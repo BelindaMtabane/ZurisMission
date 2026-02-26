@@ -6,16 +6,21 @@ public class PlayerMovement : MonoBehaviour
     //Create variables
     public static float playerSpeed = 5f;
     public static float playerJumpPower = 5f;
-    public static float playerSpeedBoost = 8f;
+    public static float playerSpeedBoost = 10f;
     public static float playerSlowDown = 3f;
     public static bool isGrounded;
+    public float waterLevel = 100f;
+    public float agilityLevel = 100f;
+    private int pressCounter;
     public Rigidbody rb;
+    ObstacleTimer timer;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         //Check if rigidbody is attached to the player, if not add one
         rb = GetComponent<Rigidbody>();
+        timer = GetComponent<ObstacleTimer>();
         if (rb == null)
         {
             rb = gameObject.AddComponent<Rigidbody>();
@@ -29,17 +34,13 @@ public class PlayerMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
-    }
-    public void MechanicMain()
-    {
         //Call the player movement and jumping mechanics in the main method
         if (isGrounded)
-        
+
             MovementMECH();
 
         if (isGrounded && Input.GetKeyDown(KeyCode.Space))
-        
+
             JumpMECH();
     }
     //Create a method that functions the PLayer Jumping Mechanic
@@ -74,9 +75,54 @@ public class PlayerMovement : MonoBehaviour
             {
                 transform.Translate(Vector3.right * playerSpeed * Time.deltaTime);
             }
+            else if (Input.GetKey(KeyCode.P))
+            {
+                SlowMECH();
+            }
+            else if (Input.GetKey(KeyCode.O))
+            {
+                SpeedBoostMECH();
+            }
+            WaterAgilityManager();
         }
     }
-    
+    public void SlowMECH()
+    {
+        //Set player speed to the slow down variable
+        playerSpeed = playerSlowDown;
+        WaterAgilityManager();   
+    }
+
+    public void SpeedBoostMECH()
+    {
+        //Set player speed to the speed boost variable
+        playerSpeed = playerSpeedBoost;
+        WaterAgilityManager();
+    }
+
+    void WaterAgilityManager()
+    {
+        float waterLeveldecrease = UnityEngine.Random.Range(2f, 20f);
+        //Check if player is fast or slow or normal
+        if (playerSpeed == 5f)
+        {
+            waterLevel -= waterLeveldecrease;
+            agilityLevel += 5f;
+
+        }
+        else if (playerSpeed == playerSpeedBoost)
+        {
+            //Decrease water level and increase player speed
+            waterLevel -= 10f;
+            agilityLevel += 5f;
+
+        }
+        else if (playerSpeed == playerSlowDown)
+        {
+            waterLevel += waterLeveldecrease;
+            agilityLevel -= 8f;
+        }
+    }
 
     //Create a method that detects when the player collides with the ground and sets isGrounded to true
     public void OnCollisionEnter(Collision collision)
