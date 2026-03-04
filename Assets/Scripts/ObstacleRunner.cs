@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class ObstacleTimer : MonoBehaviour
+public class ObstacleRunner : MonoBehaviour
 {
     public GameObject animalONE;
     public GameObject animalTWO;
@@ -8,8 +8,9 @@ public class ObstacleTimer : MonoBehaviour
     public GameObject obstacles;
     public float delayTime;
 
-    void animalsSpeedONE()
+    public void animalsSpeedONE()
     {
+
         delayTime += Time.deltaTime;
 
         if (delayTime >= 5)
@@ -30,7 +31,7 @@ public class ObstacleTimer : MonoBehaviour
         }
 
     }
-    void animalsSpeedTWO()
+    public void animalsSpeedTWO()
     {
         delayTime += Time.deltaTime;
 
@@ -51,7 +52,7 @@ public class ObstacleTimer : MonoBehaviour
         }
 
     }
-    void peopleSpeed()
+    public  void peopleSpeed()
     {
         delayTime += Time.deltaTime;
         if (delayTime <= 15)

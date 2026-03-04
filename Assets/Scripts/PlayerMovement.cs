@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
+using System;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -13,6 +15,9 @@ public class PlayerMovement : MonoBehaviour
     public float villageWaterLevel = 0f;
     public float agilityLevel = 100f;
     public Rigidbody rb;
+    //public TextMesh waterLevelText;
+    //public TextMesh agility;
+
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -82,12 +87,22 @@ public class PlayerMovement : MonoBehaviour
             {
                 SpeedBoostMECH();
             }
+            else if (Input.GetKeyUp(KeyCode.I))
+            {
+                waterLevel += 10f;
+                agilityLevel += 6f;
+            }
 
             if (Input.GetKeyUp(KeyCode.P) || Input.GetKeyUp(KeyCode.O))
             {
                 WaterAgilityManager();
             }
+            else if (Input.GetKeyUp(KeyCode.I))
+            {
+                waterLevel += 10f;
+                agilityLevel += 6f;
 
+            }
         }
     }
     public void SlowMECH()
@@ -158,7 +173,7 @@ public class PlayerMovement : MonoBehaviour
             //Set Ground to be true when Player collides with the ground
             isGrounded = true;
         }
-        /*else if (collision.gameObject.CompareTag("Water"))
+        else if (collision.gameObject.CompareTag("Water"))
         {
             waterLevel += 7f;
             agilityLevel -= 5f;
@@ -174,29 +189,33 @@ public class PlayerMovement : MonoBehaviour
             waterLevel -= 5f;
             agilityLevel -= 3f;
         }
-        else if (collision.gameObject.CompareTag("Food"))
+        else if (collision.gameObject.CompareTag("Dam"))
         {
-            agilityLevel += 7f;
-        }
-        else if (collision.gameObject.CompareTag("Drink"))
-        {
-            waterLevel += 10f;
-            agilityLevel += 6f;
+            waterLevel -= 8f;
         }
         else if (collision.gameObject.CompareTag("Animal"))
         {
             waterLevel -= 12f;
             agilityLevel -= 6f;
         }
+        else if (collision.gameObject.CompareTag("Pickup"))
+        {
+            waterLevel += 5f;
+            Destroy(collision.gameObject);
+        }
         else if (collision.gameObject.CompareTag("People"))
         {
             waterLevel -= 4f;
             agilityLevel += 2f;
-        }*/
+        }
         else
         {
             //Set if Player did not contact the ground / is in the air
             isGrounded = false;
         }
+    }
+    public void TextDisplay()
+    {
+
     }
 }
