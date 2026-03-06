@@ -4,7 +4,7 @@ public class Pickups : MonoBehaviour
 {
     //Create the variables for the pickups
     public GameObject fruitPickup;
-    public GameObject brickPickup;
+    //public GameObject brickPickup;
 
     void Start()
     {
@@ -23,20 +23,21 @@ public class Pickups : MonoBehaviour
     }
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Player"))
+        if (CompareTag("Player"))
         {
             //Check if the collided object is a fruit
-            if (gameObject.CompareTag("FruitPickup"))
+            if (CompareTag("FruitPickup"))
             {
                 Debug.Log("Fruit collected!");
                 Destroy(gameObject);
             }
-            else if (gameObject.CompareTag("BrickPickup"))
+            else if (CompareTag("BrickPickup"))
             {
                 Debug.Log("Brick collected!");
                 Destroy(gameObject);
             }
         }
+        //
         //Check if all 10 are destroyed to respawn
         if (GameObject.FindGameObjectsWithTag("FruitPickup").Length == 0)
         {
