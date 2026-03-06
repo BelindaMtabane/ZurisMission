@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: b1949cdc488e8e444a2a0af0d2a5e033
+guid: 26033a9c6b903234e84033f14e25398f
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -123,23 +123,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Screenshot 2026-03-06 083951_0
+      name: brick block_0
       rect:
         serializedVersion: 2
-        x: 4
-        y: 3
-        width: 137
-        height: 135
+        x: 0
+        y: 0
+        width: 736
+        height: 736
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 7dda794d4b739a049a574bff7e7e4416
-      internalID: 107738069
+      spriteID: 85e6c6dae0a321a4b8c191e645fb826b
+      internalID: -676205531
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 618e41322b96ced40be4b3f8b5bd1023
+    spriteID: 3268459b59c22ce4ea2f6ce2f51b432f
     internalID: 0
     vertices: []
     indices: 
@@ -158,7 +158,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Screenshot 2026-03-06 083951_0: 107738069
+      brick block_0: -676205531
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
