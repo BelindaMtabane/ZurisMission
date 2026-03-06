@@ -1,5 +1,129 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &3428453760490210154
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 7732945729184807902}
+    m_Modifications:
+    - target: {fileID: 1435454790161784035, guid: 11c53348ed97abc409847c78de1c27ec, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.8771865
+      objectReference: {fileID: 0}
+    - target: {fileID: 1435454790161784035, guid: 11c53348ed97abc409847c78de1c27ec, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.0003746107
+      objectReference: {fileID: 0}
+    - target: {fileID: 1435454790161784035, guid: 11c53348ed97abc409847c78de1c27ec, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.2038269
+      objectReference: {fileID: 0}
+    - target: {fileID: 1435454790161784035, guid: 11c53348ed97abc409847c78de1c27ec, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1435454790161784035, guid: 11c53348ed97abc409847c78de1c27ec, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1435454790161784035, guid: 11c53348ed97abc409847c78de1c27ec, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1435454790161784035, guid: 11c53348ed97abc409847c78de1c27ec, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1435454790161784035, guid: 11c53348ed97abc409847c78de1c27ec, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1435454790161784035, guid: 11c53348ed97abc409847c78de1c27ec, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1435454790161784035, guid: 11c53348ed97abc409847c78de1c27ec, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1774438225319396953, guid: 11c53348ed97abc409847c78de1c27ec, type: 3}
+      propertyPath: m_Name
+      value: Farm_Crop_Tree_02
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 11c53348ed97abc409847c78de1c27ec, type: 3}
+--- !u!4 &4359363499196342153 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1435454790161784035, guid: 11c53348ed97abc409847c78de1c27ec, type: 3}
+  m_PrefabInstance: {fileID: 3428453760490210154}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &5929933976306505433
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 7732945729184807902}
+    m_Modifications:
+    - target: {fileID: 6013926057701310411, guid: fba6bcb3c7d442c4f95fafcbfffcd636, type: 3}
+      propertyPath: m_Name
+      value: Farm_Tool_Shovel_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 6358538752686564721, guid: fba6bcb3c7d442c4f95fafcbfffcd636, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.372073
+      objectReference: {fileID: 0}
+    - target: {fileID: 6358538752686564721, guid: fba6bcb3c7d442c4f95fafcbfffcd636, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.131063
+      objectReference: {fileID: 0}
+    - target: {fileID: 6358538752686564721, guid: fba6bcb3c7d442c4f95fafcbfffcd636, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.3929493
+      objectReference: {fileID: 0}
+    - target: {fileID: 6358538752686564721, guid: fba6bcb3c7d442c4f95fafcbfffcd636, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6358538752686564721, guid: fba6bcb3c7d442c4f95fafcbfffcd636, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6358538752686564721, guid: fba6bcb3c7d442c4f95fafcbfffcd636, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6358538752686564721, guid: fba6bcb3c7d442c4f95fafcbfffcd636, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6358538752686564721, guid: fba6bcb3c7d442c4f95fafcbfffcd636, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6358538752686564721, guid: fba6bcb3c7d442c4f95fafcbfffcd636, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6358538752686564721, guid: fba6bcb3c7d442c4f95fafcbfffcd636, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fba6bcb3c7d442c4f95fafcbfffcd636, type: 3}
+--- !u!4 &753590731132957608 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6358538752686564721, guid: fba6bcb3c7d442c4f95fafcbfffcd636, type: 3}
+  m_PrefabInstance: {fileID: 5929933976306505433}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7843661235388308533
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -49,15 +173,26 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -7511558181221131132, guid: 844438035d937084f9028c4fdc6043a8, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: fa6c45465cde56c4495f6d9109c80326, type: 2}
+      objectReference: {fileID: 2100000, guid: cbcfbb22b57cfd64597a700d9320825c, type: 2}
     - target: {fileID: 919132149155446097, guid: 844438035d937084f9028c4fdc6043a8, type: 3}
       propertyPath: m_Name
       value: Props_Broken_Rope_Bridge_01
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 844438035d937084f9028c4fdc6043a8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4359363499196342153}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 844438035d937084f9028c4fdc6043a8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 753590731132957608}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 844438035d937084f9028c4fdc6043a8, type: 3}
+--- !u!4 &7732945729184807902 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 844438035d937084f9028c4fdc6043a8, type: 3}
+  m_PrefabInstance: {fileID: 7843661235388308533}
+  m_PrefabAsset: {fileID: 0}
