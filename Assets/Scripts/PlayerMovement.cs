@@ -173,12 +173,6 @@ public class PlayerMovement : MonoBehaviour
             //Set Ground to be true when Player collides with the ground
             isGrounded = true;
         }
-        else if (collision.gameObject.CompareTag("Water"))
-        {
-            waterLevel += 7f;
-            agilityLevel -= 5f;
-
-        }
         else if (collision.gameObject.CompareTag("VillageTank"))
         {
             villageWaterLevel += waterLevel;
@@ -191,22 +185,16 @@ public class PlayerMovement : MonoBehaviour
         }
         else if (collision.gameObject.CompareTag("Dam"))
         {
-            waterLevel -= 8f;
+            waterLevel += 8f;
         }
         else if (collision.gameObject.CompareTag("Animal"))
         {
             waterLevel -= 12f;
             agilityLevel -= 6f;
         }
-        else if (collision.gameObject.CompareTag("Pickup"))
+        else if (collision.gameObject.CompareTag("WaterPick"))
         {
             waterLevel += 5f;
-            Destroy(collision.gameObject);
-        }
-        else if (collision.gameObject.CompareTag("People"))
-        {
-            waterLevel -= 4f;
-            agilityLevel += 2f;
         }
         else
         {
