@@ -2,6 +2,11 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using System;
+using TMPro;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Collections;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -12,11 +17,23 @@ public class PlayerMovement : MonoBehaviour
     public static float playerSlowDown = 3f;
     public static bool isGrounded;
     public float waterLevel = 100f;
+    public float health = 100f;
     public float villageWaterLevel = 0f;
     public float agilityLevel = 100f;
     public Rigidbody rb;
+    // The issue is with these lines:
     //public TextMesh waterLevelText;
     //public TextMesh agility;
+
+    // TextMesh is typically used for 3D text in the scene, not for UI elements.
+    // If you are displaying water level and agility in a UI canvas, you should use TMP_Text (from TextMeshPro) or UnityEngine.UI.Text.
+    // If you are using TextMeshPro, change these lines to:
+
+    public TMP_Text waterLevelText;
+    public TMP_Text agility;
+    public TMP_Text healthText;
+
+    // Also, ensure you assign the correct UI components in the Unity Inspector.
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -45,6 +62,8 @@ public class PlayerMovement : MonoBehaviour
         if (isGrounded && Input.GetKeyDown(KeyCode.Space))
 
             JumpMECH();
+
+        UpdateUI();
     }
     //Create a method that functions the PLayer Jumping Mechanic
     public void JumpMECH()
@@ -165,6 +184,13 @@ public class PlayerMovement : MonoBehaviour
             Debug.Log("Water level is low, agility level decreases gradually");
         }
     }
+    void UpdateUI()
+    {
+        //Update the UI text to display the current water level and agility level
+        waterLevelText.text = "Water LVL: " + waterLevel.ToString("F1");
+        agility.text = "Agility: " + agilityLevel.ToString("F1");
+        healthText.text = "Health: " + health.ToString("F1");
+    }
     //Create a method that detects when the player collides with the ground and sets isGrounded to true
     public void OnCollisionEnter(Collision collision)
     {
@@ -182,6 +208,7 @@ public class PlayerMovement : MonoBehaviour
         {
             waterLevel -= 5f;
             agilityLevel -= 3f;
+            health -= 5f;
         }
         else if (collision.gameObject.CompareTag("Dam"))
         {
@@ -191,6 +218,7 @@ public class PlayerMovement : MonoBehaviour
         {
             waterLevel -= 12f;
             agilityLevel -= 6f;
+            health -= 10f;
         }
         else if (collision.gameObject.CompareTag("WaterPick"))
         {
@@ -201,9 +229,5 @@ public class PlayerMovement : MonoBehaviour
             //Set if Player did not contact the ground / is in the air
             isGrounded = false;
         }
-    }
-    public void TextDisplay()
-    {
-
     }
 }
