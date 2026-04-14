@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class MovingObstacle : MonoBehaviour
 {
-    private Vector3 startPosition;
+    /*private Vector3 startPosition;
     public float moveDistance = 2f;//How far it moves
     public float moveSpeed = 1f;//Speed of the movement
     public float delayBeforeMoving = 60f;
@@ -30,8 +30,17 @@ public class MovingObstacle : MonoBehaviour
         if (canMove)
         {
             moveTimer += Time.deltaTime;//Increment the move timer
-            float offset = Mathf.PingPong(moveTimer * moveSpeed, moveDistance);//Calculate the offset using PingPong function
-            transform.position = startPosition + Vector3.right * offset;//Apply the offset to change position
+            //Move the player continously forward
+            transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
+            //Creat a if statement to check the keys that the player is moving on 
+            if (Input.GetKey(KeyCode.A))
+            {
+                transform.Translate(Vector3.left * moveSpeed * Time.deltaTime);
+            }
+            if (Input.GetKey(KeyCode.D))
+            {
+                transform.Translate(Vector3.right * moveSpeed * Time.deltaTime);
+            }
         }
     }
 
@@ -42,5 +51,5 @@ public class MovingObstacle : MonoBehaviour
             // Handle collision with the player, e.g., reduce health or reset position
             Debug.Log("Player hit by moving obstacle!");
         }
-    }
+    }*/
 }

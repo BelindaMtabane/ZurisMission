@@ -12,6 +12,8 @@ TagManager:
   - Obstacle
   - Animal
   - Pickup
+  - Trigger
+  - Destroy
   layers:
   - Default
   - TransparentFX

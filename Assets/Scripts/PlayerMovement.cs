@@ -11,7 +11,7 @@ using System.Collections;
 public class PlayerMovement : MonoBehaviour
 {
     //Create variables
-    public static float playerSpeed = 5f;
+    public static float playerSpeed = 20f;
     public static float playerJumpPower = 5f;
     public static float playerSpeedBoost = 10f;
     public static float playerSlowDown = 3f;
@@ -29,9 +29,9 @@ public class PlayerMovement : MonoBehaviour
     // If you are displaying water level and agility in a UI canvas, you should use TMP_Text (from TextMeshPro) or UnityEngine.UI.Text.
     // If you are using TextMeshPro, change these lines to:
 
-    public TMP_Text waterLevelText;
+    /*public TMP_Text waterLevelText;
     public TMP_Text agility;
-    public TMP_Text healthText;
+    public TMP_Text healthText;*/
 
     // Also, ensure you assign the correct UI components in the Unity Inspector.
 
@@ -63,7 +63,7 @@ public class PlayerMovement : MonoBehaviour
 
             JumpMECH();
 
-        UpdateUI();
+        //UpdateUI();
     }
     //Create a method that functions the PLayer Jumping Mechanic
     public void JumpMECH()
@@ -81,47 +81,42 @@ public class PlayerMovement : MonoBehaviour
         //Get player input using the wasd key functionality
         if (isGrounded)
         {
-            if (Input.GetKey(KeyCode.W))
-            {
-                transform.Translate(Vector3.forward * playerSpeed * Time.deltaTime);
-            }
-            if (Input.GetKey(KeyCode.S))
-            {
-                transform.Translate(Vector3.back * playerSpeed * Time.deltaTime);
-            }
+            //Move forward continously
+            Vector3 forwardMVMT = transform.forward * playerSpeed * Time.deltaTime;
+
             if (Input.GetKey(KeyCode.A))
             {
-                transform.Translate(Vector3.left * playerSpeed * Time.deltaTime);
+                transform.Translate(Vector3.left * playerSpeed * Time.deltaTime * 2);
             }
             if (Input.GetKey(KeyCode.D))
             {
-                transform.Translate(Vector3.right * playerSpeed * Time.deltaTime);
+                transform.Translate(Vector3.right * playerSpeed * Time.deltaTime * 2);
             }
+            rb.MovePosition(rb.position + forwardMVMT);
+            /* if (Input.GetKeyDown(KeyCode.P))
+             {
+                 SlowMECH();
+             }
+             else if (Input.GetKeyDown(KeyCode.O))
+             {
+                 SpeedBoostMECH();
+             }
+             else if (Input.GetKeyUp(KeyCode.I))
+             {
+                 waterLevel += 10f;
+                 agilityLevel += 6f;
+             }
 
-            if (Input.GetKeyDown(KeyCode.P))
-            {
-                SlowMECH();
-            }
-            else if (Input.GetKeyDown(KeyCode.O))
-            {
-                SpeedBoostMECH();
-            }
-            else if (Input.GetKeyUp(KeyCode.I))
-            {
-                waterLevel += 10f;
-                agilityLevel += 6f;
-            }
+             if (Input.GetKeyUp(KeyCode.P) || Input.GetKeyUp(KeyCode.O))
+             {
+                 WaterAgilityManager();
+             }
+             else if (Input.GetKeyUp(KeyCode.I))
+             {
+                 waterLevel += 10f;
+                 agilityLevel += 6f;
 
-            if (Input.GetKeyUp(KeyCode.P) || Input.GetKeyUp(KeyCode.O))
-            {
-                WaterAgilityManager();
-            }
-            else if (Input.GetKeyUp(KeyCode.I))
-            {
-                waterLevel += 10f;
-                agilityLevel += 6f;
-
-            }
+             }*/
         }
     }
     public void SlowMECH()
@@ -184,13 +179,13 @@ public class PlayerMovement : MonoBehaviour
             Debug.Log("Water level is low, agility level decreases gradually");
         }
     }
-    void UpdateUI()
+   /* void UpdateUI()
     {
         //Update the UI text to display the current water level and agility level
-        waterLevelText.text = "Water LVL: " + waterLevel.ToString("F1");
-        agility.text = "Agility: " + agilityLevel.ToString("F1");
-        healthText.text = "Health: " + health.ToString("F1");
-    }
+        waterLevelText.text = "Water LVL: " + waterLevel;
+        agility.text = "Agility: " + agilityLevel;
+        healthText.text = "Health: " + health;
+    }*/
     //Create a method that detects when the player collides with the ground and sets isGrounded to true
     public void OnCollisionEnter(Collision collision)
     {
@@ -198,7 +193,7 @@ public class PlayerMovement : MonoBehaviour
         {
             //Set Ground to be true when Player collides with the ground
             isGrounded = true;
-        }
+        }/*
         else if (collision.gameObject.CompareTag("VillageTank"))
         {
             villageWaterLevel += waterLevel;
@@ -223,7 +218,7 @@ public class PlayerMovement : MonoBehaviour
         else if (collision.gameObject.CompareTag("WaterPick"))
         {
             waterLevel += 5f;
-        }
+        }*/
         else
         {
             //Set if Player did not contact the ground / is in the air
