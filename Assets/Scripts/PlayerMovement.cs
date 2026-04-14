@@ -83,6 +83,9 @@ public class PlayerMovement : MonoBehaviour
         {
             //Move forward continously
             Vector3 forwardMVMT = transform.forward * playerSpeed * Time.deltaTime;
+            //Crouching vector declaration
+            Vector3 crouchSCALE = new Vector3(1f, 0.5f, 1f);
+            Vector3 playerSCALE = new Vector3(1f, 1f, 1f);
 
             if (Input.GetKey(KeyCode.A))
             {
@@ -92,6 +95,19 @@ public class PlayerMovement : MonoBehaviour
             {
                 transform.Translate(Vector3.right * playerSpeed * Time.deltaTime * 2);
             }
+            if(Input.GetKeyDown(KeyCode.P))
+            {
+                transform.localScale = crouchSCALE;
+                transform.position = new Vector3(transform.position.x, transform.position.y - 0.5f, transform.position.z);
+            }
+            else if (Input.GetKeyUp(KeyCode.P))
+            {
+                //Return the player to their original scale
+                transform.localScale = playerSCALE;
+                transform.position = new Vector3(transform.position.x, transform.position.y + 0.5f, transform.position.z);
+
+            }
+
             rb.MovePosition(rb.position + forwardMVMT);
             /* if (Input.GetKeyDown(KeyCode.P))
              {

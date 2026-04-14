@@ -10,21 +10,23 @@ public class GroundSpawnner : MonoBehaviour
         {
             SpawnGround();
         }
-        if (other.CompareTag("Destroy"))
+        /*if (other.CompareTag("Destroy"))
         {
             Destroyground();
-        }
+        }*/
     }
     void SpawnGround()
     {
         // Instantiate a new ground piece at the desired position
         Vector3 spawnPosition = transform.position + new Vector3(0, 0, 70); // Adjust the spawn position as needed
-        Instantiate(groundPrefabTrigger, spawnPosition, Quaternion.identity);
+        GameObject newGround = Instantiate(groundPrefabTrigger, spawnPosition, Quaternion.identity);
 
+        //Destroy the ground after 20 seconds each
+        Destroy(newGround, 10f);
     }
     void Destroyground()
     {
         //Destroy the ground after 20 seconds each
-        Destroy(groundPrefabTrigger);
+        //Destroy(newGround, 3f);
     }
 }
