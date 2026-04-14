@@ -3,46 +3,31 @@ using UnityEngine;
 public class Pickups : MonoBehaviour
 {
     //Create the variables for the pickups
-    public GameObject fruitPickup;
+    public GameObject[] pickup;
     //public GameObject brickPickup;
-
-    void Start()
+    public void SpawnPickups(GameObject ground)
     {
-        //Spawn multiple pickups at the start and respawn
-        SpawnPickups();
-    }
-
-    void SpawnPickups()
-    {
+        int pickupCount = Random.Range(2, 10);
         //Create a for loop to spawn mulitple
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < pickupCount; i++)
         {
-            Vector3 randomPosition = new Vector3(Random.Range(-10f, 10f), 1f, Random.Range(-10f, 10f));
-            Instantiate(fruitPickup,randomPosition,Quaternion.identity);
+            GameObject spawnPickup = pickup[Random.Range(0, pickup.Length)];
+            Vector3 randomPosition = ground.transform.position + new Vector3(Random.Range(-10f, 10f), 1f, Random.Range(-50f, 50f));
+            Instantiate(spawnPickup, randomPosition,Quaternion.identity);
         }
     }
     private void OnCollisionEnter(Collision collision)
     {
-        if (CompareTag("Player"))
+        //Check if the collided object is a fruit
+        if (CompareTag("FruitPickup"))
         {
-            //Check if the collided object is a fruit
-            if (CompareTag("FruitPickup"))
-            {
-                Debug.Log("Fruit collected!");
-                Destroy(gameObject);
-            }
-            else if (CompareTag("BrickPickup"))
-            {
-                Debug.Log("Brick collected!");
-                Destroy(gameObject);
-            }
+            Debug.Log("Fruit collected!");
+            Destroy(gameObject);
         }
-        //
-        //Check if all 10 are destroyed to respawn
-        if (GameObject.FindGameObjectsWithTag("FruitPickup").Length == 0)
+        if (CompareTag("BrickPickup"))
         {
-            //Respawn Pickups
-            SpawnPickups();
+            Debug.Log("Brick collected!");
+            Destroy(gameObject);
         }
     }
 }

@@ -14,6 +14,8 @@ TagManager:
   - Pickup
   - Trigger
   - Destroy
+  - FruitPickup
+  - BrickPickup
   layers:
   - Default
   - TransparentFX
