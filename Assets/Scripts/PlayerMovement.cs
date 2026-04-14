@@ -11,31 +11,12 @@ using System.Collections;
 public class PlayerMovement : MonoBehaviour
 {
     //Create variables
-    public static float playerSpeed = 20f;
-    public static float playerJumpPower = 5f;
-    public static float playerSpeedBoost = 10f;
-    public static float playerSlowDown = 3f;
-    public static bool isGrounded;
-    public float waterLevel = 100f;
-    public float health = 100f;
-    public float villageWaterLevel = 0f;
-    public float agilityLevel = 100f;
+    public float playerSpeed = 20f;
+    public float playerJumpPower = 5f;
+    public float playerSpeedBoost = 10f;
+    public float playerSlowDown = 3f;
+    public bool isGrounded;
     public Rigidbody rb;
-    // The issue is with these lines:
-    //public TextMesh waterLevelText;
-    //public TextMesh agility;
-
-    // TextMesh is typically used for 3D text in the scene, not for UI elements.
-    // If you are displaying water level and agility in a UI canvas, you should use TMP_Text (from TextMeshPro) or UnityEngine.UI.Text.
-    // If you are using TextMeshPro, change these lines to:
-
-    /*public TMP_Text waterLevelText;
-    public TMP_Text agility;
-    public TMP_Text healthText;*/
-
-    // Also, ensure you assign the correct UI components in the Unity Inspector.
-
-
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -95,7 +76,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 transform.Translate(Vector3.right * playerSpeed * Time.deltaTime * 2);
             }
-            if(Input.GetKeyDown(KeyCode.P))
+            if (Input.GetKeyDown(KeyCode.P))
             {
                 transform.localScale = crouchSCALE;
                 transform.position = new Vector3(transform.position.x, transform.position.y - 0.5f, transform.position.z);
@@ -138,7 +119,7 @@ public class PlayerMovement : MonoBehaviour
     public void SlowMECH()
     {
         //Set player speed to the slow down variable
-        playerSpeed = playerSlowDown;   
+        playerSpeed = playerSlowDown;
     }
 
     public void SpeedBoostMECH()
@@ -147,61 +128,7 @@ public class PlayerMovement : MonoBehaviour
         playerSpeed = playerSpeedBoost;
     }
 
-    void WaterAgilityManager()
-    {
-        float waterLeveldecrease = UnityEngine.Random.Range(2f, 10f);
-        //Check if player is fast or slow or normal
-        if (playerSpeed == playerSpeedBoost)
-        {
-            //Decrease water level and increase player speed
-            waterLevel -= waterLeveldecrease;
-            agilityLevel += 5f;
-            Debug.Log("FAST, water level decreased by " + waterLeveldecrease + " and agility level is" + agilityLevel);
-            
-        }
-        else if (playerSpeed == playerSlowDown)
-        {
-            waterLevel += waterLeveldecrease;
-            agilityLevel -= 8f;
-            Debug.Log("SLOW, water level decreased by " + waterLeveldecrease + " and agility level is" + agilityLevel);
-        }
-        AgiliyLimit();
-        WaterLimit();
 
-
-    }
-
-    void AgiliyLimit()
-    {
-        //Check if agility is lower than 40 and decrease water by 1 if the 40 increases but if it decreases increase water level    }
-        if (agilityLevel < 40f)
-        {
-            waterLevel -= 1f;
-            Debug.Log("Agility is low to carry the water, water level decreases gradually");
-        }
-        else if (agilityLevel > 40f)
-        {
-            waterLevel += 2f;
-            Debug.Log("Agility is increasing, water level increases gradually");
-        }
-    }
-    void WaterLimit()
-    {
-        //Check if water level is lower than 50 and increases agility  by 2 
-        if (waterLevel <+ 50f)
-        {
-            agilityLevel += 3f;
-            playerSpeed = 4f;
-            Debug.Log("Water level is low, agility level decreases gradually");
-        }
-    }
-   /* void UpdateUI()
-    {
-        //Update the UI text to display the current water level and agility level
-        waterLevelText.text = "Water LVL: " + waterLevel;
-        agility.text = "Agility: " + agilityLevel;
-        healthText.text = "Health: " + health;
-    }*/
     //Create a method that detects when the player collides with the ground and sets isGrounded to true
     public void OnCollisionEnter(Collision collision)
     {
@@ -209,7 +136,23 @@ public class PlayerMovement : MonoBehaviour
         {
             //Set Ground to be true when Player collides with the ground
             isGrounded = true;
-        }/*
+        }
+        if (!collision.gameObject.CompareTag("Ground"))
+        {
+            isGrounded = false;
+        }
+    }
+    /*public void OnTriggerEnter(Collider collider)
+    {
+        if (collider.gameObject.CompareTag("FruitPickup"))
+        {
+            Debug.Log("Fruit pickup collected!");
+            Destroy(collider.gameObject);
+        }
+    }*/
+
+    
+    /*
         else if (collision.gameObject.CompareTag("VillageTank"))
         {
             villageWaterLevel += waterLevel;
@@ -235,10 +178,7 @@ public class PlayerMovement : MonoBehaviour
         {
             waterLevel += 5f;
         }*/
-        else
-        {
-            //Set if Player did not contact the ground / is in the air
-            isGrounded = false;
-        }
-    }
+    
+        
+    
 }
