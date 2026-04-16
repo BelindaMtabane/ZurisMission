@@ -5,15 +5,15 @@ TagManager:
   serializedVersion: 3
   tags:
   - Ground
-  - VillageTank
-  - People
   - Obstacle
-  - Animal
   - Trigger
   - FruitPickup
-  - Material
-  - Dam/WaterBUCK/WaterDROP
-  - Agility
+  - SpeedBoast
+  - SlowDown
+  - Herbs
+  - Materials
+  - EndLevel
+  - DamWaterBUCKWaterDROP
   layers:
   - Default
   - TransparentFX

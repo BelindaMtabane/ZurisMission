@@ -17,6 +17,7 @@ public class PlayerMovement : MonoBehaviour
     public float playerSlowDown = 3f;
     public bool isGrounded;
     public Rigidbody rb;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -90,30 +91,6 @@ public class PlayerMovement : MonoBehaviour
             }
 
             rb.MovePosition(rb.position + forwardMVMT);
-            /* if (Input.GetKeyDown(KeyCode.P))
-             {
-                 SlowMECH();
-             }
-             else if (Input.GetKeyDown(KeyCode.O))
-             {
-                 SpeedBoostMECH();
-             }
-             else if (Input.GetKeyUp(KeyCode.I))
-             {
-                 waterLevel += 10f;
-                 agilityLevel += 6f;
-             }
-
-             if (Input.GetKeyUp(KeyCode.P) || Input.GetKeyUp(KeyCode.O))
-             {
-                 WaterAgilityManager();
-             }
-             else if (Input.GetKeyUp(KeyCode.I))
-             {
-                 waterLevel += 10f;
-                 agilityLevel += 6f;
-
-             }*/
         }
     }
     public void SlowMECH()
@@ -142,43 +119,4 @@ public class PlayerMovement : MonoBehaviour
             isGrounded = false;
         }
     }
-    /*public void OnTriggerEnter(Collider collider)
-    {
-        if (collider.gameObject.CompareTag("FruitPickup"))
-        {
-            Debug.Log("Fruit pickup collected!");
-            Destroy(collider.gameObject);
-        }
-    }*/
-
-    
-    /*
-        else if (collision.gameObject.CompareTag("VillageTank"))
-        {
-            villageWaterLevel += waterLevel;
-            waterLevel -= 0f;
-        }
-        else if (collision.gameObject.CompareTag("Obstacle"))
-        {
-            waterLevel -= 5f;
-            agilityLevel -= 3f;
-            health -= 5f;
-        }
-        else if (collision.gameObject.CompareTag("Dam"))
-        {
-            waterLevel += 8f;
-        }
-        else if (collision.gameObject.CompareTag("Animal"))
-        {
-            waterLevel -= 12f;
-            agilityLevel -= 6f;
-            health -= 10f;
-        }
-        else if (collision.gameObject.CompareTag("WaterPick"))
-        {
-            waterLevel += 5f;
-        }*/
-    
-        
-    
 }
