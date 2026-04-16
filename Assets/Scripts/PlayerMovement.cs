@@ -11,7 +11,7 @@ using System.Collections;
 public class PlayerMovement : MonoBehaviour
 {
     //Create variables
-    public float playerSpeed = 20f;
+    public float playerSpeed = 25f;
     public float playerJumpPower = 5f;
     public float playerSpeedBoost = 10f;
     public float playerSlowDown = 3f;
