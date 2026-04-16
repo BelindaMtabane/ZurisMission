@@ -39,62 +39,54 @@ public class HUDControls : MonoBehaviour
         waterSystem.text = "Water System: " + systemLevel;
         healthText.text = "Health: " + health;
     }
-    void WaterManager()
+    public void WaterControls()
     {
         float waterLeveldecrease = UnityEngine.Random.Range(2f, 10f);
         //Check if player is fast or slow or normal
         if (playerMovement.playerSpeed == playerMovement.playerSpeedBoost)
         {
-            //Decrease water level and increase player speed
+            //Decrease water level based on the player speed
             waterLevel -= waterLeveldecrease;
             Debug.Log("FAST, water level decreased by " + waterLeveldecrease);
 
         }
-        else if (playerMovement.playerSpeed == playerMovement.playerSlowDown)
+        if (playerMovement.playerSpeed == playerMovement.playerSlowDown)
         {
-            waterLevel += waterLeveldecrease;
-            Debug.Log("SLOW, water level decreased by " + waterLeveldecrease);
+            //agilityLevels
+            Debug.Log("SLOW, water level stagnent, agility decrease");
         }
-        WaterSystem();
-        WaterLimit();
+        WaterManager();
     }
 
-    void WaterSystem()
+    void WaterManager()
     {
         //Check if agility is lower than 40 and decrease water by 1 if the 40 increases but if it decreases increase water level    }
         if (systemLevel < 40f)
         {
             Debug.Log("Agility is low to carry the water, water level decreases gradually");
         }
-        else if (systemLevel > 40f)
+        if (systemLevel > 40f)
         {
             Debug.Log("Agility is increasing, water level increases gradually");
         }
-    }
-    void WaterLimit()
-    {
         //Check if water level is lower than 50 and increases agility  by 2 
-        if (waterLevel < +50f)
+        if (waterLevel < 50f)
         {
             playerMovement.playerSpeed = 4f;
             Debug.Log("Water level is low, agility level decreases gradually");
         }
     }
-    private void OnTriggerEnter(Collider other)
+    void PlayerLose()
     {
-        if (other.gameObject.CompareTag("Obstacle"))
-        {
-            waterLevel -= 5f;
-            health -= 5f;
-        }
-        else if (other.gameObject.CompareTag("Dam"))
-        {
-            waterLevel += 8f;
-        }
-        else if (other.gameObject.CompareTag("Animal"))
-        {
-            waterLevel -= 12f;
-            health -= 10f;
-        }
+        
+    }
+    void PlayerWins()
+    {
+
+    }
+    void MoveControls(float playerMove)
+    {
+        //Based on the parameter attch it to the player speed
+        playerMovement.playerSpeed = playerMove;
     }
 }
