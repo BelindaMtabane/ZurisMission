@@ -9,10 +9,20 @@ public class PlayerHUDBase : MonoBehaviour
         if (hudControls == null) return;
         hudControls = FindFirstObjectByType<HUDControls>(); // Updated to use the recommended method
 
-        if (other.CompareTag("DamWaterBUCKWaterDROP"))
+        if (other.CompareTag("DamWaterBUCK"))
         {
             hudControls.WaterIncreaseManager();
             Debug.Log("Player water level increased!");
+        }
+        if (other.CompareTag("WaterDROP"))
+        {
+            hudControls.PlayerWaterINC();
+            Debug.Log("Player water level decreased!");
+        }
+        if (other.CompareTag("Heat&Disease"))
+        {
+            hudControls.PlayerWaterDEC();
+            Debug.Log("Player water system level increased!");
         }
         if (other.CompareTag("SpeedBoast"))
         {

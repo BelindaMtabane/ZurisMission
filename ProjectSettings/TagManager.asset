@@ -13,7 +13,9 @@ TagManager:
   - Herbs
   - Materials
   - EndLevel
-  - DamWaterBUCKWaterDROP
+  - DamWaterBUCK
+  - WaterDROP
+  - Heat&Disease
   layers:
   - Default
   - TransparentFX

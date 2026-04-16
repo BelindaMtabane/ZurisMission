@@ -51,7 +51,7 @@ public class HUDControls : MonoBehaviour
         UpdateUI();
         BarFilling();
         //Check if the player has died
-        if (!isDead && (waterLevel <= 0f || health <= 0f || waterSystemLevel <= 20f || waterLvlPLY <= 0f))
+        if (!isDead && (waterLevel <= 99f || health <= 0f || waterSystemLevel <= 20f || waterLvlPLY <= 0f))
         {
             isDead = true;
             DeathCheck();
@@ -223,7 +223,14 @@ public class HUDControls : MonoBehaviour
             waterSystemLevel += 15f;
         }
     }
-
+    public void PlayerWaterINC()
+    {
+        waterLvlPLY += 5f;
+    }
+    public void PlayerWaterDEC()
+    {
+        waterLvlPLY -= 5f;
+    }
     public void LevelProgress()
     {
 
