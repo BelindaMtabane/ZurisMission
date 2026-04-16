@@ -16,6 +16,7 @@ TagManager:
   - DamWaterBUCK
   - WaterDROP
   - Heat&Disease
+  - AnimalAttack
   layers:
   - Default
   - TransparentFX

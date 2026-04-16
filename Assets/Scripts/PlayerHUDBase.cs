@@ -35,10 +35,10 @@ public class PlayerHUDBase : MonoBehaviour
             Debug.Log("Player slowed down!");
         }
         //other.CompareTag("AnimalAttack")
-        if (other.CompareTag("Obstacle"))
+        if (other.CompareTag("AnimalAttack") || other.CompareTag("Obstacle"))
         {
             hudControls.HealthDecreaseManager();
-            Debug.Log("Player health decreased!");
+            Debug.Log("Player health decreased by animal or obstacle!");
         }
         if (other.CompareTag("Materials"))
         {

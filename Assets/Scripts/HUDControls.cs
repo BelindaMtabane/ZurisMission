@@ -64,7 +64,7 @@ public class HUDControls : MonoBehaviour
         /*waterLevelText.text = $"Water LVL: {waterLevel:F0}";
         waterSystem.text = $"Water System: {waterSystemLevel:F0}";
         healthText.text = $"Health:  {health:F0}";*/
-        villageProgressText.text = $"Village Progress:  {villageLevel:F0}";
+        villageProgressText.text = $"Village Progress:  {villageLevel:F0}%";
 
     }
     //all good ++
