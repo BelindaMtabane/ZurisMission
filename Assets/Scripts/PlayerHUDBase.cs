@@ -65,7 +65,7 @@ public class PlayerHUDBase : MonoBehaviour
             hudControls.LevelProgress();
             hudControls.SceneChange(4f);
         }
-        if (other.CompareTag("PipeFix1"))
+        /*if (other.CompareTag("PipeFix1"))
         {
             hudControls.TankProgressINC(1f);
             Debug.Log("Pipe 1 hit");
@@ -79,10 +79,10 @@ public class PlayerHUDBase : MonoBehaviour
         {
             hudControls.TankProgressINC(3f);
             Debug.Log("Pipe 3 hit");
-        }
+        }*/
         if (other.CompareTag("PipeHit"))
         {
-            hudControls.TankDEC();
+            hudControls.TankProgressINC();
             Debug.Log("Hit the pipe");
         }
     }

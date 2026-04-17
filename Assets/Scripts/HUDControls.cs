@@ -238,26 +238,13 @@ public class HUDControls : MonoBehaviour
         //Increase Tank level
         tankThree += 16.67f;
     }
-    public void TankProgressINC(float pipeNO)
+    public void TankProgressINC()
     {
         if (GetActiveScene().name == "Leve3")
         {
             tankProgress = 4.17f;
             waterSystemLevel += tankProgress;
-            Debug.Log("Water system level increased by " + tankProgress + " by croaching" + waterSystemLevel);
-
-            if (pipeNO == 1f)
-            {
-                Tank1();
-            }
-            if (pipeNO == 2f)
-            {
-                Tank2();
-            }
-            if (pipeNO == 3f)
-            {
-                Tank3();
-            }
+            Debug.Log("Water system level increased by " + tankProgress + " by croaching" + waterSystemLevel + "fixed pipes");
         }
     }
     public void TankDEC()
