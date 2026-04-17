@@ -112,12 +112,28 @@ public class HUDControls : MonoBehaviour
     // all good ++
     public void WaterIncreaseManager()
     {
-        //30 for 2nd and 17 for 3rd
+        //Check which scene the player is in
+        if (GetActiveScene().name == "MainGame")
+        {
             //Set the water Increase based on the scene
+            waterIncreaseRate = 50f;
             waterLevel += waterIncreaseRate;
             Debug.Log("Water bucket level increased by " + waterIncreaseRate);
-        
-        
+        }
+        if (GetActiveScene().name == "Level2")
+        {
+            //Set the water Increase based on the scene
+            waterIncreaseRate = 30f;
+            waterLevel += waterIncreaseRate;
+            Debug.Log("Water bucket level increased by " + waterIncreaseRate);
+        }
+        if (GetActiveScene().name == "Level3")
+        {
+            //Set the water Increase based on the scene
+            waterIncreaseRate = 17f;
+            waterLevel += waterIncreaseRate;
+            Debug.Log("Water bucket level increased by " + waterIncreaseRate);
+        }
     }
     // all good ++
     public void HealthDecreaseManager()
