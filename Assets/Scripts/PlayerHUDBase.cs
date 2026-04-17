@@ -31,7 +31,7 @@ public class PlayerHUDBase : MonoBehaviour
         }
         if (other.CompareTag("SlowDown"))
         {
-            hudControls.SpeedControls(10f);
+            hudControls.SpeedControls(15f);
             Debug.Log("Player slowed down!");
         }
         //other.CompareTag("AnimalAttack")

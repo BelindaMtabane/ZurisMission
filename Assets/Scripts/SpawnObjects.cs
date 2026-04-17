@@ -7,7 +7,7 @@ public class SpawnObjects : MonoBehaviour
     //public GameObject brickPickup;
     public void SpawnGameObjects(GameObject ground)
     {
-        int spawnCount = Random.Range(2, 10);
+        int spawnCount = Random.Range(5, 20);
         //Create a for loop to spawn mulitple
         for (int i = 0; i < spawnCount; i++)
         {

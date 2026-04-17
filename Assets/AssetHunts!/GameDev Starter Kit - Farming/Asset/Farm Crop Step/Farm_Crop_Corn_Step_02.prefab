@@ -49,9 +49,9 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -7511558181221131132, guid: 2f0a733783fca674aa6e5f20b8a5d25e, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: fa6c45465cde56c4495f6d9109c80326, type: 2}
+      objectReference: {fileID: 2100000, guid: 49a230f8d4220f449afa081d08c05320, type: 2}
     - target: {fileID: 919132149155446097, guid: 2f0a733783fca674aa6e5f20b8a5d25e, type: 3}
       propertyPath: m_Name
       value: Farm_Crop_Corn_Step_02
