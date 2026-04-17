@@ -65,25 +65,15 @@ public class PlayerHUDBase : MonoBehaviour
             hudControls.LevelProgress();
             hudControls.SceneChange(4f);
         }
-        /*if (other.CompareTag("PipeFix1"))
-        {
-            hudControls.TankProgressINC(1f);
-            Debug.Log("Pipe 1 hit");
-        }
-        if (other.CompareTag("PipeFix2"))
-        {
-            hudControls.TankProgressINC(2f);
-            Debug.Log("Pipe 2 hit");
-        }
-        if (other.CompareTag("PipeFix3"))
-        {
-            hudControls.TankProgressINC(3f);
-            Debug.Log("Pipe 3 hit");
-        }*/
         if (other.CompareTag("PipeHit"))
         {
             hudControls.TankProgressINC();
             Debug.Log("Hit the pipe");
+        }
+        else if (!other.CompareTag("PipeHit"))
+        {
+            hudControls.TankDEC();
+            Debug.Log("Missed the pipe");
         }
     }
 }

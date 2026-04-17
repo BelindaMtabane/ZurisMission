@@ -80,7 +80,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 transform.Translate(Vector3.right * playerSpeed * Time.deltaTime * 2);
             }
-            if (Input.GetKeyDown(KeyCode.P))
+            /*if (Input.GetKeyDown(KeyCode.P))
             {
                 transform.localScale = crouchSCALE;
                 transform.position = new Vector3(transform.position.x, transform.position.y - 0.5f, transform.position.z);
@@ -91,7 +91,7 @@ public class PlayerMovement : MonoBehaviour
                 transform.localScale = playerSCALE;
                 transform.position = new Vector3(transform.position.x, transform.position.y + 0.5f, transform.position.z);
 
-            }
+            }*/
 
             rb.MovePosition(rb.position + forwardMVMT);
         }

@@ -33,9 +33,6 @@ public class HUDControls : MonoBehaviour
     public float waterSystemLevel;
 
     //Tanks variables
-    private float tankOne = 0f;
-    private float tankTwo = 0f;
-    private float tankThree = 0f;
     private float tankProgress;
 
     //UI bars
@@ -43,6 +40,10 @@ public class HUDControls : MonoBehaviour
     [SerializeField] private Slider bucketbar;
     [SerializeField] private Slider materialBar;
     [SerializeField] private Slider playerWaterLevelBar;
+    public GameObject deathMenuUI;
+    public GameObject victoryMenuUIone;
+    public GameObject victoryMenuUItwo;
+    public GameObject victoryMenuUIthree;
 
     void Start()
     {
@@ -112,7 +113,6 @@ public class HUDControls : MonoBehaviour
     // all good ++
     public void WaterIncreaseManager()
     {
-        //30 for 2nd and 17 for 3rd
             //Set the water Increase based on the scene
             waterLevel += waterIncreaseRate;
             Debug.Log("Water bucket level increased by " + waterIncreaseRate);
@@ -222,36 +222,23 @@ public class HUDControls : MonoBehaviour
     {
         waterLvlPLY -= 5f;
     }
-    void Tank1()
-    {
-        //Increase Tank level
-        tankOne += 50f;
-        Debug.Log("Tank 1 level increased by 50%");
-    }
-    void Tank2()
-    {
-        //Increase Tank level
-        tankTwo += 25f;
-    }
-    void Tank3()
-    {
-        //Increase Tank level
-        tankThree += 16.67f;
-    }
     public void TankProgressINC()
     {
         if (GetActiveScene().name == "Leve3")
         {
-            tankProgress = 4.17f;
+            tankProgress = 20f;
             waterSystemLevel += tankProgress;
-            Debug.Log("Water system level increased by " + tankProgress + " by croaching" + waterSystemLevel + "fixed pipes");
+            Debug.Log("Water system level increased by " + tankProgress + " for fixing the pipe, increasing it to " + waterSystemLevel + "fixed pipes");
+            float materialIntake = UnityEngine.Random.Range(10f, 20f);
+            //Decrease material for fixing the pipe
+            waterSystemLevel -= materialIntake;
         }
     }
     public void TankDEC()
     {
-        tankProgress = 8.34f;
+        tankProgress = 10f;
         waterSystemLevel -= tankProgress;
-        Debug.Log("Water system level decreased by " + tankProgress + " by not croaching" + waterSystemLevel);
+        Debug.Log("Water system level decreased by " + tankProgress + " for not fixing the pipe, decreasing it to " + waterSystemLevel);
     }
     public void SceneChange(float scenenumber)
     {
@@ -271,12 +258,26 @@ public class HUDControls : MonoBehaviour
     public void LevelProgress()
     {
         //Set the village progress
-        //VillageProgress();
+        VillageProgress();
+        //SetVictoryMenu
+        if (GetActiveScene().name == "MainGame")
+        {
+            victoryMenuUIone.SetActive(true);
+            Time.timeScale = 0f;//Stop time
+        }
+        if (GetActiveScene().name == "Level2")
+        {
+            victoryMenuUItwo.SetActive(true);
+            Time.timeScale = 0f;//Stop time
+        }
+        if (GetActiveScene().name == "Level3")
+        {
+            victoryMenuUIthree.SetActive(true);
+            Time.timeScale = 0f;//Stop time
+        }
     }
     void DeathCheck()
     {
-        
-            //Set death active
-        
+        //SetDeathMenu
     }
 }
