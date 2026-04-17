@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: c9d6eba06c9ea474982dbab5722c54bd
+guid: 28f493e638b8e2046a112eccb7313da8
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -123,13 +123,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Get high-quality white smoke effect PNG from Roungroat__0
+      name: Screenshot 2026-04-17 214834_0
       rect:
         serializedVersion: 2
-        x: 54
-        y: 47
-        width: 563
-        height: 915
+        x: 0
+        y: 0
+        width: 329
+        height: 251
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -138,8 +138,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e249ac5403c4bf545b0389adb5b2f708
-      internalID: -1968796156
+      spriteID: 7d16f2b1e7c7ed3429d9c9d957b051bd
+      internalID: 1524732114
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 8798b12a3277c434ab8e47c1e86328f1
+    spriteID: bc47c0f5bc9bf2047b55cb23205215e6
     internalID: 0
     vertices: []
     indices: 
@@ -158,7 +158,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Get high-quality white smoke effect PNG from Roungroat__0: -1968796156
+      Screenshot 2026-04-17 214834_0: 1524732114
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

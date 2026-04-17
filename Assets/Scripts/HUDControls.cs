@@ -41,9 +41,9 @@ public class HUDControls : MonoBehaviour
     [SerializeField] private Slider materialBar;
     [SerializeField] private Slider playerWaterLevelBar;
     public GameObject deathMenuUI;
-    public GameObject victoryMenuUIone;
+    /*public GameObject victoryMenuUIone;
     public GameObject victoryMenuUItwo;
-    public GameObject victoryMenuUIthree;
+    public GameObject victoryMenuUIthree;*/
 
     void Start()
     {
@@ -59,11 +59,6 @@ public class HUDControls : MonoBehaviour
         UpdateUI();
         BarFilling();
         //Check if the player has died
-        if (!isDead && (waterLevel <= 99f || health <= 0f || waterSystemLevel <= 20f || waterLvlPLY <= 0f))
-        {
-            isDead = true;
-            DeathCheck();
-        }
     }
 
     void UpdateUI()
@@ -260,7 +255,7 @@ public class HUDControls : MonoBehaviour
         //Set the village progress
         VillageProgress();
         //SetVictoryMenu
-        if (GetActiveScene().name == "MainGame")
+        /*if (GetActiveScene().name == "MainGame")
         {
             victoryMenuUIone.SetActive(true);
             Time.timeScale = 0f;//Stop time
@@ -274,10 +269,16 @@ public class HUDControls : MonoBehaviour
         {
             victoryMenuUIthree.SetActive(true);
             Time.timeScale = 0f;//Stop time
-        }
+        }*/
     }
     void DeathCheck()
     {
-        //SetDeathMenu
+        if (!isDead && (waterLevel <= 99f || health <= 0f || waterSystemLevel <= 0f || waterLvlPLY <= 0f))
+        {
+            isDead = true;
+            //SetDeathMenu
+            deathMenuUI.SetActive(true);
+            Time.timeScale = 0f;//Stop time
+        }
     }
 }

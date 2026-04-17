@@ -39,4 +39,17 @@ public class PauseMenu : MonoBehaviour
         Time.timeScale = 1f;
         SceneManager.LoadScene("StarterInfor");
     }
+    public void Level2()
+    {
+        //Go to level 2
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("Level2");
+    }
+    public void Level3()
+    {
+        //Go to level 3
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("Level3");
+    }
+
 }
