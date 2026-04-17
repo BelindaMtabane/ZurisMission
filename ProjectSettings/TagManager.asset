@@ -17,6 +17,11 @@ TagManager:
   - WaterDROP
   - Heat&Disease
   - AnimalAttack
+  - PipeFix1
+  - PipeFix2
+  - PipeFix3
+  - PipeHit
+  - EndLevel1
   layers:
   - Default
   - TransparentFX

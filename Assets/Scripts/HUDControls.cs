@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Collections;
 using static UnityEngine.SceneManagement.SceneManager;
+using UnityEngine.SceneManagement;
 
 public class HUDControls : MonoBehaviour
 {
@@ -29,7 +30,13 @@ public class HUDControls : MonoBehaviour
 
     //Village variables
     private float villageLevel;
-    private float waterSystemLevel;
+    public float waterSystemLevel;
+
+    //Tanks variables
+    private float tankOne = 0f;
+    private float tankTwo = 0f;
+    private float tankThree = 0f;
+    private float tankProgress;
 
     //UI bars
     [SerializeField] private Slider healthbar;
@@ -231,14 +238,71 @@ public class HUDControls : MonoBehaviour
     {
         waterLvlPLY -= 5f;
     }
+    void Tank1()
+    {
+        //Increase Tank level
+        tankOne += 50f;
+        Debug.Log("Tank 1 level increased by 50%");
+    }
+    void Tank2()
+    {
+        //Increase Tank level
+        tankTwo += 25f;
+    }
+    void Tank3()
+    {
+        //Increase Tank level
+        tankThree += 16.67f;
+    }
+    public void TankProgressINC(float pipeNO)
+    {
+        if (GetActiveScene().name == "MainGame")
+        {
+            //waterSystemLevel = 50f;
+            tankProgress = 4.17f;
+            waterSystemLevel += tankProgress;
+            Debug.Log("Water system level increased by " + tankProgress + " by croaching" + waterSystemLevel);
+
+            if (pipeNO == 1f)
+            {
+                Tank1();
+            }
+            if (pipeNO == 2f)
+            {
+                Tank2();
+            }
+            if (pipeNO == 3f)
+            {
+                Tank3();
+            }
+        }
+    }
+    public void TankDEC()
+    {
+        tankProgress = 8.34f;
+        waterSystemLevel -= tankProgress;
+        Debug.Log("Water system level decreased by " + tankProgress + " by not croaching" + waterSystemLevel);
+    }
+    public void SceneChange(float scenenumber)
+    {
+        if (scenenumber == 1f)
+        {
+            //Load the scene
+            SceneManager.LoadScene("MainGame");
+        }
+        if (scenenumber == 2f)
+        {
+            SceneManager.LoadScene("Level2");
+        }
+        if (scenenumber == 3f)
+        {
+            SceneManager.LoadScene("Level3");
+        }
+    }
     public void LevelProgress()
     {
-
-        //Set win active
-
         //Set the village progress
-        VillageProgress();
-
+        //VillageProgress();
     }
     void DeathCheck()
     {

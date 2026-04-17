@@ -50,9 +50,41 @@ public class PlayerHUDBase : MonoBehaviour
             hudControls.HealthIncreaseManager();
             Debug.Log("Player health increased!");
         }
-        if (other.CompareTag("EndLevel"))
+        if (other.CompareTag("EndLevel1"))
         {
             hudControls.LevelProgress();
+            hudControls.SceneChange(1f);
+        }/*
+        if (other.CompareTag("EndLevel2"))
+        {
+            hudControls.LevelProgress();
+            hudControls.SceneChange(2f);
+        }
+        if (other.CompareTag("EndLevel3"))
+        {
+            hudControls.LevelProgress();
+            hudControls.SceneChange(3f);
+        }*/
+
+        if (other.CompareTag("PipeFix1"))
+        {
+            hudControls.TankProgressINC(1f);
+            Debug.Log("Pipe 1 hit");
+        }
+        if (other.CompareTag("PipeFix2"))
+        {
+            hudControls.TankProgressINC(2f);
+            Debug.Log("Pipe 2 hit");
+        }
+        if (other.CompareTag("PipeFix3"))
+        {
+            hudControls.TankProgressINC(3f);
+            Debug.Log("Pipe 3 hit");
+        }
+        if (other.CompareTag("PipeHit"))
+        {
+            hudControls.TankDEC();
+            Debug.Log("Hit the pipe");
         }
     }
 }

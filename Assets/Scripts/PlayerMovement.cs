@@ -12,7 +12,7 @@ public class PlayerMovement : MonoBehaviour
 {
     //Create variables
     public float playerSpeed = 25f;
-    public float playerJumpPower = 5f;
+    public float playerJumpPower = 10f;
     public float playerSpeedBoost = 10f;
     public float playerSlowDown = 3f;
     public bool isGrounded;
@@ -53,8 +53,11 @@ public class PlayerMovement : MonoBehaviour
         //Check if the player is grounded and the space key is pressed to apply a force to the player
         if (isGrounded && Input.GetKeyDown(KeyCode.Space))
         {
+            
             //Apply force to the player to make them jump
             rb.AddForce(Vector3.up * playerJumpPower, ForceMode.Impulse);
+
+            Vector3 forwardMVMT = transform.forward * playerSpeed * Time.deltaTime;
             isGrounded = false;
         }
     }
