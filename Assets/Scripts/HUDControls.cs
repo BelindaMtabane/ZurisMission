@@ -123,14 +123,14 @@ public class HUDControls : MonoBehaviour
         if (GetActiveScene().name == "Level2")
         {
             //Set the water Increase based on the scene
-            waterIncreaseRate = 40f;
+            waterIncreaseRate = 30f;
             waterLevel += waterIncreaseRate;
             Debug.Log("Water bucket level increased by " + waterIncreaseRate);
         }
         if (GetActiveScene().name == "Level3")
         {
             //Set the water Increase based on the scene
-            waterIncreaseRate = 20f;
+            waterIncreaseRate = 17f;
             waterLevel += waterIncreaseRate;
             Debug.Log("Water bucket level increased by " + waterIncreaseRate);
         }
@@ -256,9 +256,8 @@ public class HUDControls : MonoBehaviour
     }
     public void TankProgressINC(float pipeNO)
     {
-        if (GetActiveScene().name == "MainGame")
+        if (GetActiveScene().name == "Leve3")
         {
-            //waterSystemLevel = 50f;
             tankProgress = 4.17f;
             waterSystemLevel += tankProgress;
             Debug.Log("Water system level increased by " + tankProgress + " by croaching" + waterSystemLevel);
@@ -285,11 +284,6 @@ public class HUDControls : MonoBehaviour
     }
     public void SceneChange(float scenenumber)
     {
-        if (scenenumber == 1f)
-        {
-            //Load the scene
-            SceneManager.LoadScene("MainGame");
-        }
         if (scenenumber == 2f)
         {
             SceneManager.LoadScene("Level2");
@@ -297,6 +291,10 @@ public class HUDControls : MonoBehaviour
         if (scenenumber == 3f)
         {
             SceneManager.LoadScene("Level3");
+        }
+        if (scenenumber == 4f)
+        {
+            SceneManager.LoadScene("StartScreen");
         }
     }
     public void LevelProgress()

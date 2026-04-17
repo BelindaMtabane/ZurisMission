@@ -53,19 +53,18 @@ public class PlayerHUDBase : MonoBehaviour
         if (other.CompareTag("EndLevel1"))
         {
             hudControls.LevelProgress();
-            hudControls.SceneChange(1f);
-        }/*
+            hudControls.SceneChange(2f);
+        }
         if (other.CompareTag("EndLevel2"))
         {
             hudControls.LevelProgress();
-            hudControls.SceneChange(2f);
+            hudControls.SceneChange(3f);
         }
         if (other.CompareTag("EndLevel3"))
         {
             hudControls.LevelProgress();
-            hudControls.SceneChange(3f);
-        }*/
-
+            hudControls.SceneChange(4f);
+        }
         if (other.CompareTag("PipeFix1"))
         {
             hudControls.TankProgressINC(1f);
