@@ -6991,9 +6991,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c14b0dea95e9bd469b17d73f6160fc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  laneSpawns:
-  - {fileID: 1920181252}
-  - {fileID: 67168758}
+  laneSpawnsPositions: []
   player: {fileID: 1875673033}
   spawnDistance: 25
   easyObstacles:
@@ -8194,7 +8192,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -121, y: 174}
+  m_AnchoredPosition: {x: 119, y: 174}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1345460400
@@ -8658,7 +8656,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -309, y: 174}
+  m_AnchoredPosition: {x: -108, y: 174}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1399314954
