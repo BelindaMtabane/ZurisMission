@@ -14,6 +14,7 @@ public class SpawnObjects : MonoBehaviour
             GameObject spawnPickup = spawnObjects[Random.Range(0, spawnObjects.Length)];
             Vector3 randomPosition = ground.transform.position + new Vector3(Random.Range(-10f, 10f), 1f, Random.Range(-50f, 50f));
             Instantiate(spawnPickup, randomPosition,Quaternion.identity);
+            
         }
     }
     

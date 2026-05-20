@@ -12,9 +12,9 @@ using UnityEngine.SceneManagement;
 
 public class HUDControls : MonoBehaviour
 {
-    /*public TMP_Text waterLevelText;
-    public TMP_Text waterSystem;
-    public TMP_Text healthText;*/
+    //public TMP_Text waterLevelText;
+    public TMP_Text material;
+    //public TMP_Text healthText;
     public TMP_Text villageProgressText;
 
     //Bucket variables
@@ -30,7 +30,7 @@ public class HUDControls : MonoBehaviour
 
     //Village variables
     private float villageLevel;
-    public float waterSystemLevel;
+    public int materialLevel;
 
     //Tanks variables
     private float tankProgress;
@@ -38,9 +38,9 @@ public class HUDControls : MonoBehaviour
     //UI bars
     [SerializeField] private Slider healthbar;
     [SerializeField] private Slider bucketbar;
-    [SerializeField] private Slider materialBar;
+    //[SerializeField] private Slider materialBar;
     [SerializeField] private Slider playerWaterLevelBar;
-    public GameObject deathMenuUI;
+    //public GameObject deathMenuUI;
     /*public GameObject victoryMenuUIone;
     public GameObject victoryMenuUItwo;
     public GameObject victoryMenuUIthree;*/
@@ -52,6 +52,7 @@ public class HUDControls : MonoBehaviour
             playerMovement = FindFirstObjectByType<PlayerMovement>(); // Updated to use the recommended method
 
         SetMax();
+        VillageProgress();
     }
     void Update()
     {
@@ -64,9 +65,9 @@ public class HUDControls : MonoBehaviour
     void UpdateUI()
     {
         //Update the UI text to display the current water level and agility level
-        /*waterLevelText.text = $"Water LVL: {waterLevel:F0}";
-        waterSystem.text = $"Water System: {waterSystemLevel:F0}";
-        healthText.text = $"Health:  {health:F0}";*/
+        //waterLevelText.text = $"Water LVL: {waterLevel:F0}";
+        material.text = ("Material:" + materialLevel);
+        //healthText.text = $"Health:  {health:F0}";
         villageProgressText.text = $"Village Progress:  {villageLevel:F0}%";
 
     }
@@ -147,7 +148,7 @@ public class HUDControls : MonoBehaviour
         //Set the player water level bar fill amount to what the player water level is
         playerWaterLevelBar.value = waterLvlPLY;
         //Set the material progress bar fill amount to what the village progress is
-        materialBar.value = waterSystemLevel;
+        //materialBar.value = waterSystemLevel;
         //Set the bucketbar fill amount to what the bucket water level is
         bucketbar.value = waterLevel;
         //Set the healthbar fill amount to what the player's health is
@@ -163,8 +164,8 @@ public class HUDControls : MonoBehaviour
         bucketbar.value = waterLevel;
 
         //Set the max value of the material progress bar to 100
-        materialBar.maxValue = 100f;
-        materialBar.value = waterSystemLevel;
+        //materialBar.maxValue = 100f;
+        //materialBar.value = waterSystemLevel;
 
         //Set the max value of the player water level bar to 100
         playerWaterLevelBar.maxValue = 100f;
@@ -187,27 +188,26 @@ public class HUDControls : MonoBehaviour
         if (GetActiveScene().name == "Level3")
         {
             //Set the community progress
-            villageLevel = 100f;
+            villageLevel = 80f;
         }
     }
     public void SystemBuild()
     {
-        // Check which scene the player is in
-        if (GetActiveScene().name == "MainGame")
+        
+        if (materialLevel < 100)
         {
+            //Create a random material increase between 5 and 15
+            int materialIncrease = UnityEngine.Random.Range(5, 15);
+
+            materialLevel += materialIncrease;
             //Increase Material Collection
-            waterSystemLevel += 25f;
+            if (materialLevel >= 100)
+            {
+                materialLevel = 100;
+                Debug.Log("Material collection is maxed");
+            }
         }
-        if (GetActiveScene().name == "Level2")
-        {
-            //Increase Material Collection
-            waterSystemLevel += 20f;
-        }
-        if (GetActiveScene().name == "Level3")
-        {
-            //Increase Material Collection
-            waterSystemLevel += 15f;
-        }
+
     }
     public void PlayerWaterINC()
     {
@@ -221,19 +221,19 @@ public class HUDControls : MonoBehaviour
     {
         if (GetActiveScene().name == "Leve3")
         {
-            tankProgress = 20f;
-            waterSystemLevel += tankProgress;
-            Debug.Log("Water system level increased by " + tankProgress + " for fixing the pipe, increasing it to " + waterSystemLevel + "fixed pipes");
-            float materialIntake = UnityEngine.Random.Range(10f, 20f);
+            int tankProgress = 20;
+            materialLevel += tankProgress;
+            Debug.Log("Water system level increased by " + tankProgress + " for fixing the pipe, increasing it to " + materialLevel + "fixed pipes");
+            int materialIntake = UnityEngine.Random.Range(10, 20);
             //Decrease material for fixing the pipe
-            waterSystemLevel -= materialIntake;
+            materialLevel -= materialIntake;
         }
     }
     public void TankDEC()
     {
-        tankProgress = 10f;
-        waterSystemLevel -= tankProgress;
-        Debug.Log("Water system level decreased by " + tankProgress + " for not fixing the pipe, decreasing it to " + waterSystemLevel);
+        int tankProgress = 10;
+        materialLevel -= tankProgress;
+        Debug.Log("Water system level decreased by " + tankProgress + " for not fixing the pipe, decreasing it to " + materialLevel);
     }
     public void SceneChange(float scenenumber)
     {
@@ -273,11 +273,11 @@ public class HUDControls : MonoBehaviour
     }
     void DeathCheck()
     {
-        if (!isDead && (waterLevel <= 99f || health <= 0f || waterSystemLevel <= 0f || waterLvlPLY <= 0f))
+        if (!isDead && (waterLevel <= 99f || health <= 0f || materialLevel <= 0f || waterLvlPLY <= 0f))
         {
             isDead = true;
             //SetDeathMenu
-            deathMenuUI.SetActive(true);
+            //deathMenuUI.SetActive(true);
             Time.timeScale = 0f;//Stop time
         }
     }

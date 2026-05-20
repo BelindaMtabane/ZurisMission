@@ -7,10 +7,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Collections;
+using Random = UnityEngine.Random;
 
 public class PlayerMovement : MonoBehaviour
 {
     //Create variables
+    public float[] lanePositions = { -6f, -2f, 2f, 6f };
+    private int currentLane = 1;
     public float playerSpeed = 25f;
     public float playerJumpPower = 10f;
     public float playerSpeedBoost = 10f;
@@ -31,6 +34,7 @@ public class PlayerMovement : MonoBehaviour
         {
             Debug.Log("Rigidbody already attached to the player.");
         }
+        InvokeRepeating("RandomLaneSwitch", 2f, 2f);
     }
 
     // Update is called once per frame
@@ -68,33 +72,30 @@ public class PlayerMovement : MonoBehaviour
         {
             //Move forward continously
             Vector3 forwardMVMT = transform.forward * playerSpeed * Time.deltaTime;
-            //Crouching vector declaration
-            Vector3 crouchSCALE = new Vector3(1f, 0.5f, 1f);
-            Vector3 playerSCALE = new Vector3(1f, 1f, 1f);
 
-            if (Input.GetKey(KeyCode.A))
+            //Crouching vector declaration
+            //Vector3 crouchSCALE = new Vector3(1f, 0.5f, 1f);
+            //Vector3 playerSCALE = new Vector3(1f, 1f, 1f);
+            /*if (Input.GetKey(KeyCode.A))
             {
-                transform.Translate(Vector3.left * playerSpeed * Time.deltaTime * 2);
+                //transform.Translate(Vector3.left * playerSpeed * Time.deltaTime * 2);
+                Move
             }
             if (Input.GetKey(KeyCode.D))
             {
-                transform.Translate(Vector3.right * playerSpeed * Time.deltaTime * 2);
-            }
-            /*if (Input.GetKeyDown(KeyCode.P))
-            {
-                transform.localScale = crouchSCALE;
-                transform.position = new Vector3(transform.position.x, transform.position.y - 0.5f, transform.position.z);
-            }
-            else if (Input.GetKeyUp(KeyCode.P))
-            {
-                //Return the player to their original scale
-                transform.localScale = playerSCALE;
-                transform.position = new Vector3(transform.position.x, transform.position.y + 0.5f, transform.position.z);
-
+                //transform.Translate(Vector3.right * playerSpeed * Time.deltaTime * 2);
+            
             }*/
+            //Make the player move left and right using the lane positions and the current lane variable
+            Vector3 targetPosition = new Vector3(lanePositions[currentLane], transform.position.y, transform.position.z);
+            transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * playerSpeed);
 
             rb.MovePosition(rb.position + forwardMVMT);
         }
+    }
+    void RandomLaneSwitch()
+    {
+        currentLane = Random.Range(0, 4);
     }
     public void SlowMECH()
     {

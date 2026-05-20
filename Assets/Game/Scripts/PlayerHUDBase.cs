@@ -70,10 +70,6 @@ public class PlayerHUDBase : MonoBehaviour
             hudControls.TankProgressINC();
             Debug.Log("Hit the pipe");
         }
-        else if (!other.CompareTag("PipeHit"))
-        {
-            hudControls.TankDEC();
-            Debug.Log("Missed the pipe");
-        }
     }
+        
 }
