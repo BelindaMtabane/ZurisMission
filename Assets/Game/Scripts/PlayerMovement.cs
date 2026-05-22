@@ -72,25 +72,12 @@ public class PlayerMovement : MonoBehaviour
         {
             //Move forward continously
             Vector3 forwardMVMT = transform.forward * playerSpeed * Time.deltaTime;
-
-            //Crouching vector declaration
-            //Vector3 crouchSCALE = new Vector3(1f, 0.5f, 1f);
-            //Vector3 playerSCALE = new Vector3(1f, 1f, 1f);
-            /*if (Input.GetKey(KeyCode.A))
-            {
-                //transform.Translate(Vector3.left * playerSpeed * Time.deltaTime * 2);
-                Move
-            }
-            if (Input.GetKey(KeyCode.D))
-            {
-                //transform.Translate(Vector3.right * playerSpeed * Time.deltaTime * 2);
-            
-            }*/
             //Make the player move left and right using the lane positions and the current lane variable
             Vector3 targetPosition = new Vector3(lanePositions[currentLane], transform.position.y, transform.position.z);
             transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * playerSpeed);
-
+            //Debug.Log("Player position is in lane " + targetPosition);
             rb.MovePosition(rb.position + forwardMVMT);
+            
         }
     }
     void RandomLaneSwitch()

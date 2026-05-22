@@ -4,10 +4,11 @@ using UnityEngine.SceneManagement;
 
 public class Lanemanager1 : MonoBehaviour
 {
+    //Declare Variables
     public Transform[] laneSpawnsPositions;
-
+    HUDControls hudControls;
     public Transform player;
-    public float spawnDistance = 25f;
+    public float spawnDistance = 10f;
     public GameObject[] easyObstacles;
 
     [Header("UI Buttons")]
@@ -18,28 +19,19 @@ public class Lanemanager1 : MonoBehaviour
 
     private GameObject[] currentObstacleSet;
 
-    void Start()
-    {
-        LevelDifficulty();
-    }
 
     void LevelDifficulty()
     {
-        if (SceneManager.GetActiveScene().name == "MainScreen")
-        { 
-            currentObstacleSet = easyObstacles;
+        currentObstacleSet = easyObstacles;
+        //Make sure 2 buttons are visible in tthe scene
+        button1.gameObject.SetActive(true);
+        button2.gameObject.SetActive(true);
 
-            //Make sure 2 buttons are visible in tthe scene
-            button1.gameObject.SetActive(true);
-            button2.gameObject.SetActive(true);
+        //Hidwe the remaining buttons to deduce the difficulty
+        button3.gameObject.SetActive(false);
+        button4.gameObject.SetActive(false);
 
-            //Hidwe the remaining buttons to deduce the difficulty
-            button3.gameObject.SetActive(false);
-            button4.gameObject.SetActive(false);
-
-            Debug.Log("Level 1 Loaded");
-        }
-        
+        Debug.Log("Level 1 Loaded");
     }
 
     public void SpawnObstacle(int laneIndex)
@@ -80,4 +72,24 @@ public class Lanemanager1 : MonoBehaviour
         Debug.Log("Spawned obstacle in lane " + laneIndex);
     }
 
+    private void Start()
+    {
+        if (hudControls == null)
+            hudControls = FindFirstObjectByType<HUDControls>();
+        LevelDifficulty();
+        StartCoroutine(SpawnObstacleEvery5Seconds());
+    }
+
+    private System.Collections.IEnumerator SpawnObstacleEvery5Seconds()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(5f);
+            int randomLane = Random.Range(0, laneSpawnsPositions.Length);
+            SpawnObstacle(randomLane);
+            Debug.Log("Auto spawned obstacle in lane " + randomLane);
+            //Decrease the water levels
+            hudControls.WaterMoveManager();
+        }
+    }
 }

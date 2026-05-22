@@ -5,9 +5,9 @@ using UnityEngine.SceneManagement;
 public class Lanemanager2 : MonoBehaviour
 {
     public Transform[] laneSpawnsPositions;
-
+    HUDControls hudControls;
     public Transform player;
-    public float spawnDistance = 25f;
+    public float spawnDistance = 10f;
     public GameObject[] mediumObstacles;
 
     [Header("UI Buttons")]
@@ -18,15 +18,30 @@ public class Lanemanager2 : MonoBehaviour
 
     private GameObject[] currentObstacleSet;
 
-    void Start()
+
+    private void Start()
     {
+        if (hudControls == null)
+            hudControls = FindFirstObjectByType<HUDControls>();
         LevelDifficulty();
+        StartCoroutine(SpawnObstacleEvery5Seconds());
     }
 
+    private System.Collections.IEnumerator SpawnObstacleEvery5Seconds()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(5f);
+            int randomLane = Random.Range(0, laneSpawnsPositions.Length);
+            SpawnObstacle(randomLane);
+            Debug.Log("Auto spawned obstacle in lane " + randomLane);
+            //Decrease the water levels
+            hudControls.WaterMoveManager();
+        }
+    }
     void LevelDifficulty()
     {
-        if (SceneManager.GetActiveScene().name == "Level 2")
-        { 
+        
             currentObstacleSet = mediumObstacles;
 
             //Make sure 3 buttons are visible in tthe scene
@@ -38,7 +53,7 @@ public class Lanemanager2 : MonoBehaviour
             button4.gameObject.SetActive(false);
 
             Debug.Log("Level 2 Loaded");
-        }
+        
         
     }
 

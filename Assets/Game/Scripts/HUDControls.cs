@@ -87,7 +87,7 @@ public class HUDControls : MonoBehaviour
         WaterMoveManager();
     }
     // all good  ++
-    void WaterMoveManager()
+    public void WaterMoveManager()
     {
         float waterDecreaseFAST = UnityEngine.Random.Range(5f, 10f);
         float waterDecreaseNORM = 3f;
