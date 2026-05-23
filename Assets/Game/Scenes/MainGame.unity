@@ -6528,7 +6528,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spawnObjects:
-  - {fileID: 386758957}
+  - {fileID: 1619109554}
 --- !u!4 &1036200614
 Transform:
   m_ObjectHideFlags: 0
@@ -6997,10 +6997,13 @@ MonoBehaviour:
   player: {fileID: 1875673033}
   spawnDistance: 25
   easyObstacles:
-  - {fileID: 1708478601}
+  - {fileID: 1461329501}
   - {fileID: 1393641791}
   - {fileID: 942758302}
   - {fileID: 1619109554}
+  - {fileID: 1708478601}
+  - {fileID: 1962414150}
+  - {fileID: 1451189503}
   button1: {fileID: 1399314956}
   button2: {fileID: 1345460402}
   button3: {fileID: 452558362}
