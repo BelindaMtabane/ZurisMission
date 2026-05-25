@@ -40,6 +40,6 @@ public class GroundSpawnner : MonoBehaviour
         }
 
         // Destroy the ground after 10 seconds each
-        Destroy(newGround, 10f);
+        Destroy(newGround, 50f);
     }
 }

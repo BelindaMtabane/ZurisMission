@@ -9,6 +9,7 @@ using System.Text;
 using System.Collections;
 using static UnityEngine.SceneManagement.SceneManager;
 using UnityEngine.SceneManagement;
+using Unity.Collections.LowLevel.Unsafe;
 
 public class HUDControls : MonoBehaviour
 {
@@ -21,6 +22,7 @@ public class HUDControls : MonoBehaviour
     //private float waterMax = 100f;
     private float waterLevel = 0f;
     public float waterIncreaseRate;
+    public int bucket;
 
     //Player variables
     private float waterLvlPLY = 100f;
@@ -234,24 +236,27 @@ public class HUDControls : MonoBehaviour
     }
     public void LevelProgress()
     {
-        //Set the village progress
-        VillageProgress();
         //SetVictoryMenu
-        /*if (GetActiveScene().name == "MainGame")
+        if (health > 0f && waterLvlPLY > 0f && materialLevel >= 100 && bucketbar.value >= 100)
         {
-            victoryMenuUIone.SetActive(true);
-            Time.timeScale = 0f;//Stop time
+            if (GetActiveScene().name == "MainGame")
+            {
+                //SetVictoryMenu
+
+            }
+            if (GetActiveScene().name == "Level2")
+            {
+                //SetVictoryMenu
+            }
+            if (GetActiveScene().name == "Level3Beg")
+            {
+                SceneManager.LoadScene("Level3End");
+            }
         }
-        if (GetActiveScene().name == "Level2")
+        else
         {
-            victoryMenuUItwo.SetActive(true);
-            Time.timeScale = 0f;//Stop time
+            //Set death scene
         }
-        if (GetActiveScene().name == "Level3")
-        {
-            victoryMenuUIthree.SetActive(true);
-            Time.timeScale = 0f;//Stop time
-        }*/
     }
     void DeathCheck()
     {

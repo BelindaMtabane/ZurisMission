@@ -134,6 +134,21 @@ public class PipeControlslevel3 : MonoBehaviour
         }
 
     }
+    public void LevelProgress()
+    {
+        //SetVictoryMenu
+        if (tank1Amount >= 100 && tank2Amount >= 100 && tank3Amount >= 100)
+        {
+            Debug.Log("All tanks are fully repaired, level complete!");
+            //SetVictoryMenu
+
+        }
+        else
+        {
+            Debug.Log("Not all tanks are fully repaired, keep working!");
+            //Set death scene
+        }
+    }
     //++All good
     public void TankProgressINC1()
     {
@@ -199,7 +214,7 @@ public class PipeControlslevel3 : MonoBehaviour
     }*/
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("PipeFix"))
+        /*if (other.CompareTag("PipeFix"))
         {
             
                 TankProgressINC1();
@@ -225,7 +240,7 @@ public class PipeControlslevel3 : MonoBehaviour
             {
                 Debug.Log("player hit pipe but not specific placement");
             }
-        }
+        }*/
 
         if (other.CompareTag("Materials"))
         {
@@ -255,10 +270,10 @@ public class PipeControlslevel3 : MonoBehaviour
             Debug.Log("Player health system level decreased!");
         }
 
-        if (other.CompareTag("EndLevel3"))
+        if (other.CompareTag("EndLvl3End"))
         {
-            //SceneChange(4f);
-            Debug.Log("Ended level 3");
+           LevelProgress();
+            //hudControls.SceneChange(4f);
         }
     }
 }

@@ -53,17 +53,17 @@ public class PlayerHUDBase : MonoBehaviour
         if (other.CompareTag("EndLevel1"))
         {
             hudControls.LevelProgress();
-            hudControls.SceneChange(2f);
+            //hudControls.SceneChange(2f);
         }
         if (other.CompareTag("EndLevel2"))
         {
             hudControls.LevelProgress();
-            hudControls.SceneChange(3f);
+            //hudControls.SceneChange(3f);
         }
-        if (other.CompareTag("EndLevel3"))
+        if (other.CompareTag("EndLevel3Beg"))
         {
             hudControls.LevelProgress();
-            hudControls.SceneChange(4f);
+            //hudControls.SceneChange(4f);
         }
     }
         

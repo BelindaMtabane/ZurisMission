@@ -23,8 +23,9 @@ TagManager:
   - PipeHit
   - EndLevel1
   - EndLevel2
-  - EndLevel3
   - PipeFix
+  - EndLvl3End
+  - EndLevel3Beg
   layers:
   - Default
   - TransparentFX
