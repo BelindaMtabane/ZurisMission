@@ -65,11 +65,6 @@ public class PlayerHUDBase : MonoBehaviour
             hudControls.LevelProgress();
             hudControls.SceneChange(4f);
         }
-        if (other.CompareTag("PipeHit"))
-        {
-            hudControls.TankProgressINC();
-            Debug.Log("Hit the pipe");
-        }
     }
         
 }

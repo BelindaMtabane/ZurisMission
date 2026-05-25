@@ -217,24 +217,6 @@ public class HUDControls : MonoBehaviour
     {
         waterLvlPLY -= 5f;
     }
-    public void TankProgressINC()
-    {
-        if (GetActiveScene().name == "Leve3")
-        {
-            int tankProgress = 20;
-            materialLevel += tankProgress;
-            Debug.Log("Water system level increased by " + tankProgress + " for fixing the pipe, increasing it to " + materialLevel + "fixed pipes");
-            int materialIntake = UnityEngine.Random.Range(10, 20);
-            //Decrease material for fixing the pipe
-            materialLevel -= materialIntake;
-        }
-    }
-    public void TankDEC()
-    {
-        int tankProgress = 10;
-        materialLevel -= tankProgress;
-        Debug.Log("Water system level decreased by " + tankProgress + " for not fixing the pipe, decreasing it to " + materialLevel);
-    }
     public void SceneChange(float scenenumber)
     {
         if (scenenumber == 2f)

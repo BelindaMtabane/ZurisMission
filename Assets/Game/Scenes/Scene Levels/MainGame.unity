@@ -6058,6 +6058,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spawnObjects:
   - {fileID: 1619109554}
+  - {fileID: 942758302}
+  - {fileID: 1451189503}
+  - {fileID: 1461329501}
+  - {fileID: 1708478601}
+  - {fileID: 965186738}
+  - {fileID: 1962414150}
+  - {fileID: 1850345399}
 --- !u!4 &1036200614
 Transform:
   m_ObjectHideFlags: 0

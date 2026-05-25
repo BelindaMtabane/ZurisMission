@@ -3840,9 +3840,12 @@ MonoBehaviour:
   player: {fileID: 1875673033}
   spawnDistance: 10
   mediumObstacles:
-  - {fileID: 40336993}
   - {fileID: 1423602244}
   - {fileID: 976678969}
+  - {fileID: 1287337698}
+  - {fileID: 571968437}
+  - {fileID: 1626545567}
+  - {fileID: 1174956858}
   button1: {fileID: 1271262604}
   button2: {fileID: 1450218231}
   button3: {fileID: 1994930959}
@@ -7057,6 +7060,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spawnObjects:
   - {fileID: 1423602244}
+  - {fileID: 85593840}
+  - {fileID: 40336993}
+  - {fileID: 976678969}
 --- !u!4 &1036200614
 Transform:
   m_ObjectHideFlags: 0
