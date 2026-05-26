@@ -10,8 +10,8 @@ public class StartMenu : MonoBehaviour
     //Set methods for buttons
     public void Update()
     {
-       /* //Delay and start the game after 50 seconds
-        Time.timeScale += 1f;
+        //Delay and start the game after 50 seconds
+        /*Time.timeScale += 1f;
         Debug.Log("Game will start in 50 seconds...");
 
         if (Time.timeScale == 50f)
