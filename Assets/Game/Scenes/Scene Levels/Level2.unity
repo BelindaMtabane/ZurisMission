@@ -3799,6 +3799,7 @@ GameObject:
   m_Component:
   - component: {fileID: 567037759}
   - component: {fileID: 567037760}
+  - component: {fileID: 567037761}
   m_Layer: 0
   m_Name: gameManager
   m_TagString: Untagged
@@ -3850,6 +3851,22 @@ MonoBehaviour:
   button2: {fileID: 1450218231}
   button3: {fileID: 1994930959}
   button4: {fileID: 1205145693}
+  bucketBarRoot: {fileID: 1737052922}
+--- !u!114 &567037761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 567037757}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a79c60cb90fbb04eafd6f6866ca31a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  feedText: {fileID: 0}
+  maxMessages: 5
+  messageDuration: 4
 --- !u!1001 &570589665
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10188,6 +10205,7 @@ MonoBehaviour:
   healthbar: {fileID: 1614830562}
   bucketbar: {fileID: 945430910}
   playerWaterLevelBar: {fileID: 1125885372}
+  failPanel: {fileID: 0}
 --- !u!4 &1447030426
 Transform:
   m_ObjectHideFlags: 0

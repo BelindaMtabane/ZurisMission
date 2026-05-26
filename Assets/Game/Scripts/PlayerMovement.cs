@@ -99,17 +99,38 @@ public class PlayerMovement : MonoBehaviour
     }
 
 
-    //Create a method that detects when the player collides with the ground and sets isGrounded to true
     public void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
         {
-            //Set Ground to be true when Player collides with the ground
             isGrounded = true;
+            return;
         }
-        else
+
+        if (collision.gameObject.GetComponent<PitObstacle>() != null)
         {
-            isGrounded = false;
+            Physics.IgnoreCollision(GetComponent<Collider>(), collision.collider);
+            PushThroughPit();
+            return;
         }
+
+        isGrounded = false;
+    }
+
+    // Keep pushing through if physics contact lingers for multiple frames
+    public void OnCollisionStay(Collision collision)
+    {
+        if (collision.gameObject.GetComponent<PitObstacle>() != null)
+            PushThroughPit();
+    }
+
+    void PushThroughPit()
+    {
+        // Restore forward velocity so the Rigidbody isn't stuck against the pit surface
+        rb.linearVelocity = new Vector3(
+            transform.forward.x * playerSpeed,
+            rb.linearVelocity.y,
+            transform.forward.z * playerSpeed
+        );
     }
 }
