@@ -28,6 +28,8 @@ public class PipeControlslevel3 : MonoBehaviour
     private int tank1Amount;
     private int tank2Amount;
     private int tank3Amount;
+    private int counter;
+    private bool hasHit = false;
 
     //Village variables
     private float villageLevel;
@@ -60,9 +62,9 @@ public class PipeControlslevel3 : MonoBehaviour
         //Update the UI text to display the current water level and agility level
         material.text = ("Material:" + materialLevel);
         healthText.text = ("Health:" + health);
-        tank1.text = ("Tank 1: " + tank1Amount);
-        tank2.text = ("Tank 2: " + tank2Amount);
-        tank3.text = ("Tank 3: " + tank3Amount);
+        tank1.text = ("Tank 1: " + tank1Amount + "%");
+        tank2.text = ("Tank 2: " + tank2Amount + "%");
+        tank3.text = ("Tank 3: " + tank3Amount + "%");
     }
     //all good ++
     public void SpeedControls(float playerMove)
@@ -191,17 +193,6 @@ public class PipeControlslevel3 : MonoBehaviour
             Debug.Log("Tank 3 is fully repaired");
         }
     }
-    public void SceneChange(float scenenumber)
-    {
-        if (scenenumber == 2f)
-        {
-            SceneManager.LoadScene("Lvl3Victory");
-        }
-        if (scenenumber == 3f)
-        {
-            SceneManager.LoadScene("DeathScene");
-        }
-    }
     /*void DeathCheck()
     {
         //if (!isDead && ( health <= 0f || materialLevel <= 0f )
@@ -212,68 +203,78 @@ public class PipeControlslevel3 : MonoBehaviour
             Time.timeScale = 0f;//Stop time
         }
     }*/
-    private void OnTriggerExit(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-        /*if (other.CompareTag("PipeFix"))
+        if (hasHit) return;
+        if (other.CompareTag("PipeFix1"))
         {
-            
-                TankProgressINC1();
-            
+            hasHit = true;
+            TankProgressINC1();
         }
+
         if (other.CompareTag("PipeFix2"))
         {
-            if (other.CompareTag("PipeHit"))
-            {
-                TankProgressINC2();
-            }
+            hasHit = true;
+            TankProgressINC2();
         }
+
         if (other.CompareTag("PipeFix3"))
         {
-            if (other.CompareTag("PipeHit"))
-            {
-                TankProgressINC3();
-            }
+            hasHit = true;
+            TankProgressINC3();
         }
-        if (!other.CompareTag("PipeFix1") || !other.CompareTag("PipeFix2") || !other.CompareTag("PipeFix3"))
-        {
-            if (other.CompareTag("PipeHit"))
-            {
-                Debug.Log("player hit pipe but not specific placement");
-            }
-        }*/
-
         if (other.CompareTag("Materials"))
         {
+            hasHit = true;
             TankMaterialINC();
             Debug.Log("Player material increased!");
         }
         if (other.CompareTag("FruitPickup"))
         {
+            hasHit = true;
             HealthIncreaseManager();
             Debug.Log("Player health increased!");
         }
 
         if (other.CompareTag("SpeedBoast"))
         {
+            hasHit = true;
             SpeedControls(40f);
             Debug.Log("Player speed boosted!");
         }
         if (other.CompareTag("SlowDown"))
         {
+            hasHit = true;
             SpeedControls(15f);
             Debug.Log("Player slowed down!");
         }
 
         if (other.CompareTag("Heat&Disease"))
         {
+            hasHit = true;
             HealthDecreaseManager();
             Debug.Log("Player health system level decreased!");
         }
 
         if (other.CompareTag("EndLvl3End"))
         {
-           LevelProgress();
+            hasHit = true;
+            LevelProgress();
             //hudControls.SceneChange(4f);
+        }
+
+        if (other.CompareTag("Heat&Disease"))
+        {
+            hasHit = true;
+            HealthDecreaseManager();
+            Debug.Log("Player health decreased");
+        }
+        //other.CompareTag("AnimalAttack")
+        if (other.CompareTag("AnimalAttack") || other.CompareTag("Obstacle"))
+        {
+            hasHit = true;
+            HealthDecreaseManager();
+            Debug.Log("Player health decreased by animal or obstacle!");
         }
     }
 }

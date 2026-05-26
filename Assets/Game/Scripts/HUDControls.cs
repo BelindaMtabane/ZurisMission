@@ -28,14 +28,12 @@ public class HUDControls : MonoBehaviour
     private float waterLvlPLY = 100f;
     private float health = 100f;
     PlayerMovement playerMovement;
+    
     bool isDead = false;
 
     //Village variables
     private float villageLevel;
     public int materialLevel;
-
-    //Tanks variables
-    private float tankProgress;
 
     //UI bars
     [SerializeField] private Slider healthbar;
@@ -187,7 +185,7 @@ public class HUDControls : MonoBehaviour
             //Set the community progress
             villageLevel = 67f;
         }
-        if (GetActiveScene().name == "Level3")
+        if (GetActiveScene().name == "Level3End")
         {
             //Set the community progress
             villageLevel = 80f;
@@ -199,7 +197,7 @@ public class HUDControls : MonoBehaviour
         if (materialLevel < 100)
         {
             //Create a random material increase between 5 and 15
-            int materialIncrease = UnityEngine.Random.Range(5, 15);
+            int materialIncrease = UnityEngine.Random.Range(10, 25);
 
             materialLevel += materialIncrease;
             //Increase Material Collection
@@ -225,37 +223,38 @@ public class HUDControls : MonoBehaviour
         {
             SceneManager.LoadScene("Level2");
         }
-        if (scenenumber == 3f)
-        {
-            SceneManager.LoadScene("Level3");
-        }
         if (scenenumber == 4f)
         {
-            SceneManager.LoadScene("StartScreen");
+            SceneManager.LoadScene("Level3End");
         }
     }
     public void LevelProgress()
     {
-        //SetVictoryMenu
-        if (health > 0f && waterLvlPLY > 0f && materialLevel >= 100 && bucketbar.value >= 100)
+        if (GetActiveScene().name == "MainGame")
         {
-            if (GetActiveScene().name == "MainGame")
+            if (health > 0f && waterLvlPLY > 0f && materialLevel >= 100 && bucketbar.value >= 100)
             {
                 //SetVictoryMenu
+                Debug.Log("Level 1 Completed");
+            }
+            else
+            {
+                //Set death scene
+            }
 
-            }
-            if (GetActiveScene().name == "Level2")
+        }
+        if (GetActiveScene().name == "Level2")
+        {
+            
+            if (health > 0f && waterLvlPLY > 0f && materialLevel >= 100 && bucketbar.value >= 100)
             {
                 //SetVictoryMenu
+                Debug.Log("Level 2 Completed");
             }
-            if (GetActiveScene().name == "Level3Beg")
+            else
             {
-                SceneManager.LoadScene("Level3End");
+                //Set death scene
             }
-        }
-        else
-        {
-            //Set death scene
         }
     }
     void DeathCheck()

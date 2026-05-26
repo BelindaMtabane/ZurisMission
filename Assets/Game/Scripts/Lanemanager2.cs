@@ -7,7 +7,7 @@ public class Lanemanager2 : MonoBehaviour
     public Transform[] laneSpawnsPositions;
     HUDControls hudControls;
     public Transform player;
-    public float spawnDistance = 10f;
+    public float spawnDistance = 30f;
     public GameObject[] mediumObstacles;
 
     [Header("UI Buttons")]

@@ -4,10 +4,10 @@ public class SpawnObjects : MonoBehaviour
 {
     //Create the variables for the objects
     public GameObject[] spawnObjects;
+    public int spawnCount;  
     //public GameObject brickPickup;
     public void SpawnGameObjects(GameObject ground)
     {
-        int spawnCount = Random.Range(1, 5);
         //Create a for loop to spawn mulitple
         for (int i = 0; i < spawnCount; i++)
         {
