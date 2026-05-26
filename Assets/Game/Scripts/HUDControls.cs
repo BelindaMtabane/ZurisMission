@@ -9,7 +9,6 @@ using System.Text;
 using System.Collections;
 using static UnityEngine.SceneManagement.SceneManager;
 using UnityEngine.SceneManagement;
-using Unity.Collections.LowLevel.Unsafe;
 
 public class HUDControls : MonoBehaviour
 {
@@ -74,17 +73,17 @@ public class HUDControls : MonoBehaviour
     //all good ++
     public void SpeedControls(float playerMove)
     {
-        //Based on the parameter attach it to the player speed
         playerMovement.playerSpeed = playerMove;
-        //After 5 seconds set the player speed back to normal
-        float timer = 5f;
-        timer -= Time.deltaTime;
-
-        if (timer <= 0f)
-            playerMovement.playerSpeed = 20f;
         Debug.Log("Player speed set to " + playerMovement.playerSpeed);
-
+        StopCoroutine("ResetSpeed");
+        StartCoroutine(ResetSpeed());
         WaterMoveManager();
+    }
+
+    private IEnumerator ResetSpeed()
+    {
+        yield return new WaitForSeconds(5f);
+        playerMovement.playerSpeed = 20f;
     }
     // all good  ++
     public void WaterMoveManager()

@@ -1,11 +1,5 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.UI;
-using System;
 using TMPro;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Collections;
 using static UnityEngine.SceneManagement.SceneManager;
 using UnityEngine.SceneManagement;
@@ -69,16 +63,16 @@ public class PipeControlslevel3 : MonoBehaviour
     //all good ++
     public void SpeedControls(float playerMove)
     {
-        //Based on the parameter attach it to the player speed
         playerMovement.playerSpeed = playerMove;
-        //After 5 seconds set the player speed back to normal
-        float timer = 5f;
-        timer -= Time.deltaTime;
-
-        if (timer <= 0f)
-            playerMovement.playerSpeed = 20f;
         Debug.Log("Player speed set to " + playerMovement.playerSpeed);
+        StopCoroutine("ResetSpeed");
+        StartCoroutine(ResetSpeed());
+    }
 
+    private IEnumerator ResetSpeed()
+    {
+        yield return new WaitForSeconds(5f);
+        playerMovement.playerSpeed = 20f;
     }
     // all good ++
     public void HealthDecreaseManager()
@@ -253,29 +247,26 @@ public class PipeControlslevel3 : MonoBehaviour
         {
             hasHit = true;
             HealthDecreaseManager();
-            Debug.Log("Player health system level decreased!");
+            Debug.Log("Player health decreased");
         }
 
         if (other.CompareTag("EndLvl3End"))
         {
             hasHit = true;
             LevelProgress();
-            //hudControls.SceneChange(4f);
         }
 
-        if (other.CompareTag("Heat&Disease"))
-        {
-            hasHit = true;
-            HealthDecreaseManager();
-            Debug.Log("Player health decreased");
-        }
-        //other.CompareTag("AnimalAttack")
         if (other.CompareTag("AnimalAttack") || other.CompareTag("Obstacle"))
         {
             hasHit = true;
             HealthDecreaseManager();
             Debug.Log("Player health decreased by animal or obstacle!");
         }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        hasHit = false;
     }
 }
 

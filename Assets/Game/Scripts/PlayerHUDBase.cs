@@ -6,8 +6,9 @@ public class PlayerHUDBase : MonoBehaviour
     PlayerMovement playerMovement;
     private void OnTriggerEnter(Collider other)
     {
+        if (hudControls == null)
+            hudControls = FindFirstObjectByType<HUDControls>();
         if (hudControls == null) return;
-        hudControls = FindFirstObjectByType<HUDControls>(); // Updated to use the recommended method
 
         if (other.CompareTag("DamWaterBUCK"))
         {

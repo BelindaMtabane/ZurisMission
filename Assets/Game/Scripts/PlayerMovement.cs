@@ -1,12 +1,6 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.UI;
-using System;
-using TMPro;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Collections;
+using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
 
 public class PlayerMovement : MonoBehaviour
@@ -34,7 +28,8 @@ public class PlayerMovement : MonoBehaviour
         {
             Debug.Log("Rigidbody already attached to the player.");
         }
-        InvokeRepeating("RandomLaneSwitch", 2f, 2f);
+        if (SceneManager.GetActiveScene().name == "Level2")
+            InvokeRepeating("RandomLaneSwitch", 2f, 2f);
     }
 
     // Update is called once per frame
@@ -60,24 +55,31 @@ public class PlayerMovement : MonoBehaviour
             
             //Apply force to the player to make them jump
             rb.AddForce(Vector3.up * playerJumpPower, ForceMode.Impulse);
-
-            Vector3 forwardMVMT = transform.forward * playerSpeed * Time.deltaTime;
             isGrounded = false;
         }
     }
     public void MovementMECH()
     {
-        //Get player input using the wasd key functionality
         if (isGrounded)
         {
-            //Move forward continously
             Vector3 forwardMVMT = transform.forward * playerSpeed * Time.deltaTime;
-            //Make the player move left and right using the lane positions and the current lane variable
-            Vector3 targetPosition = new Vector3(lanePositions[currentLane], transform.position.y, transform.position.z);
-            transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * playerSpeed);
-            //Debug.Log("Player position is in lane " + targetPosition);
+
+            if (SceneManager.GetActiveScene().name == "Level2")
+            {
+                // AI: snap to randomly chosen lane
+                Vector3 targetPosition = new Vector3(lanePositions[currentLane], transform.position.y, transform.position.z);
+                transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * playerSpeed);
+            }
+            else
+            {
+                // Player: A/D keys for left/right
+                if (Input.GetKey(KeyCode.A))
+                    transform.Translate(Vector3.left * playerSpeed * Time.deltaTime * 2);
+                if (Input.GetKey(KeyCode.D))
+                    transform.Translate(Vector3.right * playerSpeed * Time.deltaTime * 2);
+            }
+
             rb.MovePosition(rb.position + forwardMVMT);
-            
         }
     }
     void RandomLaneSwitch()
@@ -105,7 +107,7 @@ public class PlayerMovement : MonoBehaviour
             //Set Ground to be true when Player collides with the ground
             isGrounded = true;
         }
-        if (!collision.gameObject.CompareTag("Ground"))
+        else
         {
             isGrounded = false;
         }

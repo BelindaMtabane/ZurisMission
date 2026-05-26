@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\TUF\\\\source\\\\repos\\\\WILSummativePortfolio\\\\ZurisMission\\\\Assets\\\\StreamingAssets\" -Recurse)",
+      "Bash(Select-Object FullName)"
+    ]
+  }
+}

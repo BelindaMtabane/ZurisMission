@@ -73,3 +73,11 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# MCP Connector files
+.mcp.json
+/[Aa]ssets/.mcp_auth_token
+/[Aa]ssets/[Ss]treamingAssets/
+/[Aa]ssets/[Ss]treamingAssets.meta
+/[Pp]ackages/io.realvirtual.mcp/
+/[Pp]ackages/io.realvirtual.mcp.meta

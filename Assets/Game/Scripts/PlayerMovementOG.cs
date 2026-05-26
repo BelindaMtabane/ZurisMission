@@ -49,8 +49,6 @@ public class PlayerMovementOG : MonoBehaviour
 
             //Apply force to the player to make them jump
             rb.AddForce(Vector3.up * playerJumpPower, ForceMode.Impulse);
-
-            Vector3 forwardMVMT = transform.forward * playerSpeed * Time.deltaTime;
             isGrounded = false;
         }
     }
@@ -109,7 +107,7 @@ public class PlayerMovementOG : MonoBehaviour
             //Set Ground to be true when Player collides with the ground
             isGrounded = true;
         }
-        if (!collision.gameObject.CompareTag("Ground"))
+        else
         {
             isGrounded = false;
         }
