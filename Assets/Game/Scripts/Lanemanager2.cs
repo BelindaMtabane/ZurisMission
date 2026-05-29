@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class Lanemanager2 : MonoBehaviour
 {
@@ -16,83 +17,138 @@ public class Lanemanager2 : MonoBehaviour
     public Button button3;
     public Button button4;
 
-    private GameObject[] currentObstacleSet;
+    [Header("UI – Bucket Bar")]
+    public RectTransform bucketBarRoot;   // drag the BucketBar parent object here
 
+    private GameObject[] currentObstacleSet;
 
     private void Start()
     {
         if (hudControls == null)
             hudControls = FindFirstObjectByType<HUDControls>();
+
         LevelDifficulty();
-        StartCoroutine(SpawnObstacleEvery5Seconds());
+        StartCoroutine(AutoSpawnLoop());
     }
 
-    private System.Collections.IEnumerator SpawnObstacleEvery5Seconds()
+    void LevelDifficulty()
+    {
+        currentObstacleSet = mediumObstacles;
+
+        // Hide the 3 individual lane buttons
+        if (button2 != null) button2.gameObject.SetActive(false);
+        if (button3 != null) button3.gameObject.SetActive(false);
+        if (button4 != null) button4.gameObject.SetActive(false);
+
+        // Repurpose button1 as the single Release button
+        if (button1 != null)
+        {
+            button1.gameObject.SetActive(true);
+            button1.onClick.RemoveAllListeners();
+            button1.onClick.AddListener(SpawnRandomObstacle);
+
+            // Red background, white text
+            var btnImage = button1.GetComponent<UnityEngine.UI.Image>();
+            if (btnImage != null) btnImage.color = Color.red;
+
+            var label = button1.GetComponentInChildren<TMPro.TMP_Text>();
+            if (label != null)
+            {
+                label.text = "Release Obstacle";
+                label.color = Color.white;
+            }
+
+            // TOP-RIGHT of screen, placed below the pause panel (~90 px gap)
+            RectTransform rt = button1.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                rt.anchorMin        = new Vector2(1f, 1f);
+                rt.anchorMax        = new Vector2(1f, 1f);
+                rt.pivot            = new Vector2(1f, 1f);
+                rt.anchoredPosition = new Vector2(-20f, -110f);  // -110 clears the pause panel above
+                rt.sizeDelta        = new Vector2(200f, 60f);
+            }
+        }
+
+        // MIDDLE-RIGHT of screen
+        if (bucketBarRoot != null)
+        {
+            bucketBarRoot.anchorMin        = new Vector2(1f, 0.5f);
+            bucketBarRoot.anchorMax        = new Vector2(1f, 0.5f);
+            bucketBarRoot.pivot            = new Vector2(1f, 0.5f);
+            bucketBarRoot.anchoredPosition = new Vector2(-20f, 0f);
+            bucketBarRoot.sizeDelta        = new Vector2(110f, 40f);
+        }
+        // Info feed is anchored to BOTTOM-RIGHT — handled inside GameInfoUI.Bootstrap()
+
+        Debug.Log("Level 2 Loaded — single release button active");
+    }
+
+    // ── Auto-spawn every 5 seconds — NO warning effect ────────────────────
+    private IEnumerator AutoSpawnLoop()
     {
         while (true)
         {
             yield return new WaitForSeconds(5f);
-            int randomLane = Random.Range(0, laneSpawnsPositions.Length);
-            SpawnObstacle(randomLane);
-            Debug.Log("Auto spawned obstacle in lane " + randomLane);
-            //Decrease the water levels
-            hudControls.WaterMoveManager();
+            if (laneSpawnsPositions != null && laneSpawnsPositions.Length > 0)
+            {
+                int lane = Random.Range(0, laneSpawnsPositions.Length);
+                SpawnObstacle(lane, false);   // silent auto-spawn
+            }
+            if (hudControls != null) hudControls.WaterMoveManager();
         }
     }
-    void LevelDifficulty()
+
+    // ── Button entry point — shows warning effect ──────────────────────────
+    public void SpawnRandomObstacle()
     {
-        
-            currentObstacleSet = mediumObstacles;
-
-            //Make sure 3 buttons are visible in tthe scene
-            button1.gameObject.SetActive(true);
-            button2.gameObject.SetActive(true);
-            button3.gameObject.SetActive(true);
-
-            //Hidwe the remaining buttons to deduce the difficulty
-            button4.gameObject.SetActive(false);
-
-            Debug.Log("Level 2 Loaded");
-        
-        
+        if (laneSpawnsPositions == null || laneSpawnsPositions.Length == 0) return;
+        int lane = Random.Range(0, laneSpawnsPositions.Length);
+        SpawnObstacle(lane, true);   // warning only on manual button press
     }
 
-    public void SpawnObstacle(int laneIndex)
+    // ── Core spawn ─────────────────────────────────────────────────────────
+    public void SpawnObstacle(int laneIndex, bool showWarning = false)
     {
-        Debug.Log("BUTTON PRESSED");
-        //Check if the obstacle set is assigned and not empty
         if (currentObstacleSet == null || currentObstacleSet.Length == 0)
         {
             Debug.Log("No obstacles assigned!");
             return;
         }
-        //Check if the lane spawn positions are assigned and the index is valid
         if (laneSpawnsPositions == null || laneIndex >= laneSpawnsPositions.Length)
         {
-            Debug.Log("Lane spawn missing or not the correct index!");
+            Debug.Log("Lane spawn missing or invalid index!");
             return;
         }
-        //Check if the player is assigned
         if (player == null)
         {
             Debug.Log("Player not assigned!");
             return;
         }
 
-        //Pick a random obstacle from the current set
-        int randomObstacle = Random.Range(0, currentObstacleSet.Length);
+        float laneX  = laneSpawnsPositions[laneIndex].position.x;
+        float laneY  = laneSpawnsPositions[laneIndex].position.y;
+        float spawnZ = player.position.z + spawnDistance;
 
-        //Instatiate the spawnning positions
-        Vector3 spawnPosition = new Vector3(
-            laneSpawnsPositions[laneIndex].position.x,   //Correct the x axis of the obstacles based on the buttons
-            laneSpawnsPositions[laneIndex].position.y,  //Set the height of the obstacles
-            player.position.z + spawnDistance //Correct the z axis of the spawnned obstacles
-        );
+        // Only show the warning tile when the Release Obstacle button is pressed
+        if (showWarning)
+        {
+            float damageLevel = Random.Range(0f, 1f);
+            LaneWarningEffect.Spawn(laneX, laneY, spawnZ, damageLevel);
+            Debug.Log($"Warning tile spawned for lane {laneIndex} (damage {damageLevel:F2})");
+        }
 
-        //Spawn the obstacles
-        Instantiate(currentObstacleSet[randomObstacle],spawnPosition,Quaternion.identity);
+        // Spawn the actual obstacle after a brief delay
+        int obstacleIndex = Random.Range(0, currentObstacleSet.Length);
+        Vector3 spawnPos  = new Vector3(laneX, laneY, spawnZ);
+        StartCoroutine(SpawnAfterDelay(currentObstacleSet[obstacleIndex], spawnPos, 0.5f));
 
-        Debug.Log("Spawned obstacle in lane " + laneIndex);
+        Debug.Log($"Obstacle queued for lane {laneIndex}");
     }
 
+    private IEnumerator SpawnAfterDelay(GameObject prefab, Vector3 position, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        Instantiate(prefab, position, Quaternion.identity);
+    }
 }

@@ -4,62 +4,87 @@ public class PlayerHUDBase : MonoBehaviour
 {
     public HUDControls hudControls;
     PlayerMovement playerMovement;
+
     private void OnTriggerEnter(Collider other)
     {
+        if (hudControls == null)
+            hudControls = FindFirstObjectByType<HUDControls>();
         if (hudControls == null) return;
-        hudControls = FindFirstObjectByType<HUDControls>(); // Updated to use the recommended method
 
         if (other.CompareTag("DamWaterBUCK"))
         {
-            hudControls.WaterIncreaseManager();
+            hudControls.WaterIncreaseManager();        // Post() fires inside
+            hudControls.VillageProgressIncrease();
             Debug.Log("Player water level increased!");
         }
         if (other.CompareTag("WaterDROP"))
         {
-            hudControls.PlayerWaterINC();
-            Debug.Log("Player water level decreased!");
+            hudControls.PlayerWaterINC();              // Post() fires inside
+            hudControls.VillageProgressIncrease();
+            Debug.Log("Player water level increased!");
         }
         if (other.CompareTag("Heat&Disease"))
         {
-            hudControls.PlayerWaterDEC();
-            Debug.Log("Player water system level increased!");
+            hudControls.PlayerWaterDEC();              // Post() fires inside
+            hudControls.VillageProgressDecrease();
+            Debug.Log("Player water system level decreased!");
         }
         if (other.CompareTag("SpeedBoast"))
         {
-            hudControls.SpeedControls(40f);
+            hudControls.SpeedControls(40f);            // Post() fires inside
             Debug.Log("Player speed boosted!");
         }
         if (other.CompareTag("SlowDown"))
         {
-            hudControls.SpeedControls(15f);
+            hudControls.SpeedControls(15f);            // Post() fires inside
             Debug.Log("Player slowed down!");
         }
-        //other.CompareTag("AnimalAttack")
-        if (other.CompareTag("AnimalAttack") || other.CompareTag("Obstacle"))
+        if (other.CompareTag("AnimalAttack"))
         {
-            hudControls.HealthDecreaseManager();
-            Debug.Log("Player health decreased by animal or obstacle!");
+            hudControls.HealthDecreaseManager();       // Post() fires inside
+            hudControls.VillageProgressDecrease();
+            GameInfoUI.Post("Zuri was attacked by an animal!", GameInfoUI.MsgType.Obstacle);
+            Debug.Log("Player health decreased by animal!");
+        }
+        if (other.CompareTag("Obstacle"))
+        {
+            hudControls.HealthDecreaseManager();       // Post() fires inside
+            hudControls.VillageProgressDecrease();
+            GameInfoUI.Post("Zuri hit an obstacle and lost health!", GameInfoUI.MsgType.Obstacle);
+            Debug.Log("Player health decreased by obstacle!");
         }
         if (other.CompareTag("Materials"))
         {
-            hudControls.SystemBuild();
+            hudControls.SystemBuild();                 // Post() fires inside
             Debug.Log("Player material increased!");
         }
-        if (other.CompareTag("FruitPickup") || other.CompareTag("Herbs"))
+        if (other.CompareTag("FruitPickup"))
         {
-            hudControls.HealthIncreaseManager();
+            hudControls.HealthIncreaseManager();       // Post() fires inside
+            GameInfoUI.Post("Zuri picked up fruit and feels better!", GameInfoUI.MsgType.Pickup);
+            Debug.Log("Player health increased!");
+        }
+        if (other.CompareTag("Herbs"))
+        {
+            hudControls.HealthIncreaseManager();       // Post() fires inside
+            GameInfoUI.Post("Zuri collected herbs and restored health!", GameInfoUI.MsgType.Pickup);
             Debug.Log("Player health increased!");
         }
         if (other.CompareTag("EndLevel1"))
         {
-            hudControls.LevelProgress();
-            hudControls.SceneChange(2f);
+            hudControls.LevelProgress();               // Post() fires inside
+            if (EndLevelDialogue.Instance != null)
+                EndLevelDialogue.Instance.ShowForLevel(1);
+            else
+                hudControls.SceneChange(2f);           // fallback
         }
         if (other.CompareTag("EndLevel2"))
         {
-            hudControls.LevelProgress();
-            hudControls.SceneChange(4f);
+            hudControls.LevelProgress();               // Post() fires inside
+            if (EndLevelDialogue.Instance != null)
+                EndLevelDialogue.Instance.ShowForLevel(2);
+            else
+                hudControls.SceneChange(4f);           // fallback
         }
     }
-        
 }

@@ -9,7 +9,6 @@ using System.Text;
 using System.Collections;
 using static UnityEngine.SceneManagement.SceneManager;
 using UnityEngine.SceneManagement;
-using Unity.Collections.LowLevel.Unsafe;
 
 public class HUDControls : MonoBehaviour
 {
@@ -28,11 +27,13 @@ public class HUDControls : MonoBehaviour
     private float waterLvlPLY = 100f;
     private float health = 100f;
     PlayerMovement playerMovement;
-    
+    PlayerMovementOG playerMovementOG;
+
     bool isDead = false;
 
     //Village variables
     private float villageLevel;
+    private float villageLevelTarget;
     public int materialLevel;
 
     //UI bars
@@ -40,26 +41,20 @@ public class HUDControls : MonoBehaviour
     [SerializeField] private Slider bucketbar;
     //[SerializeField] private Slider materialBar;
     [SerializeField] private Slider playerWaterLevelBar;
-    //public GameObject deathMenuUI;
-    /*public GameObject victoryMenuUIone;
-    public GameObject victoryMenuUItwo;
-    public GameObject victoryMenuUIthree;*/
+    [SerializeField] private GameObject failPanel;
 
     void Start()
     {
-        // Assign the playerscript to the variable3
-        if (playerMovement == null)
-            playerMovement = FindFirstObjectByType<PlayerMovement>(); // Updated to use the recommended method
-
+        playerMovement = FindFirstObjectByType<PlayerMovement>();
+        playerMovementOG = FindFirstObjectByType<PlayerMovementOG>();
         SetMax();
         VillageProgress();
     }
     void Update()
     {
-        //Display the HUD to the player 
         UpdateUI();
         BarFilling();
-        //Check if the player has died
+        DeathCheck();
     }
 
     void UpdateUI()
@@ -71,36 +66,51 @@ public class HUDControls : MonoBehaviour
         villageProgressText.text = $"Village Progress:  {villageLevel:F0}%";
 
     }
-    //all good ++
+    float ActiveSpeed()
+    {
+        if (playerMovement != null) return playerMovement.playerSpeed;
+        if (playerMovementOG != null) return playerMovementOG.playerSpeed;
+        return 20f;
+    }
+
+    void SetActiveSpeed(float speed)
+    {
+        if (playerMovement != null) playerMovement.playerSpeed = speed;
+        if (playerMovementOG != null) playerMovementOG.playerSpeed = speed;
+    }
+
     public void SpeedControls(float playerMove)
     {
-        //Based on the parameter attach it to the player speed
-        playerMovement.playerSpeed = playerMove;
-        //After 5 seconds set the player speed back to normal
-        float timer = 5f;
-        timer -= Time.deltaTime;
-
-        if (timer <= 0f)
-            playerMovement.playerSpeed = 20f;
-        Debug.Log("Player speed set to " + playerMovement.playerSpeed);
-
+        SetActiveSpeed(playerMove);
+        Debug.Log("Player speed set to " + playerMove);
+        StopCoroutine("ResetSpeed");
+        StartCoroutine(ResetSpeed());
         WaterMoveManager();
+
+        if (playerMove >= 40f)
+            GameInfoUI.Post("Zuri is moving fast! Speed boosted.", GameInfoUI.MsgType.Interaction);
+        else
+            GameInfoUI.Post("Zuri has been slowed down!", GameInfoUI.MsgType.Obstacle);
     }
-    // all good  ++
+
+    private IEnumerator ResetSpeed()
+    {
+        yield return new WaitForSeconds(5f);
+        SetActiveSpeed(20f);
+    }
+
     public void WaterMoveManager()
     {
+        float speed = ActiveSpeed();
         float waterDecreaseFAST = UnityEngine.Random.Range(5f, 10f);
         float waterDecreaseNORM = 3f;
-        //Check if player is fast or slow or normal
-        if (playerMovement.playerSpeed >= 40f)
+        if (speed >= 40f)
         {
-            //Decrease water level based on the player speed
             waterLevel -= waterDecreaseFAST;
             Debug.Log("FAST, water level decreased by " + waterDecreaseFAST);
         }
-        if (playerMovement.playerSpeed <= 20f)
+        if (speed <= 20f)
         {
-            //Decrease water level based on the player speed
             waterLevel -= waterDecreaseNORM;
             waterLvlPLY -= 2f;
             Debug.Log("Water level decreased on NORM by " + waterDecreaseNORM);
@@ -109,34 +119,28 @@ public class HUDControls : MonoBehaviour
     // all good ++
     public void WaterIncreaseManager()
     {
-            //Set the water Increase based on the scene
-            waterLevel += waterIncreaseRate;
-            Debug.Log("Water bucket level increased by " + waterIncreaseRate);
-        
-        
+        waterLevel += waterIncreaseRate;
+        Debug.Log("Water bucket level increased by " + waterIncreaseRate);
+        GameInfoUI.Post("Zuri filled the bucket with water!", GameInfoUI.MsgType.Pickup);
     }
     // all good ++
     public void HealthDecreaseManager()
     {
         float playerDAMGE = UnityEngine.Random.Range(3f, 15f);
-        //Calculate the player Health and the water levels
         health -= playerDAMGE;
         Debug.Log("Player health decreased by " + playerDAMGE);
-        if (health <= 0f)
-        {
-            health = 0f;
-        }
+        GameInfoUI.Post($"Zuri took damage! -{playerDAMGE:F0} health", GameInfoUI.MsgType.Loss);
+        if (health <= 0f) health = 0f;
     }
     // all good ++
     public void HealthIncreaseManager()
     {
         float healthIncrease = UnityEngine.Random.Range(3f, 15f);
-        //Check if the player has no health
         if (health < 100f)
         {
-            //Calculate the player Health
             health += healthIncrease;
             Debug.Log("Player health increased by " + healthIncrease);
+            GameInfoUI.Post($"Zuri is healing! +{healthIncrease:F0} health", GameInfoUI.MsgType.Pickup);
         }
         else
         {
@@ -171,51 +175,81 @@ public class HUDControls : MonoBehaviour
         playerWaterLevelBar.maxValue = 100f;
         playerWaterLevelBar.value = waterLvlPLY;
     }
-    //Create a village progress based on the water system
     void VillageProgress()
     {
-        // Check which scene the player is in
         if (GetActiveScene().name == "MainGame")
         {
-            //Set the community progress
-            villageLevel = 33.5f;
+            villageLevel = 0f;
+            villageLevelTarget = 66f;
         }
-        if (GetActiveScene().name == "Level2")
+        else if (GetActiveScene().name == "Level2")
         {
-            //Set the community progress
             villageLevel = 67f;
+            villageLevelTarget = 88f;
         }
-        if (GetActiveScene().name == "Level3End")
+        else if (GetActiveScene().name == "Level3End")
         {
-            //Set the community progress
-            villageLevel = 80f;
+            villageLevel = 89f;
+            villageLevelTarget = 96f;
         }
+    }
+
+    public void VillageProgressIncrease()
+    {
+        float increase = UnityEngine.Random.Range(3f, 6f);
+        villageLevel = Mathf.Min(villageLevel + increase, villageLevelTarget);
+        Debug.Log($"Village progress +{increase:F1} → {villageLevel:F1}%");
+    }
+
+    public void VillageProgressDecrease()
+    {
+        float decrease = UnityEngine.Random.Range(1f, 3f);
+        villageLevel = Mathf.Max(villageLevel - decrease, 0f);
+        Debug.Log($"Village progress -{decrease:F1} → {villageLevel:F1}%");
     }
     public void SystemBuild()
     {
-        
         if (materialLevel < 100)
         {
-            //Create a random material increase between 5 and 15
             int materialIncrease = UnityEngine.Random.Range(10, 25);
-
             materialLevel += materialIncrease;
-            //Increase Material Collection
             if (materialLevel >= 100)
             {
                 materialLevel = 100;
                 Debug.Log("Material collection is maxed");
+                GameInfoUI.Post("Zuri has maxed out all materials!", GameInfoUI.MsgType.Win);
+            }
+            else
+            {
+                GameInfoUI.Post($"Zuri collected materials! +{materialIncrease}", GameInfoUI.MsgType.Pickup);
             }
         }
-
     }
+    public void PitDamage()
+    {
+        float pitHealthDamage   = UnityEngine.Random.Range(25f, 40f);
+        float pitWaterDamage    = UnityEngine.Random.Range(20f, 35f);
+        int   pitMaterialDamage = UnityEngine.Random.Range(15, 25);
+
+        health        = Mathf.Max(health - pitHealthDamage, 0f);
+        waterLvlPLY   = Mathf.Max(waterLvlPLY - pitWaterDamage, 0f);
+        materialLevel = Mathf.Max(materialLevel - pitMaterialDamage, 0);
+
+        VillageProgressDecrease();
+        GameInfoUI.Post($"Zuri fell into a pit! Health -{pitHealthDamage:F0}, Water -{pitWaterDamage:F0}", GameInfoUI.MsgType.Loss);
+        Debug.Log($"Pit! Health -{pitHealthDamage:F0}, Water -{pitWaterDamage:F0}, Materials -{pitMaterialDamage}");
+        DeathCheck();
+    }
+
     public void PlayerWaterINC()
     {
         waterLvlPLY += 5f;
+        GameInfoUI.Post("Zuri collected a water drop!", GameInfoUI.MsgType.Pickup);
     }
     public void PlayerWaterDEC()
     {
         waterLvlPLY -= 5f;
+        GameInfoUI.Post("Zuri is affected by heat and disease! Water drained.", GameInfoUI.MsgType.Obstacle);
     }
     public void SceneChange(float scenenumber)
     {
@@ -232,39 +266,87 @@ public class HUDControls : MonoBehaviour
     {
         if (GetActiveScene().name == "MainGame")
         {
-            if (health > 0f && waterLvlPLY > 0f && materialLevel >= 100 && bucketbar.value >= 100)
+            if (villageLevel >= villageLevelTarget)
             {
-                //SetVictoryMenu
-                Debug.Log("Level 1 Completed");
+                Debug.Log("Level 1 Completed — Village at " + villageLevel.ToString("F0") + "%");
+                GameInfoUI.Post("Zuri completed Level 1! Village target reached.", GameInfoUI.MsgType.Win);
             }
             else
             {
-                //Set death scene
+                Debug.Log("Level 1 ended — Village at " + villageLevel.ToString("F0") + "%");
+                GameInfoUI.Post($"Zuri ended Level 1 with {villageLevel:F0}% village progress.", GameInfoUI.MsgType.Interaction);
             }
-
         }
-        if (GetActiveScene().name == "Level2")
+        else if (GetActiveScene().name == "Level2")
         {
-            
-            if (health > 0f && waterLvlPLY > 0f && materialLevel >= 100 && bucketbar.value >= 100)
+            if (villageLevel >= villageLevelTarget)
             {
-                //SetVictoryMenu
-                Debug.Log("Level 2 Completed");
+                Debug.Log("Level 2 Completed — Village at " + villageLevel.ToString("F0") + "%");
+                GameInfoUI.Post("Zuri completed Level 2! Village target reached.", GameInfoUI.MsgType.Win);
             }
             else
             {
-                //Set death scene
+                Debug.Log("Level 2 ended — Village at " + villageLevel.ToString("F0") + "%");
+                GameInfoUI.Post($"Zuri ended Level 2 with {villageLevel:F0}% village progress.", GameInfoUI.MsgType.Interaction);
             }
         }
     }
     void DeathCheck()
     {
-        if (!isDead && (waterLevel <= 99f || health <= 0f || materialLevel <= 0f || waterLvlPLY <= 0f))
+        if (isDead) return;
+        if (health <= 0f || waterLvlPLY <= 0f)
+            GameOver();
+    }
+
+    // ── Show / hide all scene gameplay HUD panels ─────────────────────────
+    /// <summary>
+    /// Hides or shows every child of the scene Canvas that is NOT an overlay
+    /// (FailPanel, PausePanel, VictoryPanel).  Also toggles the GameInfoUI feed.
+    /// Call with false when a full-screen overlay appears, true when it closes.
+    /// </summary>
+    public void SetSceneHUDVisible(bool visible)
+    {
+        // Navigate to the Canvas root via any known Inspector reference.
+        // healthbar lives at Canvas/HealthBAR/Slider  → parent.parent = Canvas.
+        // material lives at Canvas/Bar/Panel/Text     → parent.parent.parent = Canvas.
+        Transform canvasT =
+            healthbar           != null ? healthbar.transform.parent?.parent :
+            material            != null ? material.transform.parent?.parent?.parent :
+            playerWaterLevelBar != null ? playerWaterLevelBar.transform.parent?.parent :
+            failPanel           != null ? failPanel.transform.parent :
+            null;
+
+        if (canvasT == null) return;
+
+        foreach (Transform child in canvasT)
         {
-            isDead = true;
-            //SetDeathMenu
-            //deathMenuUI.SetActive(true);
-            Time.timeScale = 0f;//Stop time
+            // Never touch the overlay panels themselves
+            if (child.name == "FailPanel")     continue;
+            if (child.name == "PausePanel")    continue;
+            if (child.name == "VictoryPanel2") continue;
+            child.gameObject.SetActive(visible);
         }
+
+        GameInfoUI.Instance?.SetVisible(visible);
+    }
+
+    // ── Read-only accessors for EndLevelDialogue / LevelHUDStrip ─────────
+    public float Health        => health;
+    public float WaterLevel    => waterLvlPLY;   // player hydration
+    public float WaterBucket   => waterLevel;    // bucket water collected
+    public float VillageLevel  => villageLevel;
+    // materialLevel is already public
+
+    void GameOver()
+    {
+        isDead = true;
+        Time.timeScale = 0f;
+        if (failPanel != null)
+            failPanel.SetActive(true);
+        // Hide every HUD panel so only the fail screen is visible
+        SetSceneHUDVisible(false);
+        LevelHUDStrip.Instance?.SetVisible(false);
+        GameInfoUI.Post("Zuri has fallen! Game Over.", GameInfoUI.MsgType.Loss);
+        Debug.Log("Game Over!");
     }
 }

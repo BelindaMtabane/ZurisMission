@@ -7,11 +7,17 @@ public class Spawner : MonoBehaviour
     //Create variables
     public GameObject[] obstacleSpawnObjects;
     private float timer;
+    public float spawnInterval = 3f;
 
 
     void Update()
     {
-        HandleSpawnObstacle();
+        timer += Time.deltaTime;
+        if (timer >= spawnInterval)
+        {
+            timer = 0f;
+            HandleSpawnObstacle();
+        }
     }
     private void HandleSpawnObstacle()
     {

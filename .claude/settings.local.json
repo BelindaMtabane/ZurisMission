@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\TUF\\\\source\\\\repos\\\\WILSummativePortfolio\\\\ZurisMission\\\\Assets\\\\StreamingAssets\" -Recurse)",
+      "Bash(Select-Object FullName)",
+      "mcp__UnityMCP__editor_get_status",
+      "mcp__UnityMCP__component_get_all",
+      "mcp__UnityMCP__component_set",
+      "mcp__UnityMCP__editor_save_scene",
+      "mcp__UnityMCP__prefab_find",
+      "mcp__UnityMCP__scene_get_components",
+      "mcp__UnityMCP__scene_hierarchy",
+      "mcp__UnityMCP__editor_read_log",
+      "mcp__UnityMCP__sim_stop",
+      "mcp__UnityMCP__editor_open_scene",
+      "mcp__UnityMCP__component_add",
+      "mcp__UnityMCP__editor_recompile",
+      "mcp__UnityMCP__unity_reconnect",
+      "mcp__UnityMCP__scene_get_info",
+      "mcp__UnityMCP__transform_set_position",
+      "mcp__UnityMCP__scene_get_transform",
+      "mcp__UnityMCP__game_object_get_info",
+      "mcp__UnityMCP__editor_select",
+      "mcp__UnityMCP__component_get",
+      "mcp__UnityMCP__transform_get_bounds",
+      "mcp__UnityMCP__screenshot_scene",
+      "mcp__UnityMCP__transform_set_scale",
+      "mcp__UnityMCP__editor_wait_ready",
+      "mcp__UnityMCP__editor_invoke_method",
+      "mcp__UnityMCP__sim_play",
+      "mcp__UnityMCP__sim_status",
+      "mcp__UnityMCP__screenshot_game",
+      "mcp__UnityMCP__screenshot_editor",
+      "mcp__UnityMCP__game_object_create_primitive",
+      "mcp__UnityMCP__renderer_set_enabled",
+      "mcp__UnityMCP__scene_list",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}
