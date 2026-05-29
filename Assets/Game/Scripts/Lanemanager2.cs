@@ -58,14 +58,14 @@ public class Lanemanager2 : MonoBehaviour
                 label.color = Color.white;
             }
 
-            // TOP-RIGHT of screen
+            // TOP-RIGHT of screen, placed below the pause panel (~90 px gap)
             RectTransform rt = button1.GetComponent<RectTransform>();
             if (rt != null)
             {
                 rt.anchorMin        = new Vector2(1f, 1f);
                 rt.anchorMax        = new Vector2(1f, 1f);
                 rt.pivot            = new Vector2(1f, 1f);
-                rt.anchoredPosition = new Vector2(-20f, -20f);
+                rt.anchoredPosition = new Vector2(-20f, -110f);  // -110 clears the pause panel above
                 rt.sizeDelta        = new Vector2(200f, 60f);
             }
         }

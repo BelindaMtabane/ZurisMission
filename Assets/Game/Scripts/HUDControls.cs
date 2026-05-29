@@ -298,12 +298,54 @@ public class HUDControls : MonoBehaviour
             GameOver();
     }
 
+    // ── Show / hide all scene gameplay HUD panels ─────────────────────────
+    /// <summary>
+    /// Hides or shows every child of the scene Canvas that is NOT an overlay
+    /// (FailPanel, PausePanel, VictoryPanel).  Also toggles the GameInfoUI feed.
+    /// Call with false when a full-screen overlay appears, true when it closes.
+    /// </summary>
+    public void SetSceneHUDVisible(bool visible)
+    {
+        // Navigate to the Canvas root via any known Inspector reference.
+        // healthbar lives at Canvas/HealthBAR/Slider  → parent.parent = Canvas.
+        // material lives at Canvas/Bar/Panel/Text     → parent.parent.parent = Canvas.
+        Transform canvasT =
+            healthbar           != null ? healthbar.transform.parent?.parent :
+            material            != null ? material.transform.parent?.parent?.parent :
+            playerWaterLevelBar != null ? playerWaterLevelBar.transform.parent?.parent :
+            failPanel           != null ? failPanel.transform.parent :
+            null;
+
+        if (canvasT == null) return;
+
+        foreach (Transform child in canvasT)
+        {
+            // Never touch the overlay panels themselves
+            if (child.name == "FailPanel")     continue;
+            if (child.name == "PausePanel")    continue;
+            if (child.name == "VictoryPanel2") continue;
+            child.gameObject.SetActive(visible);
+        }
+
+        GameInfoUI.Instance?.SetVisible(visible);
+    }
+
+    // ── Read-only accessors for EndLevelDialogue / LevelHUDStrip ─────────
+    public float Health        => health;
+    public float WaterLevel    => waterLvlPLY;   // player hydration
+    public float WaterBucket   => waterLevel;    // bucket water collected
+    public float VillageLevel  => villageLevel;
+    // materialLevel is already public
+
     void GameOver()
     {
         isDead = true;
         Time.timeScale = 0f;
         if (failPanel != null)
             failPanel.SetActive(true);
+        // Hide every HUD panel so only the fail screen is visible
+        SetSceneHUDVisible(false);
+        LevelHUDStrip.Instance?.SetVisible(false);
         GameInfoUI.Post("Zuri has fallen! Game Over.", GameInfoUI.MsgType.Loss);
         Debug.Log("Game Over!");
     }

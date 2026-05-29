@@ -73,12 +73,18 @@ public class PlayerHUDBase : MonoBehaviour
         if (other.CompareTag("EndLevel1"))
         {
             hudControls.LevelProgress();               // Post() fires inside
-            hudControls.SceneChange(2f);
+            if (EndLevelDialogue.Instance != null)
+                EndLevelDialogue.Instance.ShowForLevel(1);
+            else
+                hudControls.SceneChange(2f);           // fallback
         }
         if (other.CompareTag("EndLevel2"))
         {
             hudControls.LevelProgress();               // Post() fires inside
-            hudControls.SceneChange(4f);
+            if (EndLevelDialogue.Instance != null)
+                EndLevelDialogue.Instance.ShowForLevel(2);
+            else
+                hudControls.SceneChange(4f);           // fallback
         }
     }
 }

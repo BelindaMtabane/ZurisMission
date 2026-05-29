@@ -102,6 +102,12 @@ public class GameInfoUI : MonoBehaviour
         feedText.text = sb.ToString().TrimEnd();
     }
 
+    /// <summary>Hide or show the info-feed panel (call when a full-screen overlay opens).</summary>
+    public void SetVisible(bool v)
+    {
+        if (_panelRT != null) _panelRT.gameObject.SetActive(v);
+    }
+
     // ── Auto-build panel ──────────────────────────────────────────────────
     private void Bootstrap()
     {

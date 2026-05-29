@@ -1,11 +1,11 @@
 using UnityEngine;
 using TMPro;
 using System.Collections;
-using static UnityEngine.SceneManagement.SceneManager;
 using UnityEngine.SceneManagement;
 
 public class PipeControlslevel3 : MonoBehaviour
 {
+    // ── Inspector-assigned HUD text fields ────────────────────────────────
     public TMP_Text material;
     public TMP_Text healthText;
     public TMP_Text villageProgressText;
@@ -13,249 +13,312 @@ public class PipeControlslevel3 : MonoBehaviour
     public TMP_Text tank2;
     public TMP_Text tank3;
 
-    //Player variables
+    // ── Player ────────────────────────────────────────────────────────────
     private float health = 100f;
     PlayerMovementOG playerMovement;
-    bool isDead = false;
-    private float healthIncreaseRate;
-    private float tankIncreaseRate;
+    private bool hasHit = false;
+
+    // ── Village ───────────────────────────────────────────────────────────
+    private float villageLevel;
+    private float villageLevelTarget = 96f;
+
+    // ── Tank / pipe progress ──────────────────────────────────────────────
     private int tank1Amount;
     private int tank2Amount;
     private int tank3Amount;
-    private int counter;
-    private bool hasHit = false;
 
-    //Village variables
-    private float villageLevel;
-    private float villageLevelTarget = 96f;
-    public int materialLevel = 100;
+    // ══════════════════════════════════════════════════════════════════════
+    // INVENTORY — four material categories
+    // ══════════════════════════════════════════════════════════════════════
+    public int pipeParts = 10;   // for repairing Pipe Joints
+    public int screws    = 10;   // shared fastener for all repairs
+    public int tankPaste = 10;   // for sealing Storage Tanks
+    public int tapParts  = 10;   // for fixing Water Taps
 
-    //Tanks variables
-    private int tank1Progress;
-    private int tank2Progress;
-    private int tank3Progress;
+    // Computed total (for EndLevelDialogue compat + legacy HUD text)
+    public int materialLevel => pipeParts + screws + tankPaste + tapParts;
 
-    //UI bars
+    // Material maximums
+    public const int MatMax = 30;
 
+    // ── Repair costs per USE press ─────────────────────────────────────────
+    // Pipe Joint:    CostPipeParts + CostScrews
+    // Water Tap:     CostTapParts  + CostScrews
+    // Storage Tank:  CostTankPaste + CostScrews
+    public const int CostPipeParts = 3;
+    public const int CostTapParts  = 3;
+    public const int CostTankPaste = 3;
+    public const int CostScrews    = 1;   // screws consumed by every repair type
+
+    // ── Pipe proximity system ─────────────────────────────────────────────
+    public enum PipeZone { None, Pipe1, Pipe2, Pipe3 }
+    public PipeZone NearbyPipe { get; private set; } = PipeZone.None;
+
+    // ══════════════════════════════════════════════════════════════════════
     void Start()
     {
-        // Assign the playerscript to the variable3
         if (playerMovement == null)
-            playerMovement = FindFirstObjectByType<PlayerMovementOG>(); // Updated to use the recommended method
-
+            playerMovement = FindFirstObjectByType<PlayerMovementOG>();
         VillageProgress();
+
+        // Push ourselves to InventoryUI so it always has a valid reference,
+        // regardless of object-activation state or script-execution order.
+        InventoryUI.Instance?.SetPipe(this);
     }
+
     void Update()
     {
-        //Display the HUD to the player 
         UpdateUI();
-        //Check if the player has died
     }
 
     void UpdateUI()
     {
-        material.text = ("Material:" + materialLevel);
-        healthText.text = ("Health:" + health);
-        tank1.text = ("Tank 1: " + tank1Amount + "%");
-        tank2.text = ("Tank 2: " + tank2Amount + "%");
-        tank3.text = ("Tank 3: " + tank3Amount + "%");
+        material.text          = $"Material: {materialLevel}";
+        healthText.text        = $"Health: {health:F0}";
+        tank1.text             = $"Tank 1: {tank1Amount}%";
+        tank2.text             = $"Tank 2: {tank2Amount}%";
+        tank3.text             = $"Tank 3: {tank3Amount}%";
         villageProgressText.text = $"Village Progress: {villageLevel:F0}%";
     }
-    //all good ++
+
+    // ── Speed ─────────────────────────────────────────────────────────────
     public void SpeedControls(float playerMove)
     {
         playerMovement.playerSpeed = playerMove;
-        Debug.Log("Player speed set to " + playerMovement.playerSpeed);
         StopCoroutine("ResetSpeed");
         StartCoroutine(ResetSpeed());
     }
 
-    private IEnumerator ResetSpeed()
+    IEnumerator ResetSpeed()
     {
         yield return new WaitForSeconds(5f);
         playerMovement.playerSpeed = 20f;
     }
-    // all good ++
+
+    // ── Health ────────────────────────────────────────────────────────────
     public void HealthDecreaseManager()
     {
-        float playerDAMGE = UnityEngine.Random.Range(3f, 15f);
-        //Calculate the player Health and the water levels
-        health -= playerDAMGE;
-        Debug.Log("Player health decreased by " + playerDAMGE);
-        if (health <= 0f)
-        {
-            health = 0f;
-        }
+        float dmg = Random.Range(3f, 15f);
+        health = Mathf.Max(health - dmg, 0f);
+        Debug.Log($"Health -{dmg:F1}  now {health:F0}");
     }
-    // all good ++
+
     public void HealthIncreaseManager()
     {
-        float healthIncrease = UnityEngine.Random.Range(3f, 15f);
-        //Check if the player has no health
         if (health < 100f)
         {
-            //Calculate the player Health
-            health += healthIncrease;
-            Debug.Log("Player health increased by " + healthIncrease);
-        }
-        else
-        {
-            Debug.Log("Health is maxed");
+            float gain = Random.Range(3f, 15f);
+            health = Mathf.Min(health + gain, 100f);
+            Debug.Log($"Health +{gain:F1}  now {health:F0}");
         }
     }
-    void VillageProgress()
-    {
-        villageLevel = 89f;
-    }
+
+    // ── Village progress ──────────────────────────────────────────────────
+    void VillageProgress() => villageLevel = 89f;
 
     public void VillageProgressIncrease()
     {
-        float increase = UnityEngine.Random.Range(2f, 4f);
-        villageLevel = Mathf.Min(villageLevel + increase, villageLevelTarget);
-        Debug.Log($"Village progress +{increase:F1} → {villageLevel:F1}%");
+        float inc = Random.Range(2f, 4f);
+        villageLevel = Mathf.Min(villageLevel + inc, villageLevelTarget);
+        Debug.Log($"Village +{inc:F1} -> {villageLevel:F1}%");
     }
 
     public void VillageProgressDecrease()
     {
-        float decrease = UnityEngine.Random.Range(1f, 2f);
-        villageLevel = Mathf.Max(villageLevel - decrease, 0f);
-        Debug.Log($"Village progress -{decrease:F1} → {villageLevel:F1}%");
+        float dec = Random.Range(1f, 2f);
+        villageLevel = Mathf.Max(villageLevel - dec, 0f);
+        Debug.Log($"Village -{dec:F1} -> {villageLevel:F1}%");
     }
-    //++All good
-    public void TankMaterialDEC()
-    {
-        materialLevel -= 6;
-    }
-    //++All good
+
+    // ── Material collection ───────────────────────────────────────────────
+    /// <summary>
+    /// Randomly distributes 4-9 material points across the four categories.
+    /// </summary>
     public void TankMaterialINC()
     {
-        if (materialLevel < 100)
-        {
-            //Create a random material increase between 5 and 15
-            int materialIncrease = UnityEngine.Random.Range(2, 7);
+        int total = Random.Range(4, 10);
+        int gained0 = 0, gained1 = 0, gained2 = 0, gained3 = 0;
 
-            materialLevel += materialIncrease;
-            //Increase Material Collection
-            if (materialLevel >= 100)
+        for (int i = 0; i < total; i++)
+        {
+            switch (Random.Range(0, 4))
             {
-                materialLevel = 100;
-                Debug.Log("Material collection is maxed");
+                case 0: if (pipeParts < MatMax) { pipeParts++;  gained0++; } break;
+                case 1: if (screws    < MatMax) { screws++;     gained1++; } break;
+                case 2: if (tankPaste < MatMax) { tankPaste++;  gained2++; } break;
+                case 3: if (tapParts  < MatMax) { tapParts++;   gained3++; } break;
             }
         }
 
+        string summary = $"Collected — Pipes:{gained0} Screws:{gained1} Paste:{gained2} Taps:{gained3}";
+        GameInfoUI.Post(summary, GameInfoUI.MsgType.Pickup);
+        Debug.Log($"TankMaterialINC: {summary}");
     }
+
+    /// <summary>Legacy material drain (deducts from each type evenly).</summary>
+    public void TankMaterialDEC()
+    {
+        pipeParts  = Mathf.Max(0, pipeParts  - 2);
+        screws     = Mathf.Max(0, screws     - 2);
+        tankPaste  = Mathf.Max(0, tankPaste  - 1);
+        tapParts   = Mathf.Max(0, tapParts   - 1);
+    }
+
+    // ── Tank progress (called from UseCurrentPipe) ────────────────────────
+    public void TankProgressINC1()
+    {
+        tank1Amount = Mathf.Min(tank1Amount + 25, 100);
+        Debug.Log($"Pipe Joint 1: {tank1Amount}%");
+    }
+
+    public void TankProgressINC2()
+    {
+        tank2Amount = Mathf.Min(tank2Amount + 17, 100);
+        Debug.Log($"Water Tap: {tank2Amount}%");
+    }
+
+    public void TankProgressINC3()
+    {
+        tank3Amount = Mathf.Min(tank3Amount + 13, 100);
+        Debug.Log($"Storage Tank: {tank3Amount}%");
+    }
+
     public void LevelProgress()
     {
         if (villageLevel >= villageLevelTarget)
             Debug.Log("Level 3 Completed — Village at " + villageLevel.ToString("F0") + "%");
         else
-            Debug.Log("Level 3 ended — Village at " + villageLevel.ToString("F0") + "% (target " + villageLevelTarget + "%)");
+            Debug.Log("Level 3 ended — Village at " + villageLevel.ToString("F0") + "%");
     }
-    //++All good
-    public void TankProgressINC1()
+
+    // ── USE button: spend materials to repair the nearby structure ─────────
+    /// <summary>
+    /// Called by the old-style trigger-only path (uses whatever NearbyPipe is at that moment).
+    /// </summary>
+    public void UseCurrentPipe() => UseAtZone(NearbyPipe);
+
+    /// <summary>
+    /// Called by InventoryUI which latches the zone at approach time and passes it
+    /// explicitly — avoids the physics/input timing race where NearbyPipe is already
+    /// cleared by OnTriggerExit before the button click event fires.
+    /// </summary>
+    public void UseAtZone(PipeZone zone)
     {
-        if (tank1Amount < 100)
+        if (zone == PipeZone.None) return;
+
+        switch (zone)
         {
-            tank1Amount += 25;
-            Debug.Log("Tank 1 progress increased by 25");
-        }
-        else
-        {
-            tank1Amount = 100;
-            Debug.Log("Tank 1 is fully repaired");
+            case PipeZone.Pipe1: // Pipe Joint 1
+                if (pipeParts < CostPipeParts || screws < CostScrews)
+                {
+                    GameInfoUI.Post(
+                        $"Need {CostPipeParts}x Pipe Parts + {CostScrews}x Screw to repair!",
+                        GameInfoUI.MsgType.Obstacle);
+                    return;
+                }
+                pipeParts -= CostPipeParts;
+                screws    -= CostScrews;
+                TankProgressINC1();
+                VillageProgressIncrease();
+                GameInfoUI.Post(
+                    $"Pipe Joint 1 repaired! Now {tank1Amount}%  |  Pipe Parts left: {pipeParts}",
+                    GameInfoUI.MsgType.Win);
+                break;
+
+            case PipeZone.Pipe2: // Water Tap
+                if (tapParts < CostTapParts || screws < CostScrews)
+                {
+                    GameInfoUI.Post(
+                        $"Need {CostTapParts}x Tap Parts + {CostScrews}x Screw to repair!",
+                        GameInfoUI.MsgType.Obstacle);
+                    return;
+                }
+                tapParts -= CostTapParts;
+                screws   -= CostScrews;
+                TankProgressINC2();
+                VillageProgressIncrease();
+                GameInfoUI.Post(
+                    $"Water Tap repaired! Now {tank2Amount}%  |  Tap Parts left: {tapParts}",
+                    GameInfoUI.MsgType.Win);
+                break;
+
+            case PipeZone.Pipe3: // Storage Tank
+                if (tankPaste < CostTankPaste || screws < CostScrews)
+                {
+                    GameInfoUI.Post(
+                        $"Need {CostTankPaste}x Tank Paste + {CostScrews}x Screw to repair!",
+                        GameInfoUI.MsgType.Obstacle);
+                    return;
+                }
+                tankPaste -= CostTankPaste;
+                screws    -= CostScrews;
+                TankProgressINC3();
+                VillageProgressIncrease();
+                GameInfoUI.Post(
+                    $"Storage Tank sealed! Now {tank3Amount}%  |  Tank Paste left: {tankPaste}",
+                    GameInfoUI.MsgType.Win);
+                break;
         }
     }
-    //++All good
-    public void TankProgressINC2()
-    {
-        if (tank2Amount < 100)
-        {
-            tank2Amount += 17;
-            Debug.Log("Tank 2 progress increased by 17");
-        }
-        else
-        {
-            tank2Amount = 100;
-            Debug.Log("Tank 2 is fully repaired");
-        }
-    }
-    //++All good
-    public void TankProgressINC3()
-    {
-        if (tank3Amount < 100)
-        {
-            tank3Amount += 13;
-            Debug.Log("Tank 3 progress increased by 13");
-        }
-        else
-        {
-            tank3Amount = 100;
-            Debug.Log("Tank 3 is fully repaired");
-        }
-    }
-    /*void DeathCheck()
-    {
-        //if (!isDead && ( health <= 0f || materialLevel <= 0f )
-        {
-            isDead = true;
-            //SetDeathMenu
-            //deathMenuUI.SetActive(true);
-            Time.timeScale = 0f;//Stop time
-        }
-    }*/
+
+    // ── Read-only accessors ────────────────────────────────────────────────
+    public float Health       => health;
+    public float VillageLevel => villageLevel;
+    public int   Tank1Amount  => tank1Amount;
+    public int   Tank2Amount  => tank2Amount;
+    public int   Tank3Amount  => tank3Amount;
+
+    // ══════════════════════════════════════════════════════════════════════
+    // TRIGGER HANDLING
+    // ══════════════════════════════════════════════════════════════════════
     private void OnTriggerEnter(Collider other)
     {
-        if (hasHit) return;
-
+        // ── Pipe proximity zones — no hasHit, just set NearbyPipe ──────────
         if (other.CompareTag("PipeFix1"))
         {
-            hasHit = true;
-            TankProgressINC1();
-            VillageProgressIncrease();
-            GameInfoUI.Post("Zuri repaired Pipe 1! Tank up +25%", GameInfoUI.MsgType.Win);
+            NearbyPipe = PipeZone.Pipe1;
+            GameInfoUI.Post("Near Pipe Joint 1 — open inventory and press USE!", GameInfoUI.MsgType.Interaction);
+            return;
         }
         if (other.CompareTag("PipeFix2"))
         {
-            hasHit = true;
-            TankProgressINC2();
-            VillageProgressIncrease();
-            GameInfoUI.Post("Zuri repaired Pipe 2! Tank up +17%", GameInfoUI.MsgType.Win);
+            NearbyPipe = PipeZone.Pipe2;
+            GameInfoUI.Post("Near Water Tap — open inventory and press USE!", GameInfoUI.MsgType.Interaction);
+            return;
         }
         if (other.CompareTag("PipeFix3"))
         {
-            hasHit = true;
-            TankProgressINC3();
-            VillageProgressIncrease();
-            GameInfoUI.Post("Zuri repaired Pipe 3! Tank up +13%", GameInfoUI.MsgType.Win);
+            NearbyPipe = PipeZone.Pipe3;
+            GameInfoUI.Post("Near Storage Tank — open inventory and press USE!", GameInfoUI.MsgType.Interaction);
+            return;
         }
+
+        // ── All other collisions use hasHit guard ──────────────────────────
+        if (hasHit) return;
+
         if (other.CompareTag("Materials"))
         {
             hasHit = true;
             TankMaterialINC();
             VillageProgressIncrease();
-            GameInfoUI.Post("Zuri collected materials for the village!", GameInfoUI.MsgType.Pickup);
-            Debug.Log("Player material increased!");
         }
         if (other.CompareTag("FruitPickup"))
         {
             hasHit = true;
             HealthIncreaseManager();
             GameInfoUI.Post("Zuri picked up fruit and feels better!", GameInfoUI.MsgType.Pickup);
-            Debug.Log("Player health increased!");
         }
         if (other.CompareTag("SpeedBoast"))
         {
             hasHit = true;
             SpeedControls(40f);
             GameInfoUI.Post("Zuri is moving fast! Speed boosted.", GameInfoUI.MsgType.Interaction);
-            Debug.Log("Player speed boosted!");
         }
         if (other.CompareTag("SlowDown"))
         {
             hasHit = true;
             SpeedControls(15f);
             GameInfoUI.Post("Zuri has been slowed down!", GameInfoUI.MsgType.Obstacle);
-            Debug.Log("Player slowed down!");
         }
         if (other.CompareTag("Heat&Disease"))
         {
@@ -263,13 +326,14 @@ public class PipeControlslevel3 : MonoBehaviour
             HealthDecreaseManager();
             VillageProgressDecrease();
             GameInfoUI.Post("Zuri is suffering from heat and disease!", GameInfoUI.MsgType.Obstacle);
-            Debug.Log("Player health decreased");
         }
         if (other.CompareTag("EndLvl3End"))
         {
             hasHit = true;
             LevelProgress();
             GameInfoUI.Post("Zuri completed the mission! The village is saved!", GameInfoUI.MsgType.Win);
+            if (EndLevelDialogue.Instance != null)
+                EndLevelDialogue.Instance.ShowForLevel(3);
         }
         if (other.CompareTag("AnimalAttack"))
         {
@@ -277,7 +341,6 @@ public class PipeControlslevel3 : MonoBehaviour
             HealthDecreaseManager();
             VillageProgressDecrease();
             GameInfoUI.Post("Zuri was attacked by an animal!", GameInfoUI.MsgType.Obstacle);
-            Debug.Log("Player health decreased by animal!");
         }
         if (other.CompareTag("Obstacle"))
         {
@@ -285,13 +348,20 @@ public class PipeControlslevel3 : MonoBehaviour
             HealthDecreaseManager();
             VillageProgressDecrease();
             GameInfoUI.Post("Zuri hit an obstacle and lost health!", GameInfoUI.MsgType.Obstacle);
-            Debug.Log("Player health decreased by obstacle!");
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        hasHit = false;
+        if (other.CompareTag("PipeFix1") ||
+            other.CompareTag("PipeFix2") ||
+            other.CompareTag("PipeFix3"))
+        {
+            NearbyPipe = PipeZone.None;
+        }
+        else
+        {
+            hasHit = false;
+        }
     }
 }
-

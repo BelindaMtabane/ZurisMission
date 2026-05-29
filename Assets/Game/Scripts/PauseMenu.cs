@@ -9,17 +9,40 @@ public class PauseMenu : MonoBehaviour
     //Set methods for buttons
     public void Pause()
     {
-        //Display menu
         pauseMenuUI.SetActive(true);
-        //Stop time
         Time.timeScale = 0f;
+        SetSceneHUDVisible(false);
+        LevelHUDStrip.Instance?.SetVisible(false);
+        InventoryUI.Instance?.SetVisible(false);
     }
     public void Resume()
     {
-        //Hide menu
         pauseMenuUI.SetActive(false);
-        //Resume time
         Time.timeScale = 1f;
+        SetSceneHUDVisible(true);
+        LevelHUDStrip.Instance?.SetVisible(true);
+        InventoryUI.Instance?.SetVisible(true);
+    }
+
+    // ── Public helper so EndLevelDialogue can call it for Level3End ───────
+    public void HideSceneHUDForOverlay() => SetSceneHUDVisible(false);
+
+    // ── Hide / show all scene HUD siblings of the pause panel ─────────────
+    void SetSceneHUDVisible(bool visible)
+    {
+        if (pauseMenuUI == null) return;
+        Transform canvasT = pauseMenuUI.transform.parent;
+        if (canvasT == null) return;
+
+        foreach (Transform child in canvasT)
+        {
+            if (child.gameObject == pauseMenuUI) continue;  // keep pause panel
+            if (child.name == "FailPanel")       continue;  // keep fail panel
+            if (child.name == "VictoryPanel2")   continue;  // keep victory panel
+            child.gameObject.SetActive(visible);
+        }
+
+        GameInfoUI.Instance?.SetVisible(visible);
     }
     public void MainMenu()
     {
@@ -49,7 +72,7 @@ public class PauseMenu : MonoBehaviour
     {
         //Go to level 3
         Time.timeScale = 1f;
-        SceneManager.LoadScene("Level3");
+        SceneManager.LoadScene("Level3End");
     }
 
 }

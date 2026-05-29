@@ -20,6 +20,12 @@ public class StartMenu : MonoBehaviour
         }*/
 
     }
+    public void StartGame()
+    {
+        // Load the first level
+        SceneManager.LoadScene("MainGame");
+    }
+
     public void ExitGame()
     {
         //Exit the game
