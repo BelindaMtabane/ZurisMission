@@ -36,6 +36,7 @@ public class Level1LayoutDirector : MonoBehaviour
 
         Transform player = FindPlayer();
         Level1Progress.BindFromScene(player);
+        Level1Pacing.Apply();
         ClearExistingGameplay(player);
         BuildLayout();
         EnsureHeatWave(player);
@@ -127,6 +128,7 @@ public class Level1LayoutDirector : MonoBehaviour
         DisableBehaviours<HeatWaveDirector>();
         DisableBehaviours<SnakePassDirector>();
         DisableBehaviours<Level1DryBushlandsBuilder>();
+        DisableBehaviours<Level1DustDevilSpin>();
         DisableBehaviours<BushlandHazard>();
         DisableBehaviours<SnakePassHazard>();
         DisableBehaviours<PickupCollectable>();
@@ -161,87 +163,190 @@ public class Level1LayoutDirector : MonoBehaviour
         Transform root = new GameObject(RootName).transform;
         int materialIndex = 0;
 
-        // 15 water pools
-        int[] poolLanes = { 1, 3, 1, 2, 0, 3, 1, 2, 1, 3, 0, 3, 1, 1, 3 };
-        float[] poolProgress = { 0.05f, 0.09f, 0.13f, 0.18f, 0.24f, 0.30f, 0.38f, 0.45f, 0.52f, 0.58f, 0.64f, 0.71f, 0.78f, 0.86f, 0.94f };
-        for (int i = 0; i < poolLanes.Length; i++)
+        // === 0–20% LEARN + PLAY ===
+
+        // 0–5% Welcome — cactus teaches lane movement
+        CactusWater(root, 1, 0.03f);
+        CactusWater(root, 2, 0.045f);
+        MaterialTool(root, 0, 0.048f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        CactusWater(root, 3, 0.06f);
+
+        // 5–8% First lane dodge
+        Rock(root, 0, 0.065f);
+        CactusWater(root, 2, 0.072f);
+        Rock(root, 2, 0.078f);
+        CactusWater(root, 0, 0.085f);
+
+        // 8–11% Sand pit → reward
+        Sand(root, 1, 0.095f);
+        CactusWater(root, 3, 0.105f);
+        MaterialTool(root, 1, 0.108f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+
+        // 11–13% Rock cluster → reward
+        RockClusterLanes(root, new[] { 0, 1 }, 0.115f);
+        CactusWater(root, 2, 0.125f);
+
+        // 13–15% Extra cactus reward
+        CactusWater(root, 2, 0.135f);
+        CactusWater(root, 3, 0.14f);
+        CactusWater(root, 0, 0.145f);
+
+        // 15–17% First horizontal cactus wall (L3 open)
+        CactusWall(root, new[] { true, true, false, true }, 0.155f);
+        CactusWater(root, 2, 0.165f);
+
+        // 17–20% First rolling log lesson + safe run
+        RollingLogLesson(root, 0.175f);
+        CactusWater(root, 2, 0.188f);
+        CactusWater(root, 1, 0.195f);
+        MaterialTool(root, 3, 0.198f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+
+        // === 20–25% BUILD — Heat at 20%, warned snakes before 25% ===
+        CactusWater(root, 0, 0.205f);
+        CactusWater(root, 3, 0.212f);
+        Snake(root, 2, 0.22f);
+        CactusWater(root, 1, 0.228f);
+        CactusWater(root, 0, 0.235f);
+        Snake(root, 1, 0.245f);
+        CactusWater(root, 3, 0.252f);
+        CactusWater(root, 2, 0.26f);
+        CactusWater(root, 1, 0.268f);
+        CactusWater(root, 0, 0.276f);
+        CactusWater(root, 3, 0.284f);
+        CactusWater(root, 2, 0.292f);
+        Sand(root, 3, 0.3f);
+        MaterialTool(root, 0, 0.303f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        CactusWater(root, 1, 0.31f);
+        RockClusterLanes(root, new[] { 2, 3 }, 0.318f);
+        CactusWater(root, 0, 0.326f);
+        CactusWater(root, 1, 0.334f);
+        CactusWater(root, 2, 0.342f);
+        CactusWall(root, new[] { false, true, true, false }, 0.35f);
+        CactusWater(root, 0, 0.358f);
+        Log(root, 2, 0.366f);
+        CactusWater(root, 3, 0.374f);
+        MaterialTool(root, 1, 0.382f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        Snake(root, 2, 0.405f);
+        CactusWater(root, 1, 0.415f);
+        Rock(root, 0, 0.425f);
+
+        // === 40–60% WEAVE ===
+        Snake(root, 1, 0.435f);
+        CactusWater(root, 3, 0.448f);
+        CactusWater(root, 0, 0.465f);
+        Snake(root, 0, 0.482f);
+        CactusWater(root, 2, 0.498f);
+        MaterialTool(root, 2, 0.512f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        CactusWall(root, new[] { true, false, true, false }, 0.525f);
+        CactusWater(root, 1, 0.538f);
+        Log(root, 1, 0.552f);
+        CactusWater(root, 2, 0.565f);
+        CactusWater(root, 0, 0.578f);
+        CactusWater(root, 3, 0.592f);
+        Snake(root, 1, 0.598f);
+        RockClusterLanes(root, new[] { 2, 3 }, 0.612f);
+
+        // === 60–70% RECOVER ===
+        CactusWater(root, 1, 0.622f);
+        CactusWater(root, 2, 0.632f);
+        CactusWater(root, 0, 0.642f);
+        CactusWater(root, 3, 0.652f);
+        MaterialTool(root, 1, 0.662f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        CactusWater(root, 2, 0.672f);
+        CactusWater(root, 1, 0.682f);
+        CactusWater(root, 3, 0.692f);
+        CactusWater(root, 0, 0.702f);
+
+        // === 70–85% ESCALATE ===
+        RockClusterLanes(root, new[] { 0, 1 }, 0.705f);
+        Snake(root, 2, 0.715f);
+        CactusWater(root, 3, 0.725f);
+        Log(root, 0, 0.735f);
+        MaterialTool(root, 2, 0.745f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        CactusWall(root, new[] { false, true, true, true }, 0.755f);
+        CactusWater(root, 0, 0.765f);
+        CactusWater(root, 3, 0.775f);
+        Snake(root, 1, 0.785f);
+        CactusWater(root, 2, 0.795f);
+        Sand(root, 1, 0.805f);
+        CactusWater(root, 1, 0.825f);
+        Log(root, 2, 0.835f);
+        MaterialTool(root, 0, 0.845f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+
+        // === 85–95% SURVIVE ===
+        CactusWall(root, new[] { true, true, false, true }, 0.855f);
+        Snake(root, 2, 0.865f);
+        CactusWater(root, 1, 0.875f);
+        CactusWater(root, 0, 0.885f);
+        CactusWater(root, 3, 0.895f);
+        RockClusterLanes(root, new[] { 0, 1 }, 0.915f);
+        CactusWater(root, 2, 0.925f);
+        MaterialTool(root, 3, 0.935f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        Log(root, 1, 0.945f);
+
+        // === 95–100% FINAL CHALLENGE ===
+        CactusWall(root, new[] { true, true, false, true }, 0.955f);
+        Snake(root, 1, 0.962f);
+        CactusWater(root, 2, 0.972f);
+        CactusWater(root, 0, 0.978f);
+        Log(root, 3, 0.984f);
+        CactusWall(root, new[] { false, true, false, true }, 0.99f);
+        CactusWater(root, 1, 0.994f);
+        MaterialTool(root, 2, 0.997f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+
+        // Materials + health for win condition
+        MaterialTool(root, 3, 0.10f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        MaterialTool(root, 0, 0.18f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        MaterialTool(root, 2, 0.28f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        MaterialTool(root, 1, 0.38f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        MaterialTool(root, 3, 0.48f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        MaterialTool(root, 0, 0.52f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        MaterialTool(root, 2, 0.62f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        MaterialTool(root, 1, 0.72f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        MaterialTool(root, 3, 0.82f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        MaterialTool(root, 0, 0.92f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        MaterialTool(root, 2, 0.96f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        MaterialTool(root, 1, 0.99f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+
+        Health(root, 1, 0.50f);
+        Health(root, 3, 0.78f);
+
+        PlaceWaterPools(root);
+    }
+
+    static void PlaceWaterPools(Transform root)
+    {
+        int[] lanes = { 1, 3, 0, 2, 1, 3, 2, 0, 1, 3, 0, 2, 3, 1, 2, 0, 3, 1, 0, 2 };
+        float[] progress =
         {
-            WaterPool(root, poolLanes[i], poolProgress[i]);
-        }
+            0.04f, 0.09f, 0.14f, 0.19f, 0.24f, 0.29f, 0.34f, 0.39f, 0.44f, 0.49f,
+            0.54f, 0.59f, 0.64f, 0.69f, 0.74f, 0.79f, 0.84f, 0.89f, 0.94f, 0.98f
+        };
 
-        // 20 material pickups (hammer / brick / cement)
-        int[] matLanes = { 0, 1, 1, 2, 3, 3, 0, 1, 3, 1, 2, 3, 0, 1, 2, 3, 1, 3, 0, 2 };
-        float[] matProgress = { 0.06f, 0.11f, 0.16f, 0.21f, 0.26f, 0.31f, 0.36f, 0.41f, 0.46f, 0.51f, 0.56f, 0.61f, 0.66f, 0.70f, 0.74f, 0.78f, 0.82f, 0.86f, 0.90f, 0.96f };
-        for (int i = 0; i < matLanes.Length; i++)
+        for (int i = 0; i < lanes.Length; i++)
         {
-            MaterialTool(root, matLanes[i], matProgress[i], MaterialCycle[materialIndex % MaterialCycle.Length]);
-            materialIndex++;
+            WaterPool(root, lanes[i], progress[i]);
         }
+    }
 
-        // 5 aloe plants
-        Aloe(root, 1, 0.35f);
-        Aloe(root, 3, 0.48f);
-        Aloe(root, 2, 0.62f);
-        Aloe(root, 3, 0.75f);
-        Aloe(root, 0, 0.88f);
+    static void CactusWall(Transform root, bool[] blockedLanes, float progress)
+    {
+        Level1Primitives.MakeCactusWall(root, blockedLanes, Z(progress));
+    }
 
-        // Super fruits + jumpable logs + hazards through progression
-        SuperFruit(root, 3, 0.08f);
-        Log(root, 3, 0.12f);
-        SuperFruit(root, 1, 0.19f);
-        DustDevil(root, 2, 0.23f);
+    static void RockClusterLanes(Transform root, int[] lanes, float progress)
+    {
+        Level1Primitives.MakeRockClusterLanes(root, lanes, Z(progress));
+    }
 
-        Rock(root, 0, 0.27f);
-        Log(root, 3, 0.29f);
-        Snake(root, 2, 0.32f);
-        SuperFruit(root, 3, 0.34f);
-        Cluster(root, new[] { 1 }, 0.36f);
-        DustDevil(root, 3, 0.39f);
-        Snake(root, 1, 0.42f);
+    static void RollingLogLesson(Transform root, float progress)
+    {
+        Level1Primitives.MakeRollingLogLesson(root, Z(progress));
+    }
 
-        Sand(root, 2, 0.47f);
-        Health(root, 3, 0.49f);
-        Snake(root, 3, 0.53f);
-        Log(root, 1, 0.55f);
-        Cluster(root, new[] { 2, 3 }, 0.57f);
-        SuperFruit(root, 0, 0.60f);
-        DustDevil(root, 3, 0.63f);
-
-        Health(root, 2, 0.65f);
-        Log(root, 3, 0.67f);
-        SuperFruit(root, 3, 0.69f);
-
-        Snake(root, 1, 0.72f);
-        Barrier(root, 3, 0.74f);
-        DustDevil(root, 0, 0.76f);
-        Snake(root, 3, 0.78f);
-        Log(root, 2, 0.80f);
-        Log(root, 3, 0.815f);
-        Snake(root, 3, 0.82f);
-        SuperFruit(root, 2, 0.84f);
-        Cluster(root, new[] { 0 }, 0.85f);
-        Snake(root, 2, 0.87f);
-
-        // End challenge: heat waves tighten + snakes + extra water
-        WaterPool(root, 1, 0.80f);
-        WaterPool(root, 2, 0.835f);
-        Snake(root, 0, 0.855f);
-        Snake(root, 3, 0.875f);
-        WaterPool(root, 3, 0.905f);
-        Snake(root, 1, 0.925f);
-        Snake(root, 2, 0.945f);
-        WaterPool(root, 0, 0.965f);
-
-        Sand(root, 0, 0.89f);
-        DustDevil(root, 3, 0.91f);
-        Rock(root, 1, 0.93f);
-        Log(root, 3, 0.935f);
-        Barrier(root, 3, 0.94f);
-        SuperFruit(root, 3, 0.95f);
-        Cluster(root, new[] { 2 }, 0.96f);
-        Log(root, 0, 0.965f);
-        Snake(root, 3, 0.97f);
-        DustDevil(root, 1, 0.98f);
+    static void CactusWater(Transform root, int lane, float progress)
+    {
+        Level1Primitives.MakeCactusWater(root, lane, Z(progress));
     }
 
     static float Z(float progress) => Level1Progress.WorldZ(progress);
@@ -291,11 +396,6 @@ public class Level1LayoutDirector : MonoBehaviour
         Level1Primitives.MakeSandPit(root, lane, Z(progress));
     }
 
-    static void DustDevil(Transform root, int lane, float progress)
-    {
-        Level1Primitives.MakeDustDevil(root, lane, Z(progress));
-    }
-
     static void Barrier(Transform root, int lane, float progress)
     {
         Level1Primitives.MakeLowCactusBarrier(root, lane, Z(progress));
@@ -303,6 +403,6 @@ public class Level1LayoutDirector : MonoBehaviour
 
     static void Snake(Transform root, int lane, float progress)
     {
-        Level1Primitives.MakeSnake(root, lane, Z(progress));
+        Level1Primitives.MakeSnake(root, lane, Z(progress), progress);
     }
 }

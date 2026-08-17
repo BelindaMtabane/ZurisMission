@@ -29,30 +29,17 @@ public static class Level1Ground
         cachedSource = source;
 
         Material instance = new Material(source);
-        float tileU = Mathf.Max(2f, tileScale.x * 0.12f);
-        float tileV = Mathf.Max(2f, tileScale.z * 0.04f);
-        Vector2 tiling = new Vector2(tileU, tileV);
-
-        Texture baseTex = source.HasProperty("_BaseMap") ? source.GetTexture("_BaseMap") : source.mainTexture;
-        if (baseTex == null && source.HasProperty("_MainTex"))
+        if (instance.HasProperty("_BaseMap"))
         {
-            baseTex = source.GetTexture("_MainTex");
+            instance.SetTexture("_BaseMap", null);
         }
 
-        if (instance.HasProperty("_BaseMap") && baseTex != null)
+        if (instance.HasProperty("_MainTex"))
         {
-            instance.SetTexture("_BaseMap", baseTex);
-            instance.SetTextureScale("_BaseMap", tiling);
+            instance.SetTexture("_MainTex", null);
         }
 
-        if (instance.HasProperty("_MainTex") && baseTex != null)
-        {
-            instance.SetTexture("_MainTex", baseTex);
-            instance.SetTextureScale("_MainTex", tiling);
-        }
-
-        instance.mainTexture = baseTex;
-        instance.mainTextureScale = tiling;
+        instance.mainTexture = null;
 
         if (instance.HasProperty("_BaseColor"))
         {

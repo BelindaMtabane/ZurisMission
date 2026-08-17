@@ -3,26 +3,54 @@ using UnityEngine;
 public class PlayerHUDBase : MonoBehaviour
 {
     public HUDControls hudControls;
-    PlayerMovement playerMovement;
+
+    void Start()
+    {
+        if (hudControls == null)
+        {
+            hudControls = FindFirstObjectByType<HUDControls>();
+        }
+    }
+
     private void OnTriggerEnter(Collider other)
     {
+        if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
+
+        if (hudControls == null)
+        {
+            hudControls = FindFirstObjectByType<HUDControls>();
+        }
+
         if (hudControls == null) return;
-        hudControls = FindFirstObjectByType<HUDControls>(); // Updated to use the recommended method
+
+        if (other.GetComponentInParent<BushlandHazard>() != null
+            || other.GetComponentInParent<SnakePassHazard>() != null
+            || other.GetComponentInParent<Level1Obstacle>() != null
+            || other.GetComponentInParent<Level1CactusPickup>() != null
+            || other.GetComponentInParent<Level1StatPickup>() != null
+            || other.GetComponentInParent<Level1WaterPoolPickup>() != null
+            || other.GetComponentInParent<Level1MaterialPickup>() != null
+            || other.GetComponentInParent<Level1SuperFruitPickup>() != null
+            || other.GetComponentInParent<Level1AloePickup>() != null
+            || other.GetComponentInParent<Level1Snake>() != null)
+        {
+            return;
+        }
 
         if (other.CompareTag("DamWaterBUCK"))
         {
             hudControls.WaterIncreaseManager();
-            Debug.Log("Player water level increased!");
+            Debug.Log("Bucket water increased.");
         }
         if (other.CompareTag("WaterDROP"))
         {
-            hudControls.PlayerWaterINC();
-            Debug.Log("Player water level decreased!");
+            hudControls.DrinkBottle();
+            Debug.Log("Water bottle +10 player water.");
         }
         if (other.CompareTag("Heat&Disease"))
         {
             hudControls.PlayerWaterDEC();
-            Debug.Log("Player water system level increased!");
+            Debug.Log("Player water decreased.");
         }
         if (other.CompareTag("SpeedBoast"))
         {
@@ -37,8 +65,17 @@ public class PlayerHUDBase : MonoBehaviour
         //other.CompareTag("AnimalAttack")
         if (other.CompareTag("AnimalAttack") || other.CompareTag("Obstacle"))
         {
-            hudControls.HealthDecreaseManager();
-            Debug.Log("Player health decreased by animal or obstacle!");
+            string n = other.name.ToLowerInvariant();
+            if (n.Contains("cactus"))
+            {
+                hudControls.ChangeBucket(10f);
+                Debug.Log("Cactus: bucket +10");
+            }
+            else
+            {
+                hudControls.HealthDecreaseManager();
+                Debug.Log("Player health decreased by animal or obstacle!");
+            }
         }
         if (other.CompareTag("Materials"))
         {
@@ -53,12 +90,10 @@ public class PlayerHUDBase : MonoBehaviour
         if (other.CompareTag("EndLevel1"))
         {
             hudControls.LevelProgress();
-            hudControls.SceneChange(2f);
         }
         if (other.CompareTag("EndLevel2"))
         {
             hudControls.LevelProgress();
-            hudControls.SceneChange(4f);
         }
     }
         

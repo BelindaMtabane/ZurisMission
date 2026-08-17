@@ -1,270 +1,541 @@
-using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.UI;
-using System;
 using TMPro;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Collections;
-using static UnityEngine.SceneManagement.SceneManager;
-using UnityEngine.SceneManagement;
-using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class HUDControls : MonoBehaviour
 {
-    //public TMP_Text waterLevelText;
-    public TMP_Text material;
-    //public TMP_Text healthText;
-    public TMP_Text villageProgressText;
+    [Header("Stats")]
+    [SerializeField] private float maxHealth = 100f;
+    [SerializeField] private float maxBucketWater = 100f;
+    [SerializeField] private float maxPlayerWater = 100f;
+    [SerializeField] private int maxMaterial = 100;
+    [SerializeField] private float waterIncreaseRate = 15f;
+    [SerializeField, Range(0f, 100f)] private float villageProgressPercent;
+    [SerializeField] private float mainGameVillageMaxPercent = 34f;
 
-    //Bucket variables
-    //private float waterMax = 100f;
-    private float waterLevel = 0f;
-    public float waterIncreaseRate;
-    public int bucket;
-
-    //Player variables
-    private float waterLvlPLY = 100f;
-    private float health = 100f;
-    PlayerMovement playerMovement;
-    
-    bool isDead = false;
-
-    //Village variables
-    private float villageLevel;
-    public int materialLevel;
-
-    //UI bars
+    [Header("UI")]
+    [SerializeField] private TMP_Text material;
+    [SerializeField] private TMP_Text villageProgressText;
+    [SerializeField] private TMP_Text healthText;
+    [SerializeField] private TMP_Text bucketWaterText;
+    [SerializeField] private TMP_Text playerWaterText;
+    [SerializeField] private TMP_Text staminaText;
     [SerializeField] private Slider healthbar;
     [SerializeField] private Slider bucketbar;
-    //[SerializeField] private Slider materialBar;
     [SerializeField] private Slider playerWaterLevelBar;
-    //public GameObject deathMenuUI;
-    /*public GameObject victoryMenuUIone;
-    public GameObject victoryMenuUItwo;
-    public GameObject victoryMenuUIthree;*/
+
+    private float waterLevel;
+    private float playerWater = 100f;
+    private float health = 100f;
+    private int materialLevel;
+    private bool uiDirty = true;
+    private PlayerController playerController;
+    private float mainGameStartingBucket = 15f;
+    private bool lowWaterWarningActive;
+    private float lowWaterGraceRemaining;
+
+    public float Health => health;
+    public float PlayerWater => playerWater;
+    public float MaxPlayerWater => maxPlayerWater;
+    public float BucketWater => waterLevel;
+    public int MaterialLevel => materialLevel;
+    public int MaxMaterial => maxMaterial;
+    public float MaxBucketWater => maxBucketWater;
+
+    public float VillageProgressPercent => villageProgressPercent;
+
+    public void ChangeBucket(float delta)
+    {
+        waterLevel = Mathf.Clamp(waterLevel + delta, 0f, maxBucketWater);
+        MarkDirty();
+        Debug.Log($"[HUDControls] Bucket {delta:+0;-0} => {waterLevel:F0}");
+    }
+
+    public void CollectCactusWater(float amount = 20f)
+    {
+        playerWater = Mathf.Min(maxPlayerWater, playerWater + amount);
+        if (playerWater > 0f)
+        {
+            EndLowWaterWarning();
+        }
+
+        MarkDirty();
+        Level1FeedbackUI.Show($"+{amount:0} WATER", new Color(0.35f, 0.85f, 1f));
+        Debug.Log("[Level1] Cactus collected — Player Water +20");
+    }
+
+    public void CollectWaterPool(float bucketAmount = 20f, float playerWaterAmount = 0f)
+    {
+        waterLevel = Mathf.Min(maxBucketWater, waterLevel + bucketAmount);
+        if (playerWaterAmount > 0f)
+        {
+            playerWater = Mathf.Min(maxPlayerWater, playerWater + playerWaterAmount);
+        }
+
+        MarkDirty();
+        Level1FeedbackUI.Show($"+{bucketAmount:0} BUCKET", new Color(0.2f, 0.55f, 0.95f));
+        Debug.Log("[Level1] Water pool collected — Bucket +20");
+    }
+
+    public void BreakMaterials(int amount = 10)
+    {
+        if (materialLevel <= 0) return;
+        materialLevel = Mathf.Max(0, materialLevel - amount);
+        MarkDirty();
+        Debug.Log($"[Level1] Materials broken -{amount}");
+    }
+
+    public void DrainPlayerWater(float amount)
+    {
+        playerWater = Mathf.Clamp(playerWater - amount, 0f, maxPlayerWater);
+        MarkDirty();
+        if (playerWater <= 0f && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainGame")
+        {
+            BeginLowWaterWarning(18f);
+            Level1FeedbackUI.Show("LOW WATER! Find cactus now!", new Color(1f, 0.35f, 0.15f), 2.5f);
+        }
+    }
+
+    public void BeginLowWaterWarning(float seconds)
+    {
+        if (lowWaterWarningActive) return;
+        lowWaterWarningActive = true;
+        lowWaterGraceRemaining = seconds;
+    }
+
+    public void EndLowWaterWarning()
+    {
+        lowWaterWarningActive = false;
+        lowWaterGraceRemaining = 0f;
+    }
+
+    public void LoseHeatWave(string reason)
+    {
+        Lose(reason);
+    }
+
+    public void ApplyHeatWaveTick(float delta = -10f)
+    {
+        DrainPlayerWater(Mathf.Abs(delta));
+        Debug.Log("[Level1] Heat Wave Tick: -10");
+    }
+
+    public void AddMaterials(int amount)
+    {
+        materialLevel = Mathf.Clamp(materialLevel + amount, 0, maxMaterial);
+        MarkDirty();
+    }
+
+    public void CollectHealthPickup(float amount = 10f)
+    {
+        health = Mathf.Min(maxHealth, health + amount);
+        MarkDirty();
+        Debug.Log("[Level1] Health collected");
+        Debug.Log("[Level1] Health +10");
+    }
+
+    public void CollectMaterialPickup(int amount = 10)
+    {
+        materialLevel = Mathf.Clamp(materialLevel + amount, 0, maxMaterial);
+        MarkDirty();
+        Debug.Log("[Level1] Material collected");
+        Debug.Log("[Level1] Material +10");
+    }
+
+    public void ChangePlayerWater(float delta, string reason = null)
+    {
+        playerWater = Mathf.Clamp(playerWater + delta, 0f, maxPlayerWater);
+        MarkDirty();
+        Debug.Log($"[HUDControls] Player water {delta:+0;-0} => {playerWater:F0} {reason}");
+        if (playerWater <= 0f && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainGame")
+        {
+            BeginLowWaterWarning(18f);
+        }
+        else if (playerWater > 0f)
+        {
+            EndLowWaterWarning();
+        }
+    }
+
+    public void ChangeHealth(float delta, string reason = null)
+    {
+        health = Mathf.Clamp(health + delta, 0f, maxHealth);
+        MarkDirty();
+        Debug.Log($"[HUDControls] Health {delta:+0;-0} => {health:F0}");
+        if (health <= 0f)
+        {
+            Lose(string.IsNullOrEmpty(reason)
+                ? "Your health reached 0."
+                : reason);
+        }
+    }
+
+    public void ApplyHeatWave()
+    {
+        ApplyHeatWaveSession();
+    }
+
+    public void ApplyHeatWaveSession()
+    {
+        DrainPlayerWater(10f);
+        Debug.Log("[HUDControls] Heat wave session: water -10");
+    }
+
+    public void DrinkBottle()
+    {
+        ChangePlayerWater(10f);
+        Debug.Log("[HUDControls] Water bottle +10 player water.");
+    }
+
+    public void Lose(string reason)
+    {
+        if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
+        RunStateManager.Instance?.NotifyDeath(reason);
+    }
 
     void Start()
     {
-        // Assign the playerscript to the variable3
-        if (playerMovement == null)
-            playerMovement = FindFirstObjectByType<PlayerMovement>(); // Updated to use the recommended method
+        playerController = FindFirstObjectByType<PlayerController>();
 
-        SetMax();
-        VillageProgress();
+        health = maxHealth;
+        playerWater = maxPlayerWater;
+        waterLevel = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainGame"
+            ? mainGameStartingBucket
+            : 0f;
+        materialLevel = 0;
+        villageProgressPercent = 0f;
+
+        AutoWireUiTextFields();
+
+        SetMaxValues();
+        RecalculateVillageProgress();
+        RefreshAllUi();
     }
+
     void Update()
     {
-        //Display the HUD to the player 
-        UpdateUI();
-        BarFilling();
-        //Check if the player has died
-    }
-
-    void UpdateUI()
-    {
-        //Update the UI text to display the current water level and agility level
-        //waterLevelText.text = $"Water LVL: {waterLevel:F0}";
-        material.text = ("Material:" + materialLevel);
-        //healthText.text = $"Health:  {health:F0}";
-        villageProgressText.text = $"Village Progress:  {villageLevel:F0}%";
-
-    }
-    //all good ++
-    public void SpeedControls(float playerMove)
-    {
-        //Based on the parameter attach it to the player speed
-        playerMovement.playerSpeed = playerMove;
-        //After 5 seconds set the player speed back to normal
-        float timer = 5f;
-        timer -= Time.deltaTime;
-
-        if (timer <= 0f)
-            playerMovement.playerSpeed = 20f;
-        Debug.Log("Player speed set to " + playerMovement.playerSpeed);
-
-        WaterMoveManager();
-    }
-    // all good  ++
-    public void WaterMoveManager()
-    {
-        float waterDecreaseFAST = UnityEngine.Random.Range(5f, 10f);
-        float waterDecreaseNORM = 3f;
-        //Check if player is fast or slow or normal
-        if (playerMovement.playerSpeed >= 40f)
+        if (uiDirty)
         {
-            //Decrease water level based on the player speed
-            waterLevel -= waterDecreaseFAST;
-            Debug.Log("FAST, water level decreased by " + waterDecreaseFAST);
+            RefreshAllUi();
         }
-        if (playerMovement.playerSpeed <= 20f)
+
+        if (lowWaterWarningActive)
         {
-            //Decrease water level based on the player speed
-            waterLevel -= waterDecreaseNORM;
-            waterLvlPLY -= 2f;
-            Debug.Log("Water level decreased on NORM by " + waterDecreaseNORM);
+            if (playerWater > 0f)
+            {
+                EndLowWaterWarning();
+            }
+            else
+            {
+                lowWaterGraceRemaining -= Time.deltaTime;
+                if (lowWaterGraceRemaining <= 0f)
+                {
+                    lowWaterWarningActive = false;
+                    Lose("Out of Water! Collect cactus to stay hydrated.");
+                }
+            }
+        }
+
+        if (staminaText != null)
+        {
+            if (playerController == null)
+                playerController = FindFirstObjectByType<PlayerController>();
+            if (playerController != null)
+                staminaText.text = $"Stamina : {playerController.Stamina:F0}/{playerController.MaxStamina:F0}";
         }
     }
-    // all good ++
-    public void WaterIncreaseManager()
+
+    void SetMaxValues()
     {
-            //Set the water Increase based on the scene
-            waterLevel += waterIncreaseRate;
-            Debug.Log("Water bucket level increased by " + waterIncreaseRate);
-        
-        
-    }
-    // all good ++
-    public void HealthDecreaseManager()
-    {
-        float playerDAMGE = UnityEngine.Random.Range(3f, 15f);
-        //Calculate the player Health and the water levels
-        health -= playerDAMGE;
-        Debug.Log("Player health decreased by " + playerDAMGE);
-        if (health <= 0f)
+        if (healthbar != null)
         {
-            health = 0f;
+            healthbar.maxValue = maxHealth;
+        }
+
+        if (bucketbar != null)
+        {
+            bucketbar.maxValue = maxBucketWater;
+        }
+
+        if (playerWaterLevelBar != null)
+        {
+            playerWaterLevelBar.maxValue = maxPlayerWater;
         }
     }
-    // all good ++
-    public void HealthIncreaseManager()
+
+    void RefreshAllUi()
     {
-        float healthIncrease = UnityEngine.Random.Range(3f, 15f);
-        //Check if the player has no health
-        if (health < 100f)
+        if (material != null)
+            material.text = $"Material: {materialLevel}/{maxMaterial}";
+
+        if (villageProgressText != null)
         {
-            //Calculate the player Health
-            health += healthIncrease;
-            Debug.Log("Player health increased by " + healthIncrease);
+            // Match the existing edit-time label formatting in the scene:
+            // "Village Progress : 0%"
+            villageProgressText.text = $"Village Progress : {villageProgressPercent:F0}%";
+        }
+
+        if (healthText != null)
+            healthText.text = $"Health : {health:F0}/{maxHealth:F0}";
+        if (bucketWaterText != null)
+            bucketWaterText.text = $"Bucket : {waterLevel:F0}/{maxBucketWater:F0}";
+        if (playerWaterText != null)
+            playerWaterText.text = $"Water : {playerWater:F0}/{maxPlayerWater:F0}";
+        if (staminaText != null && playerController != null)
+            staminaText.text = $"Stamina : {playerController.Stamina:F0}/{playerController.MaxStamina:F0}";
+
+        if (healthbar != null)
+        {
+            healthbar.value = health;
+        }
+
+        if (bucketbar != null)
+        {
+            bucketbar.value = waterLevel;
+        }
+
+        if (playerWaterLevelBar != null)
+        {
+            playerWaterLevelBar.value = playerWater;
+        }
+
+        // Debug trace so you can confirm HUD updates are happening.
+        Debug.Log(
+            $"[HUDControls] HUD update | Material={materialLevel} Village={villageProgressPercent:F0}% Health={health:F0} Water={playerWater:F0} Bucket={waterLevel:F0}");
+
+        uiDirty = false;
+    }
+
+    void MarkDirty()
+    {
+        RecalculateVillageProgress();
+        uiDirty = true;
+    }
+
+    void RecalculateVillageProgress()
+    {
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "MainGame")
+        {
+            return;
+        }
+
+        float materialNorm = materialLevel / (float)maxMaterial;
+        float bucketRange = Mathf.Max(1f, maxBucketWater - mainGameStartingBucket);
+        float bucketNorm = Mathf.Clamp01((waterLevel - mainGameStartingBucket) / bucketRange);
+        villageProgressPercent = ((materialNorm + bucketNorm) * 0.5f) * mainGameVillageMaxPercent;
+        villageProgressPercent = Mathf.Clamp(villageProgressPercent, 0f, mainGameVillageMaxPercent);
+    }
+
+    public void SetVillageProgress(float percent)
+    {
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainGame")
+        {
+            RecalculateVillageProgress();
         }
         else
         {
-            Debug.Log("Health is maxed");
+            villageProgressPercent = Mathf.Clamp(percent, 0f, 100f);
         }
-    }
-    void BarFilling()
-    {
-        //Set the player water level bar fill amount to what the player water level is
-        playerWaterLevelBar.value = waterLvlPLY;
-        //Set the material progress bar fill amount to what the village progress is
-        //materialBar.value = waterSystemLevel;
-        //Set the bucketbar fill amount to what the bucket water level is
-        bucketbar.value = waterLevel;
-        //Set the healthbar fill amount to what the player's health is
-        healthbar.value = health;
-    }
-    void SetMax()
-    {
-        //Set the max value of the healthbar to 100
-        healthbar.maxValue = 100f;
-        healthbar.value = health;
-        //Set the max value of the bucketbar to 100
-        bucketbar.maxValue = 100f;
-        bucketbar.value = waterLevel;
 
-        //Set the max value of the material progress bar to 100
-        //materialBar.maxValue = 100f;
-        //materialBar.value = waterSystemLevel;
+        MarkDirty();
+        Debug.Log($"[HUDControls] Village progress {villageProgressPercent:F0}%");
+    }
 
-        //Set the max value of the player water level bar to 100
-        playerWaterLevelBar.maxValue = 100f;
-        playerWaterLevelBar.value = waterLvlPLY;
-    }
-    //Create a village progress based on the water system
-    void VillageProgress()
+    void CheckDeath()
     {
-        // Check which scene the player is in
-        if (GetActiveScene().name == "MainGame")
+        if (health <= 0f)
         {
-            //Set the community progress
-            villageLevel = 33.5f;
+            Lose("Your health reached 0.");
         }
-        if (GetActiveScene().name == "Level2")
+        else if (playerWater <= 0f)
         {
-            //Set the community progress
-            villageLevel = 67f;
-        }
-        if (GetActiveScene().name == "Level3End")
-        {
-            //Set the community progress
-            villageLevel = 80f;
+            BeginLowWaterWarning(18f);
         }
     }
+
+    public void ShowActionFeedback(string message, Color color)
+    {
+        Level1FeedbackUI.Show(message, color);
+    }
+
+    public void SpeedControls(float newSpeed)
+    {
+        if (playerController == null)
+        {
+            playerController = FindFirstObjectByType<PlayerController>();
+        }
+
+        if (playerController == null) return;
+
+        playerController.ApplySpeedModifier(newSpeed, 5f);
+        WaterMoveManager();
+
+        Debug.Log($"[HUDControls] SpeedControls speed={newSpeed}");
+    }
+
+    public void WaterMoveManager()
+    {
+        float bucketDrain = playerController != null && playerController.CurrentSpeed >= 40f
+            ? Random.Range(5f, 10f)
+            : 3f;
+
+        waterLevel = Mathf.Clamp(waterLevel - bucketDrain, 0f, maxBucketWater);
+
+        if (playerController != null && playerController.CurrentSpeed <= 20f)
+        {
+            playerWater = Mathf.Clamp(playerWater - 2f, 0f, maxPlayerWater);
+            CheckDeath();
+        }
+
+        MarkDirty();
+
+        Debug.Log($"[HUDControls] WaterMoveManager bucketDrain={bucketDrain:F1} bucketWater={waterLevel:F1} playerWater={playerWater:F1}");
+    }
+
+    public void WaterIncreaseManager()
+    {
+        waterLevel = Mathf.Clamp(waterLevel + waterIncreaseRate, 0f, maxBucketWater);
+        MarkDirty();
+
+        Debug.Log($"[HUDControls] WaterIncreaseManager +{waterIncreaseRate:F1} => bucketWater={waterLevel:F1}");
+    }
+
+    public void HealthDecreaseManager()
+    {
+        health -= Random.Range(3f, 15f);
+        health = Mathf.Clamp(health, 0f, maxHealth);
+        MarkDirty();
+        CheckDeath();
+
+        Debug.Log($"[HUDControls] HealthDecreaseManager health={health:F1}");
+    }
+
+    public void HealthIncreaseManager()
+    {
+        health += Random.Range(3f, 15f);
+        health = Mathf.Clamp(health, 0f, maxHealth);
+        MarkDirty();
+
+        Debug.Log($"[HUDControls] HealthIncreaseManager health={health:F1}");
+    }
+
     public void SystemBuild()
     {
-        
-        if (materialLevel < 100)
-        {
-            //Create a random material increase between 5 and 15
-            int materialIncrease = UnityEngine.Random.Range(10, 25);
+        if (materialLevel >= maxMaterial) return;
 
-            materialLevel += materialIncrease;
-            //Increase Material Collection
-            if (materialLevel >= 100)
-            {
-                materialLevel = 100;
-                Debug.Log("Material collection is maxed");
-            }
-        }
+        materialLevel += Random.Range(10, 25);
+        materialLevel = Mathf.Clamp(materialLevel, 0, maxMaterial);
+        MarkDirty();
 
+        Debug.Log($"[HUDControls] SystemBuild materialLevel={materialLevel}");
     }
+
     public void PlayerWaterINC()
     {
-        waterLvlPLY += 5f;
+        ChangePlayerWater(10f);
     }
+
     public void PlayerWaterDEC()
     {
-        waterLvlPLY -= 5f;
+        ChangePlayerWater(-5f);
     }
-    public void SceneChange(float scenenumber)
+
+    public void SceneChange(float sceneNumber)
     {
-        if (scenenumber == 2f)
+        if (sceneNumber == 2f)
         {
-            SceneManager.LoadScene("Level2");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Level2");
         }
-        if (scenenumber == 4f)
+
+        if (sceneNumber == 4f)
         {
-            SceneManager.LoadScene("Level3End");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Level3End");
         }
     }
+
     public void LevelProgress()
     {
-        if (GetActiveScene().name == "MainGame")
+        if (health <= 0f)
         {
-            if (health > 0f && waterLvlPLY > 0f && materialLevel >= 100 && bucketbar.value >= 100)
+            Lose("Your health reached 0.");
+            return;
+        }
+
+        if (playerWater <= 0f)
+        {
+            Lose("You ran out of water.");
+            return;
+        }
+
+        bool missingMaterials = materialLevel < maxMaterial;
+        bool bucketNotFull = waterLevel < maxBucketWater;
+
+        if (missingMaterials || bucketNotFull)
+        {
+            string reason;
+            if (missingMaterials && bucketNotFull)
             {
-                //SetVictoryMenu
-                Debug.Log("Level 1 Completed");
+                reason = $"You reached the end without enough materials ({materialLevel}/{maxMaterial}) and your bucket was not full ({waterLevel:F0}/{maxBucketWater:F0}).";
+            }
+            else if (missingMaterials)
+            {
+                reason = $"You reached the end without enough materials ({materialLevel}/{maxMaterial}).";
             }
             else
             {
-                //Set death scene
+                reason = $"You reached the end but your water bucket was not full ({waterLevel:F0}/{maxBucketWater:F0}). You needed {maxBucketWater:F0}.";
             }
 
+            Lose(reason);
+            return;
         }
-        if (GetActiveScene().name == "Level2")
-        {
-            
-            if (health > 0f && waterLvlPLY > 0f && materialLevel >= 100 && bucketbar.value >= 100)
-            {
-                //SetVictoryMenu
-                Debug.Log("Level 2 Completed");
-            }
-            else
-            {
-                //Set death scene
-            }
-        }
+
+        RunStateManager.Instance?.NotifyVictory();
+        Debug.Log("[HUDControls] LevelProgress complete=true");
     }
-    void DeathCheck()
+
+    void AutoWireUiTextFields()
     {
-        if (!isDead && (waterLevel <= 99f || health <= 0f || materialLevel <= 0f || waterLvlPLY <= 0f))
+        // Scene should already have these wired. This is a fallback in case
+        // Inspector references were lost after a script rewrite.
+        TMP_Text[] all = FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        if (all == null || all.Length == 0) return;
+
+        foreach (TMP_Text t in all)
         {
-            isDead = true;
-            //SetDeathMenu
-            //deathMenuUI.SetActive(true);
-            Time.timeScale = 0f;//Stop time
+            if (t == null) continue;
+
+            string txt = t.text != null ? t.text.Trim() : "";
+            string goName = t.gameObject != null ? t.gameObject.name : "";
+
+            if (material == null &&
+                (goName.Contains("Material") || txt.StartsWith("Material") || txt == "MaterialLVL"))
+            {
+                material = t;
+            }
+            else if (villageProgressText == null &&
+                     (txt.StartsWith("Village Progress") || goName.Contains("Village")))
+            {
+                villageProgressText = t;
+            }
+            else if (healthText == null &&
+                     (txt.StartsWith("Health") || txt == "HealthLVL"))
+            {
+                healthText = t;
+            }
+            else if (playerWaterText == null &&
+                     (txt.StartsWith("Water") || txt == "WaterLVL"))
+            {
+                playerWaterText = t;
+            }
+            else if (bucketWaterText == null &&
+                     (txt.StartsWith("Bucket") || txt == "BucketLVL"))
+            {
+                bucketWaterText = t;
+            }
         }
+
+        Debug.Log(
+            $"[HUDControls] AutoWireText => material={(material != null)}, village={(villageProgressText != null)}, health={(healthText != null)}, water={(playerWaterText != null)}, bucket={(bucketWaterText != null)}");
     }
 }

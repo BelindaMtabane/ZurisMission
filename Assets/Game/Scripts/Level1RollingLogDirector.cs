@@ -3,12 +3,12 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Spawns a rolling horizontal log toward the player every 10 seconds in MainGame.
+/// Spawns a rolling horizontal log toward the player every 16 seconds in MainGame.
 /// </summary>
 public class Level1RollingLogDirector : MonoBehaviour
 {
-    const float StartProgress = 0.12f;
-    const float SpawnInterval = 10f;
+    const float StartProgress = 0.50f;
+    const float SpawnInterval = 16f;
     const float SpawnAhead = 55f;
 
     Transform player;

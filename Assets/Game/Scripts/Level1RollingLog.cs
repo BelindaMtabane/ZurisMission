@@ -5,9 +5,8 @@ using UnityEngine;
 /// </summary>
 public class Level1RollingLog : MonoBehaviour
 {
-    const float RollSpeed = 24f;
-    const float HealthDamage = 10f;
-    const float BucketDamage = 2f;
+    const float RollSpeed = 12f;
+    const float BucketDamage = 1f;
     const float DespawnBehind = 18f;
 
     Transform player;
@@ -41,8 +40,7 @@ public class Level1RollingLog : MonoBehaviour
         hit = true;
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         hud?.ChangeBucket(-BucketDamage);
-        hud?.ChangeHealth(-HealthDamage, "A rolling log struck you.");
-        Debug.Log("[Level1] Rolling log hit player");
+        Debug.Log("[Level1] Rolling log hit — bucket damage");
     }
 
     void CachePlayer()

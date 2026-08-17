@@ -3,17 +3,14 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Heat waves drain water; screen redness follows player water level in three bands.
+/// After 20% progress, heat drains player water every 6 seconds.
+/// Screen warmth scales with hydration level.
 /// </summary>
 public class Level1HeatWave : MonoBehaviour
 {
-    const float StartProgress = 0.20f;
-    const float WaveInterval = 10f;
-    const float WaveDuration = 6f;
-    const float WaterDrainPerSecond = 10f;
-    const float FadeInSeconds = 1.5f;
-    const float FadeOutSeconds = 1.2f;
-    const float EndChallengeProgress = 0.78f;
+    [SerializeField] private float heatWaveStartProgress = 0.20f;
+    [SerializeField] private float heatWaveWaterLoss = 5f;
+    [SerializeField] private float heatWaveInterval = 6f;
 
     Image overlay;
     Light sun;
@@ -22,14 +19,13 @@ public class Level1HeatWave : MonoBehaviour
     HUDControls hud;
 
     bool started;
-    bool waveActive;
-    float wavePulse;
+    bool heatActive;
     float pauseUntil;
-    float drainAccumulator;
+    float tickTimer;
     Transform player;
 
     public bool IsPaused => Time.time < pauseUntil;
-    public bool IsWaveActive => waveActive && !IsPaused;
+    public bool IsHeatActive => heatActive && !IsPaused;
 
     public void BindProgress(Transform playerTransform)
     {
@@ -39,7 +35,7 @@ public class Level1HeatWave : MonoBehaviour
     public void PauseHeatWave(float seconds)
     {
         pauseUntil = Time.time + seconds;
-        Debug.Log($"[Level1] Heat wave paused for {seconds:0}s");
+        Debug.Log($"[Level1] Heat paused for {seconds:0}s");
     }
 
     void Start()
@@ -49,10 +45,10 @@ public class Level1HeatWave : MonoBehaviour
         CreateOverlay();
         CacheSun();
         CreateHeatParticles();
-        StartCoroutine(WatchAndRunWaves());
+        StartCoroutine(HeatLoop());
     }
 
-    IEnumerator WatchAndRunWaves()
+    IEnumerator HeatLoop()
     {
         while (!started)
         {
@@ -62,16 +58,18 @@ public class Level1HeatWave : MonoBehaviour
                 continue;
             }
 
-            if (Level1Progress.Normalized(PlayerZ()) >= StartProgress)
+            if (Level1Progress.Normalized(PlayerZ()) >= heatWaveStartProgress)
             {
                 started = true;
-                Debug.Log("[Level1] Heat wave system started");
+                heatActive = true;
+                Level1FeedbackUI.Show("HEAT WAVE! Collect cactus for water!", new Color(1f, 0.55f, 0.2f), 2.4f);
+                Debug.Log("[Level1] Heat wave started at 20% progress");
             }
 
             yield return null;
         }
 
-        float intervalTimer = WaveInterval;
+        tickTimer = heatWaveInterval;
         while (true)
         {
             if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying)
@@ -86,74 +84,21 @@ public class Level1HeatWave : MonoBehaviour
                 continue;
             }
 
-            intervalTimer -= Time.deltaTime;
-            if (intervalTimer <= 0f)
+            tickTimer -= Time.deltaTime;
+            if (tickTimer <= 0f)
             {
-                yield return StartCoroutine(RunHeatWave());
-                float progress = Level1Progress.Normalized(PlayerZ());
-                intervalTimer = progress >= EndChallengeProgress ? WaveInterval * 0.75f : WaveInterval;
+                tickTimer = heatWaveInterval;
+                ApplyHeatTick();
             }
 
             yield return null;
         }
     }
 
-    IEnumerator RunHeatWave()
+    void ApplyHeatTick()
     {
-        waveActive = true;
-        drainAccumulator = 0f;
-        Debug.Log("[Level1] Heat wave — collect water!");
-
-        float elapsed = 0f;
-        while (elapsed < WaveDuration)
-        {
-            if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying)
-            {
-                yield return null;
-                continue;
-            }
-
-            if (IsPaused)
-            {
-                yield return null;
-                continue;
-            }
-
-            elapsed += Time.deltaTime;
-            wavePulse = Mathf.Clamp01(elapsed / FadeInSeconds);
-
-            drainAccumulator += Time.deltaTime;
-            while (drainAccumulator >= 1f)
-            {
-                drainAccumulator -= 1f;
-                if (hud == null) hud = FindFirstObjectByType<HUDControls>();
-                hud?.DrainPlayerWater(WaterDrainPerSecond);
-                Debug.Log("[Level1] Heat wave -10 water");
-            }
-
-            yield return null;
-        }
-
-        waveActive = false;
-
         if (hud == null) hud = FindFirstObjectByType<HUDControls>();
-        if (hud != null && hud.PlayerWater <= 0f)
-        {
-            hud.LoseHeatWave("The heat wave dried you out. Collect water during heat waves to survive.");
-            yield break;
-        }
-
-        float fadeT = 0f;
-        float startPulse = wavePulse;
-        while (fadeT < FadeOutSeconds)
-        {
-            fadeT += Time.deltaTime;
-            wavePulse = Mathf.Lerp(startPulse, 0f, fadeT / FadeOutSeconds);
-            yield return null;
-        }
-
-        wavePulse = 0f;
-        Debug.Log("[Level1] Heat wave ended");
+        hud?.ApplyHeatWaveTick(heatWaveWaterLoss);
     }
 
     void LateUpdate()
@@ -165,9 +110,9 @@ public class Level1HeatWave : MonoBehaviour
             if (heatParticles != null && heatParticles.isPlaying) heatParticles.Stop();
             if (sun != null) sun.color = sunOriginal;
         }
-        else if (waveActive || Level1Progress.Normalized(PlayerZ()) >= StartProgress)
+        else if (heatActive)
         {
-            SetHeatVisual(waveActive);
+            SetHeatVisual(true);
             if (heatParticles != null && player != null)
             {
                 heatParticles.transform.position = player.position + Vector3.up * 2f;
@@ -183,23 +128,21 @@ public class Level1HeatWave : MonoBehaviour
 
         if (waterPercent <= 20f)
         {
-            return Mathf.Lerp(0.48f, 0.28f, waterPercent / 20f);
+            return Mathf.Lerp(0.42f, 0.24f, waterPercent / 20f);
         }
 
         if (waterPercent <= 60f)
         {
-            return Mathf.Lerp(0.24f, 0.10f, (waterPercent - 20f) / 40f);
+            return Mathf.Lerp(0.22f, 0.08f, (waterPercent - 20f) / 40f);
         }
 
-        return Mathf.Lerp(0.10f, 0.04f, (waterPercent - 60f) / 40f);
+        return Mathf.Lerp(0.08f, 0.03f, (waterPercent - 60f) / 40f);
     }
 
     void UpdateOverlayColor()
     {
         if (overlay == null) return;
-
-        bool showHeatTint = waveActive || wavePulse > 0.01f;
-        if (!showHeatTint)
+        if (!heatActive)
         {
             overlay.color = new Color(1f, 1f, 1f, 0f);
             return;
@@ -213,32 +156,12 @@ public class Level1HeatWave : MonoBehaviour
             waterPercent = (hud.PlayerWater / hud.MaxPlayerWater) * 100f;
         }
 
-        float alpha = GetWaterHeatAlpha(waterPercent) * Mathf.Max(wavePulse, waveActive ? 1f : wavePulse);
-
-        if (waveActive)
-        {
-            float waveBoost = wavePulse * 0.14f;
-            if (waterPercent <= 20f)
-            {
-                waveBoost += wavePulse * 0.10f;
-            }
-            else if (waterPercent <= 60f)
-            {
-                waveBoost += wavePulse * 0.06f;
-            }
-            else
-            {
-                waveBoost += wavePulse * 0.03f;
-            }
-
-            alpha = Mathf.Min(0.58f, alpha + waveBoost);
-        }
-
+        float alpha = GetWaterHeatAlpha(waterPercent);
         Color tint = waterPercent <= 20f
-            ? new Color(0.95f, 0.08f, 0.05f, alpha)
+            ? new Color(0.95f, 0.12f, 0.08f, alpha)
             : waterPercent <= 60f
-                ? new Color(0.92f, 0.16f, 0.08f, alpha)
-                : new Color(0.90f, 0.28f, 0.12f, alpha);
+                ? new Color(0.92f, 0.22f, 0.10f, alpha)
+                : new Color(0.90f, 0.35f, 0.14f, alpha);
 
         overlay.color = tint;
     }
@@ -253,7 +176,7 @@ public class Level1HeatWave : MonoBehaviour
 
         if (sun != null)
         {
-            sun.color = on && !IsPaused ? new Color(1f, 0.58f, 0.25f) : sunOriginal;
+            sun.color = on && !IsPaused ? new Color(1f, 0.62f, 0.32f) : sunOriginal;
         }
     }
 
@@ -286,17 +209,17 @@ public class Level1HeatWave : MonoBehaviour
         go.transform.SetParent(transform, false);
         heatParticles = go.AddComponent<ParticleSystem>();
         var main = heatParticles.main;
-        main.startColor = new Color(1f, 0.45f, 0.08f, 0.55f);
-        main.startSize = 1.4f;
-        main.startLifetime = 1.6f;
-        main.startSpeed = 0.6f;
+        main.startColor = new Color(1f, 0.5f, 0.12f, 0.45f);
+        main.startSize = 1.2f;
+        main.startLifetime = 1.4f;
+        main.startSpeed = 0.5f;
         main.simulationSpace = ParticleSystemSimulationSpace.World;
-        main.maxParticles = 40;
+        main.maxParticles = 30;
         var emission = heatParticles.emission;
-        emission.rateOverTime = 12f;
+        emission.rateOverTime = 10f;
         var shape = heatParticles.shape;
         shape.shapeType = ParticleSystemShapeType.Hemisphere;
-        shape.radius = 4f;
+        shape.radius = 3.5f;
         heatParticles.Stop();
     }
 

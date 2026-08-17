@@ -18,21 +18,25 @@ public static class Level1Primitives
     public static readonly Color HammerHead = new Color(0.55f, 0.55f, 0.58f);
     public static readonly Color BrickRed = new Color(0.72f, 0.28f, 0.18f);
     public static readonly Color CementBag = new Color(0.82f, 0.78f, 0.68f);
-    public static readonly Color SnakeBodyGreen = new Color(0.28f, 0.52f, 0.18f);
-    public static readonly Color SnakeBodyDarkGreen = new Color(0.05f, 0.32f, 0.08f);
+    public static readonly Color SnakeBodyGreen = new Color(0.15f, 0.88f, 0.25f);
+    public static readonly Color SnakeBodyDarkGreen = new Color(0.12f, 0.72f, 0.20f);
     public static readonly Color SnakeBodyBrown = new Color(0.42f, 0.28f, 0.12f);
-    public static readonly Color SnakeHead = new Color(0.04f, 0.24f, 0.06f);
+    public static readonly Color SnakeHead = new Color(0.10f, 0.68f, 0.16f);
     public static readonly Color SnakeTongue = new Color(0.95f, 0.1f, 0.12f);
+    public static readonly Color SnakeWarning = new Color(1f, 0.78f, 0.12f);
+    public static readonly Color SnakeWarningAccent = new Color(0.95f, 0.22f, 0.12f);
+    public static readonly Color SnakeDangerCactus = new Color(0.55f, 0.12f, 0.14f);
+    public static readonly Color SnakeDangerCactusSpike = new Color(0.72f, 0.18f, 0.16f);
     public static readonly Color LogBrown = new Color(0.45f, 0.28f, 0.12f);
     public static readonly Color LogDark = new Color(0.32f, 0.18f, 0.08f);
     public static readonly Color LogBark = new Color(0.38f, 0.22f, 0.10f);
 
-    public const float CactusWallDamage = 5f;
-    public const float SandPitDamage = 3f;
-    public const float RockClusterDamage = 2f;
+    public const float CactusWallDamage = 3f;
+    public const float SandPitDamage = 1.5f;
+    public const float RockClusterDamage = 1f;
     public const float DustHazardDamage = 6f;
-    public const float LowBarrierDamage = 2f;
-    public const float LogDamage = 2f;
+    public const float LowBarrierDamage = 1f;
+    public const float LogDamage = 1f;
     public const float JumpLogHalfLength = 1.85f;
     public const float RollingLogHalfLength = 24f;
     public const float RollingLogRadius = 0.58f;
@@ -71,6 +75,25 @@ public static class Level1Primitives
         box.center = new Vector3(0f, 4f, 0f);
         box.size = new Vector3(width, 10f, depth);
         return box;
+    }
+
+    public static GameObject MakeCactusWater(Transform parent, int lane, float z)
+    {
+        GameObject root = new GameObject("CactusWater");
+        root.transform.SetParent(parent, false);
+        root.transform.position = Level1Ground.LanePosition(lane, z);
+
+        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.72f, 0f), new Vector3(0.65f, 0.72f, 0.65f), Cactus, "Stem");
+        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0.42f, 1.02f, 0f), new Vector3(0.32f, 0.48f, 0.32f), CactusAccent, "ArmR");
+        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(-0.42f, 1.02f, 0f), new Vector3(0.32f, 0.48f, 0.32f), CactusAccent, "ArmL");
+        Visual(PrimitiveType.Sphere, root.transform, new Vector3(0f, 1.42f, 0f), new Vector3(0.52f, 0.38f, 0.52f), Cactus, "Top");
+        Visual(PrimitiveType.Sphere, root.transform, new Vector3(0.28f, 1.65f, 0.18f), new Vector3(0.32f, 0.32f, 0.32f), Dew, "WaterDrop");
+
+        TallTrigger(root, 1.6f, 1.4f);
+        KinematicBody(root);
+        AnchorPickup(root);
+        root.AddComponent<Level1CactusPickup>();
+        return root;
     }
 
     public static GameObject MakeWaterPool(Transform parent, int lane, float z)
@@ -268,6 +291,82 @@ public static class Level1Primitives
         return root;
     }
 
+    public static GameObject MakeCactusWall(Transform parent, bool[] blockedLanes, float z)
+    {
+        GameObject root = new GameObject("CactusWall");
+        root.transform.SetParent(parent, false);
+        root.transform.position = new Vector3(0f, Level1Ground.SurfaceY, z);
+
+        float minTriggerX = 999f;
+        float maxTriggerX = -999f;
+
+        for (int lane = 0; lane < LevelLanes.Count; lane++)
+        {
+            if (blockedLanes == null || lane >= blockedLanes.Length || !blockedLanes[lane])
+            {
+                continue;
+            }
+
+            float laneX = LevelLanes.X(lane);
+            minTriggerX = Mathf.Min(minTriggerX, laneX);
+            maxTriggerX = Mathf.Max(maxTriggerX, laneX);
+
+            GameObject pillar = new GameObject($"DangerCactus_L{lane + 1}");
+            pillar.transform.SetParent(root.transform, false);
+            pillar.transform.localPosition = new Vector3(laneX, 0f, 0f);
+
+            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(0f, 0.55f, 0f), new Vector3(1.1f, 1.1f, 1.1f), SnakeDangerCactus, "Base");
+            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(0f, 1.15f, 0f), new Vector3(0.85f, 0.85f, 0.85f), SnakeDangerCactus, "Mid");
+            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(0.35f, 1.45f, 0f), new Vector3(0.35f, 0.35f, 0.35f), SnakeDangerCactusSpike, "SpikeR");
+            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(-0.35f, 1.45f, 0f), new Vector3(0.35f, 0.35f, 0.35f), SnakeDangerCactusSpike, "SpikeL");
+
+            BoxCollider laneBox = pillar.AddComponent<BoxCollider>();
+            laneBox.isTrigger = true;
+            laneBox.center = new Vector3(0f, 0.85f, 0f);
+            laneBox.size = new Vector3(1.4f, 1.7f, 2.2f);
+
+            Level1Obstacle obstacle = pillar.AddComponent<Level1Obstacle>();
+            obstacle.Setup(Level1ObstacleKind.Cactus, CactusWallDamage, false);
+        }
+
+        if (minTriggerX < maxTriggerX)
+        {
+            Visual(PrimitiveType.Cube, root.transform, new Vector3((minTriggerX + maxTriggerX) * 0.5f, 2.4f, 0f),
+                new Vector3(Mathf.Max(2f, maxTriggerX - minTriggerX + 2f), 0.08f, 0.08f),
+                new Color(1f, 0.85f, 0.15f), "WallWarning");
+        }
+
+        return root;
+    }
+
+    public static GameObject MakeRockClusterLanes(Transform parent, int[] lanes, float z)
+    {
+        GameObject root = new GameObject("RockCluster");
+        root.transform.SetParent(parent, false);
+        root.transform.position = new Vector3(0f, Level1Ground.SurfaceY, z);
+
+        for (int i = 0; i < lanes.Length; i++)
+        {
+            float laneX = LevelLanes.X(lanes[i]);
+            Visual(PrimitiveType.Cube, root.transform, new Vector3(laneX, 0.55f, 0f), new Vector3(1.6f, 1.1f, 1.4f), Rock, $"Boulder_{i}");
+            Visual(PrimitiveType.Sphere, root.transform, new Vector3(laneX + 0.5f, 0.35f, 0.35f), new Vector3(0.9f, 0.7f, 0.9f), Rock, $"Chunk_{i}");
+        }
+
+        TallTrigger(root, 3.6f, 2.2f);
+        Level1Obstacle obstacle = root.AddComponent<Level1Obstacle>();
+        obstacle.Setup(Level1ObstacleKind.Rock, RockClusterDamage, false);
+        return root;
+    }
+
+    public static GameObject MakeRollingLogLesson(Transform parent, float z)
+    {
+        GameObject root = new GameObject("RollingLogLesson");
+        root.transform.SetParent(parent, false);
+        root.transform.position = new Vector3(0f, Level1Ground.SurfaceY, z);
+        root.AddComponent<Level1RollingLogLesson>();
+        return root;
+    }
+
     public static GameObject MakeCactusCluster(Transform parent, int[] lanes, float z)
     {
         GameObject root = new GameObject("CactusCluster");
@@ -396,28 +495,37 @@ public static class Level1Primitives
         return root;
     }
 
-    public static GameObject MakeSnake(Transform parent, int lane, float z)
+    public static GameObject MakeSnake(Transform parent, int lane, float z, float spawnProgress)
     {
         GameObject root = new GameObject("Snake");
         root.transform.SetParent(parent, false);
         root.transform.position = Level1Ground.LanePosition(lane, z, 0.45f);
 
+        GameObject warningRoot = new GameObject("SnakeWarning");
+        warningRoot.transform.SetParent(root.transform, false);
+        warningRoot.transform.localPosition = new Vector3(0f, 2.35f, 7f);
+        Visual(PrimitiveType.Cube, warningRoot.transform, new Vector3(0f, 0.55f, 0f), new Vector3(1.5f, 1.1f, 0.18f), SnakeWarning, "Sign");
+        Visual(PrimitiveType.Cube, warningRoot.transform, new Vector3(0f, 0.55f, 0.12f), new Vector3(0.35f, 0.75f, 0.12f), SnakeWarningAccent, "Exclamation");
+        Visual(PrimitiveType.Cylinder, warningRoot.transform, new Vector3(0f, -0.15f, 0f), new Vector3(0.18f, 0.55f, 0.18f), SnakeWarningAccent, "Pole");
+        warningRoot.SetActive(false);
+
         GameObject body = new GameObject("Body");
         body.transform.SetParent(root.transform, false);
-        Visual(PrimitiveType.Capsule, body.transform, new Vector3(0f, 0.32f, 2.8f), new Vector3(0.62f, 0.62f, 1.25f), SnakeBodyDarkGreen, "Seg1");
-        Visual(PrimitiveType.Capsule, body.transform, new Vector3(0f, 0.32f, 1.2f), new Vector3(0.66f, 0.66f, 1.35f), SnakeBodyDarkGreen, "Seg2");
-        Visual(PrimitiveType.Capsule, body.transform, new Vector3(0f, 0.32f, -0.4f), new Vector3(0.68f, 0.68f, 1.4f), SnakeBodyDarkGreen, "Seg3");
-        Visual(PrimitiveType.Capsule, body.transform, new Vector3(0f, 0.32f, -2.0f), new Vector3(0.64f, 0.64f, 1.3f), SnakeBodyDarkGreen, "Seg4");
-        Visual(PrimitiveType.Capsule, body.transform, new Vector3(0f, 0.32f, -3.6f), new Vector3(0.6f, 0.6f, 1.25f), SnakeBodyDarkGreen, "Seg5");
-        body.SetActive(false);
+        float[] segZ = { -2.8f, -1.4f, 0f, 1.4f, 2.8f };
+        for (int i = 0; i < segZ.Length; i++)
+        {
+            Color segColor = i % 2 == 0 ? SnakeBodyGreen : SnakeBodyDarkGreen;
+            Visual(PrimitiveType.Cube, body.transform, new Vector3(0f, 0.38f, segZ[i]), new Vector3(0.72f, 0.52f, 1.05f), segColor, $"Seg_{i}");
+        }
 
         GameObject head = new GameObject("Head");
         head.transform.SetParent(root.transform, false);
-        Visual(PrimitiveType.Sphere, head.transform, new Vector3(0f, 0.48f, 4.2f), new Vector3(0.88f, 0.75f, 1.15f), SnakeHead, "Skull");
-        Visual(PrimitiveType.Capsule, head.transform, new Vector3(0f, 0.42f, 4.95f), new Vector3(0.12f, 0.12f, 0.55f), SnakeTongue, "TongueCenter");
-        Visual(PrimitiveType.Capsule, head.transform, new Vector3(-0.08f, 0.38f, 5.2f), new Vector3(0.1f, 0.1f, 0.35f), SnakeTongue, "TongueL");
-        Visual(PrimitiveType.Capsule, head.transform, new Vector3(0.08f, 0.38f, 5.2f), new Vector3(0.1f, 0.1f, 0.35f), SnakeTongue, "TongueR");
-        head.SetActive(false);
+        Visual(PrimitiveType.Cube, head.transform, new Vector3(0f, 0.48f, 4.1f), new Vector3(0.82f, 0.62f, 0.95f), SnakeHead, "HeadBox");
+        Visual(PrimitiveType.Cube, head.transform, new Vector3(0f, 0.52f, 4.65f), new Vector3(0.55f, 0.42f, 0.45f), SnakeHead, "Snout");
+
+        Transform tongueCenter = Visual(PrimitiveType.Cube, head.transform, new Vector3(0f, 0.46f, 5.05f), new Vector3(0.12f, 0.08f, 0.42f), SnakeTongue, "TongueCenter").transform;
+        Transform tongueLeft = Visual(PrimitiveType.Cube, head.transform, new Vector3(-0.1f, 0.42f, 5.25f), new Vector3(0.08f, 0.06f, 0.28f), SnakeTongue, "TongueL").transform;
+        Transform tongueRight = Visual(PrimitiveType.Cube, head.transform, new Vector3(0.1f, 0.42f, 5.25f), new Vector3(0.08f, 0.06f, 0.28f), SnakeTongue, "TongueR").transform;
 
         GameObject visualRoot = new GameObject("Visual");
         visualRoot.transform.SetParent(root.transform, false);
@@ -425,13 +533,16 @@ public static class Level1Primitives
         head.transform.SetParent(visualRoot.transform, true);
         visualRoot.SetActive(false);
 
+        Level1SnakeVisual anim = visualRoot.AddComponent<Level1SnakeVisual>();
+        anim.Bind(body.transform, head.transform, tongueCenter, tongueLeft, tongueRight);
+
         GameObject colliderGo = new GameObject("Collider");
         colliderGo.transform.SetParent(root.transform, false);
         TallTrigger(colliderGo, 1.5f, 6.5f);
 
         KinematicBody(root);
         Level1Snake snake = root.AddComponent<Level1Snake>();
-        snake.Setup(lane, visualRoot);
+        snake.Setup(lane, visualRoot, spawnProgress, warningRoot);
         return root;
     }
 

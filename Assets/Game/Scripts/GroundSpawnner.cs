@@ -18,7 +18,8 @@ public class GroundSpawnner : MonoBehaviour
     [SerializeField] private float spawnedTileScaleZ = 200f;
 
     [Header("Spawn Timing")]
-    [SerializeField] private float spawnInterval = 0.01f;
+    [SerializeField] private float spawnCheckInterval = 0.25f;
+    [SerializeField] private float lookAheadDistance = 280f;
     [SerializeField] private float destroyStartDelay = 120f;
     [SerializeField] private float destroyInterval = 3f;
 
@@ -78,8 +79,9 @@ public class GroundSpawnner : MonoBehaviour
             spawnX = seedTile.transform.position.x;
             spawnY = seedTile.transform.position.y;
             ApplyTileAppearance(seedTile);
-            tileLength = MeasureTileLength(seedTile);
-            nextSpawnZ = seedTile.transform.position.z + tileLength;
+            tileLength = GetTileLength(MeasureTileLength(seedTile));
+            float seedCenterZ = seedTile.transform.position.z;
+            nextSpawnZ = seedCenterZ + tileLength;
             spawnedTiles.Enqueue(seedTile);
         }
         else
@@ -153,6 +155,11 @@ public class GroundSpawnner : MonoBehaviour
         {
             spawnedTileScaleX = scale.x;
         }
+
+        if (scale.z > 0.01f)
+        {
+            spawnedTileScaleZ = scale.z;
+        }
     }
 
     bool ResolveSpawnTemplate()
@@ -218,11 +225,37 @@ public class GroundSpawnner : MonoBehaviour
         {
             if (RunStateManager.Instance == null || RunStateManager.Instance.IsPlaying)
             {
-                SpawnGround();
+                TrySpawnAheadOfPlayer();
             }
 
-            yield return new WaitForSeconds(spawnInterval);
+            yield return new WaitForSeconds(spawnCheckInterval);
         }
+    }
+
+    void TrySpawnAheadOfPlayer()
+    {
+        float playerZ = GetPlayerZ();
+        float frontEdge = GetTerrainFrontEdgeZ();
+
+        while (frontEdge < playerZ + lookAheadDistance)
+        {
+            SpawnGround();
+            frontEdge = GetTerrainFrontEdgeZ();
+        }
+    }
+
+    float GetTerrainFrontEdgeZ()
+    {
+        return nextSpawnZ - tileLength * 0.5f;
+    }
+
+    float GetPlayerZ()
+    {
+        PlayerController pc = FindFirstObjectByType<PlayerController>();
+        if (pc != null) return pc.transform.position.z;
+
+        GameObject player = GameObject.Find("Player");
+        return player != null ? player.transform.position.z : nextSpawnZ;
     }
 
     IEnumerator DestroyLoop()
@@ -263,7 +296,7 @@ public class GroundSpawnner : MonoBehaviour
         GameObject newGround = Instantiate(spawnTemplate, spawnPosition, spawnTemplate.transform.rotation);
         newGround.name = "Ground_" + Mathf.RoundToInt(nextSpawnZ);
         ApplyTileAppearance(newGround);
-        tileLength = MeasureTileLength(newGround);
+        tileLength = GetTileLength(MeasureTileLength(newGround));
         nextSpawnZ += tileLength;
         spawnedTiles.Enqueue(newGround);
 
@@ -297,6 +330,16 @@ public class GroundSpawnner : MonoBehaviour
         {
             float z = rend.bounds.size.z;
             if (z > 0.01f) return z;
+        }
+
+        return spawnedTileScaleZ;
+    }
+
+    float GetTileLength(float measured)
+    {
+        if (measured > 0.01f)
+        {
+            return measured;
         }
 
         return spawnedTileScaleZ;

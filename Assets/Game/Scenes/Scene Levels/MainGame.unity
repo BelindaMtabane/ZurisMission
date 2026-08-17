@@ -1110,7 +1110,7 @@ Transform:
   m_GameObject: {fileID: 214562866}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.44, y: -1, z: 1016}
+  m_LocalPosition: {x: 3.44, y: 4.2, z: 1016}
   m_LocalScale: {x: 68.6, y: 7.4, z: 0.3632832}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1338,7 +1338,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Village Progress : 0%'
+  m_text: 'Village Progress : 34%'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -5114,7 +5114,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: MaterialLVL
+  m_text: 'Material: 0/100'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -8155,14 +8155,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 430c20754ddf64d48b93a9d2719dd216, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  maxHealth: 100
+  maxBucketWater: 100
+  maxPlayerWater: 100
+  maxMaterial: 100
+  waterIncreaseRate: 50
+  villageProgressPercent: 33.5
   material: {fileID: 874437518}
   villageProgressText: {fileID: 234030179}
-  waterIncreaseRate: 50
-  bucket: 0
-  materialLevel: 0
-  healthbar: {fileID: 1614830562}
-  bucketbar: {fileID: 945430910}
-  playerWaterLevelBar: {fileID: 1125885372}
+  healthText: {fileID: 1662173219}
+  bucketWaterText: {fileID: 1844503056}
+  playerWaterText: {fileID: 1866933661}
+  healthbar: {fileID: 0}
+  bucketbar: {fileID: 0}
+  playerWaterLevelBar: {fileID: 0}
 --- !u!4 &1447030426
 Transform:
   m_ObjectHideFlags: 0
@@ -9848,7 +9854,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: HealthLVL
+  m_text: 'Health : 100/100'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -10872,7 +10878,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: BucketLVL
+  m_text: 'Bucket : 0/100'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -11139,7 +11145,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: WaterLVL
+  m_text: 'Water : 100/100'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -11373,7 +11379,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e67c023f0c46ff444844f98da4f86ea0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  groundTilePrefab: {fileID: 8747392018473629101, guid: f8c4e2a91b3d4c5e9f807162534aabb1, type: 3}
   groundPrefabTrigger: {fileID: 1792437609}
+  groundSurfaceMaterial: {fileID: 2100000, guid: de2f75f6bbeac9d41a0209eb8d11917a, type: 2}
   spawnObjects: {fileID: 1036200613}
 --- !u!114 &1875673038
 MonoBehaviour:

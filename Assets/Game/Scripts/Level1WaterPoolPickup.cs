@@ -3,7 +3,7 @@ using UnityEngine;
 public class Level1WaterPoolPickup : MonoBehaviour
 {
     [SerializeField] private float bucketAmount = 20f;
-    [SerializeField] private float playerWaterAmount = 10f;
+    [SerializeField] private float playerWaterAmount = 0f;
 
     bool collected;
 
