@@ -1,45 +1,304 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GroundSpawnner : MonoBehaviour
 {
-    public GameObject groundPrefabTrigger;
+    [Header("Ground")]
+    [SerializeField] private GameObject groundTilePrefab;
+    [SerializeField] private GameObject groundPrefabTrigger;
+    [SerializeField] private Material groundSurfaceMaterial;
+
     public SpawnObjects spawnObjects;
+
+    [Header("Tile Size (world units via scale)")]
+    [SerializeField] private float spawnedTileScaleX = 50.837f;
+    [SerializeField] private float spawnedTileScaleY = 1f;
+    [SerializeField] private float spawnedTileScaleZ = 200f;
+
+    [Header("Spawn Timing")]
+    [SerializeField] private float spawnInterval = 0.01f;
+    [SerializeField] private float destroyStartDelay = 120f;
+    [SerializeField] private float destroyInterval = 3f;
+
+    readonly Queue<GameObject> spawnedTiles = new Queue<GameObject>();
+    GameObject spawnTemplate;
+    GameObject seedTile;
+    float tileLength;
+    float nextSpawnZ;
+    float spawnX;
+    float spawnY;
+    bool timerMode;
+
+    public void EnsureGroundLinked()
+    {
+        ResolveSpawnTemplate();
+        ResolveGroundMaterial();
+        RefreshVisibleGroundTiles();
+    }
+
+    void Awake()
+    {
+        ResolveSpawnTemplate();
+    }
 
     void Start()
     {
-        // Assign the Spawn objects script to the variable
-        
-        spawnObjects = Object.FindFirstObjectByType<SpawnObjects>(); // Updated to use the recommended method
         if (spawnObjects == null)
         {
-            Debug.LogError("SpawnObjects script NOT found in scene!");
+            spawnObjects = FindFirstObjectByType<SpawnObjects>();
+        }
+
+        timerMode = SceneManager.GetActiveScene().name == "MainGame";
+
+        if (!ResolveSpawnTemplate())
+        {
+            Debug.LogError("[GroundSpawnner] No ground tile prefab or scene Ground found.");
+            return;
+        }
+
+        if (seedTile == null)
+        {
+            seedTile = FindSceneGround();
+        }
+
+        if (groundSurfaceMaterial == null && seedTile != null)
+        {
+            Renderer seedRenderer = seedTile.GetComponent<Renderer>();
+            if (seedRenderer != null && seedRenderer.sharedMaterial != null)
+            {
+                groundSurfaceMaterial = seedRenderer.sharedMaterial;
+            }
+        }
+
+        if (seedTile != null)
+        {
+            CaptureTileDimensionsFromSeed(seedTile);
+            spawnX = seedTile.transform.position.x;
+            spawnY = seedTile.transform.position.y;
+            ApplyTileAppearance(seedTile);
+            tileLength = MeasureTileLength(seedTile);
+            nextSpawnZ = seedTile.transform.position.z + tileLength;
+            spawnedTiles.Enqueue(seedTile);
+        }
+        else
+        {
+            spawnX = transform.position.x;
+            spawnY = transform.position.y;
+            nextSpawnZ = transform.position.z;
+            tileLength = spawnedTileScaleZ;
+        }
+
+        if (timerMode)
+        {
+            RefreshVisibleGroundTiles();
+            StartCoroutine(SpawnLoop());
+            StartCoroutine(DestroyLoop());
+            Debug.Log($"[GroundSpawnner] Tile size X={spawnedTileScaleX} Y={spawnedTileScaleY} Z={spawnedTileScaleZ}; despawn after {destroyStartDelay}s.");
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    void ResolveGroundMaterial()
     {
+        if (groundSurfaceMaterial != null) return;
+
+        if (spawnTemplate != null)
+        {
+            Renderer templateRenderer = spawnTemplate.GetComponent<Renderer>();
+            if (templateRenderer != null && templateRenderer.sharedMaterial != null)
+            {
+                groundSurfaceMaterial = templateRenderer.sharedMaterial;
+                return;
+            }
+        }
+
+        if (seedTile != null)
+        {
+            Renderer seedRenderer = seedTile.GetComponent<Renderer>();
+            if (seedRenderer != null && seedRenderer.sharedMaterial != null)
+            {
+                groundSurfaceMaterial = seedRenderer.sharedMaterial;
+            }
+        }
+    }
+
+    void RefreshVisibleGroundTiles()
+    {
+        GameObject[] tagged = GameObject.FindGameObjectsWithTag("Ground");
+        for (int i = 0; i < tagged.Length; i++)
+        {
+            ApplyTileAppearance(tagged[i]);
+        }
+
+        GameObject sceneGround = GameObject.Find("Ground");
+        if (sceneGround != null)
+        {
+            ApplyTileAppearance(sceneGround);
+        }
+
+        foreach (GameObject tile in spawnedTiles)
+        {
+            if (tile != null)
+            {
+                ApplyTileAppearance(tile);
+            }
+        }
+    }
+
+    void CaptureTileDimensionsFromSeed(GameObject seed)
+    {
+        Vector3 scale = seed.transform.localScale;
+        if (scale.x > 0.01f)
+        {
+            spawnedTileScaleX = scale.x;
+        }
+    }
+
+    bool ResolveSpawnTemplate()
+    {
+        if (groundTilePrefab != null)
+        {
+            spawnTemplate = groundTilePrefab;
+            return true;
+        }
+
+        if (groundPrefabTrigger != null)
+        {
+            if (IsSceneInstance(groundPrefabTrigger))
+            {
+                seedTile = groundPrefabTrigger;
+            }
+
+            spawnTemplate = groundPrefabTrigger;
+            return true;
+        }
+
+        GameObject sceneGround = FindSceneGround();
+        if (sceneGround == null)
+        {
+            return false;
+        }
+
+        seedTile = sceneGround;
+        groundPrefabTrigger = sceneGround;
+        spawnTemplate = sceneGround;
+        Debug.Log("[GroundSpawnner] Auto-linked scene Ground as spawn template.");
+        return true;
+    }
+
+    static bool IsSceneInstance(GameObject go)
+    {
+        return go != null && go.scene.IsValid();
+    }
+
+    static GameObject FindSceneGround()
+    {
+        GameObject tagged = GameObject.FindGameObjectWithTag("Ground");
+        if (tagged != null)
+        {
+            return tagged;
+        }
+
+        return GameObject.Find("Ground");
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (timerMode) return;
         if (other.CompareTag("Trigger"))
         {
             SpawnGround();
         }
     }
+
+    IEnumerator SpawnLoop()
+    {
+        while (true)
+        {
+            if (RunStateManager.Instance == null || RunStateManager.Instance.IsPlaying)
+            {
+                SpawnGround();
+            }
+
+            yield return new WaitForSeconds(spawnInterval);
+        }
+    }
+
+    IEnumerator DestroyLoop()
+    {
+        yield return new WaitForSeconds(destroyStartDelay);
+        while (true)
+        {
+            if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying)
+            {
+                yield return null;
+                continue;
+            }
+
+            if (spawnedTiles.Count > 1)
+            {
+                GameObject oldest = spawnedTiles.Dequeue();
+                if (oldest != null && oldest != seedTile)
+                {
+                    Debug.Log("[GroundSpawnner] Destroying old tile " + oldest.name);
+                    Destroy(oldest);
+                }
+            }
+
+            yield return new WaitForSeconds(destroyInterval);
+        }
+    }
+
     void SpawnGround()
     {
-        // Instantiate a new ground piece at the desired position
-        Vector3 spawnPosition = new Vector3(0f ,0f, transform.position.z + 71); // Adjust the spawn position as needed
-        GameObject newGround = Instantiate(groundPrefabTrigger, spawnPosition, Quaternion.identity);
-
-        // Spawn the objects on the new grounds
-        if (spawnObjects != null)
-            spawnObjects.SpawnGameObjects(newGround);
-
-        if (groundPrefabTrigger == null)
+        if (spawnTemplate == null && !ResolveSpawnTemplate())
         {
-            Debug.LogError("Ground Prefab is NOT assigned!");
+            Debug.LogError("[GroundSpawnner] Ground prefab is NOT assigned!");
             return;
         }
 
-        // Destroy the ground after 10 seconds each
-        Destroy(newGround, 50f);
+        Vector3 spawnPosition = new Vector3(spawnX, spawnY, nextSpawnZ);
+
+        GameObject newGround = Instantiate(spawnTemplate, spawnPosition, spawnTemplate.transform.rotation);
+        newGround.name = "Ground_" + Mathf.RoundToInt(nextSpawnZ);
+        ApplyTileAppearance(newGround);
+        tileLength = MeasureTileLength(newGround);
+        nextSpawnZ += tileLength;
+        spawnedTiles.Enqueue(newGround);
+
+        if (spawnObjects != null)
+        {
+            spawnObjects.SpawnGameObjects(newGround);
+        }
+
+        Debug.Log("[GroundSpawnner] Spawned tile at " + spawnPosition + " size=(" + spawnedTileScaleX + "," + spawnedTileScaleY + "," + spawnedTileScaleZ + ") length=" + tileLength);
+    }
+
+    void ApplyTileAppearance(GameObject tile)
+    {
+        if (tile == null) return;
+        Vector3 scale = new Vector3(spawnedTileScaleX, spawnedTileScaleY, spawnedTileScaleZ);
+        tile.transform.localScale = scale;
+        Level1Ground.ApplyGroundSurface(tile, groundSurfaceMaterial, scale);
+    }
+
+    float MeasureTileLength(GameObject tile)
+    {
+        Collider col = tile.GetComponent<Collider>();
+        if (col != null)
+        {
+            float z = col.bounds.size.z;
+            if (z > 0.01f) return z;
+        }
+
+        Renderer rend = tile.GetComponent<Renderer>();
+        if (rend != null)
+        {
+            float z = rend.bounds.size.z;
+            if (z > 0.01f) return z;
+        }
+
+        return spawnedTileScaleZ;
     }
 }
