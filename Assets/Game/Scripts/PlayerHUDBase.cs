@@ -32,7 +32,26 @@ public class PlayerHUDBase : MonoBehaviour
             || other.GetComponentInParent<Level1MaterialPickup>() != null
             || other.GetComponentInParent<Level1SuperFruitPickup>() != null
             || other.GetComponentInParent<Level1AloePickup>() != null
-            || other.GetComponentInParent<Level1Snake>() != null)
+            || other.GetComponentInParent<Level1Snake>() != null
+            || other.GetComponentInParent<Level2Obstacle>() != null
+            || other.GetComponentInParent<Level2WaterDropletPickup>() != null
+            || other.GetComponentInParent<Level2BaobabPickup>() != null
+            || other.GetComponentInParent<Level2MaterialPickup>() != null
+            || other.GetComponentInParent<Level2BubbleShieldPickup>() != null
+            || other.GetComponentInParent<Level2SpeedFruitPickup>() != null
+            || other.GetComponentInParent<Level2JumpBoostPickup>() != null
+            || other.GetComponentInParent<Level2PoisonPlant>() != null
+            || other.GetComponentInParent<Level2MudMonster>() != null
+            || other.GetComponentInParent<Level2MudBall>() != null
+            || other.GetComponentInParent<Level3Obstacle>() != null
+            || other.GetComponentInParent<Level3MaterialPickup>() != null
+            || other.GetComponentInParent<Level3BucketPickup>() != null
+            || other.GetComponentInParent<Level3HealthPickup>() != null
+            || other.GetComponentInParent<Level3LeafPickup>() != null
+            || other.GetComponentInParent<Level3HorizontalEnemy>() != null
+            || other.GetComponentInParent<Level3AcidRainZone>() != null
+            || other.GetComponentInParent<Level3RepairPoint>() != null
+            || other.GetComponentInParent<Level3BossRepairPoint>() != null)
         {
             return;
         }
@@ -92,6 +111,10 @@ public class PlayerHUDBase : MonoBehaviour
             hudControls.LevelProgress();
         }
         if (other.CompareTag("EndLevel2"))
+        {
+            hudControls.LevelProgress();
+        }
+        if (other.CompareTag("EndLvl3End"))
         {
             hudControls.LevelProgress();
         }

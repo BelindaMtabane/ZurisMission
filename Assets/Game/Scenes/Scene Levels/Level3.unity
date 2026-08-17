@@ -27565,8 +27565,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e67c023f0c46ff444844f98da4f86ea0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  groundTilePrefab: {fileID: 8747392018473629101, guid: f8c4e2a91b3d4c5e9f807162534aabb1, type: 3}
   groundPrefabTrigger: {fileID: 1792437609}
+  groundSurfaceMaterial: {fileID: 2100000, guid: b96fbdc3486acfe469f6409b76ca8a4f, type: 2}
   spawnObjects: {fileID: 1036200613}
+  spawnedTileScaleX: 50.837
+  spawnedTileScaleY: 1
+  spawnedTileScaleZ: 200
+  spawnCheckInterval: 0.25
+  lookAheadDistance: 280
+  destroyStartDelay: 120
+  destroyInterval: 3
 --- !u!114 &1875673039
 MonoBehaviour:
   m_ObjectHideFlags: 0

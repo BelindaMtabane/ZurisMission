@@ -13,6 +13,20 @@ public class Level1RollingLogDirector : MonoBehaviour
 
     Transform player;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void Register()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name != "MainGame") return;
+        if (FindFirstObjectByType<Level1RollingLogDirector>() != null) return;
+        new GameObject("Level1RollingLogDirector").AddComponent<Level1RollingLogDirector>();
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Boot()
     {

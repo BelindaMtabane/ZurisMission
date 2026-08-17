@@ -2,6 +2,15 @@ using UnityEngine;
 
 public class PlayerMovementOG : MonoBehaviour
 {
+    void Awake()
+    {
+        if (GetComponent<PlayerController>() != null || FindFirstObjectByType<PlayerController>() != null)
+        {
+            enabled = false;
+            Debug.Log("[PlayerMovementOG] Disabled because PlayerController is active.");
+        }
+    }
+
     //Create variables
     public float playerSpeed = 25f;
 

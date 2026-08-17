@@ -23,6 +23,9 @@ public class Lanemanager2 : MonoBehaviour
     {
         if (hudControls == null)
             hudControls = FindFirstObjectByType<HUDControls>();
+
+        if (!enabled) return;
+
         LevelDifficulty();
         StartCoroutine(SpawnObstacleEvery5Seconds());
     }
@@ -32,29 +35,28 @@ public class Lanemanager2 : MonoBehaviour
         while (true)
         {
             yield return new WaitForSeconds(5f);
+            if (!enabled) yield break;
+
+            if (laneSpawnsPositions == null || laneSpawnsPositions.Length == 0) continue;
+
             int randomLane = Random.Range(0, laneSpawnsPositions.Length);
             SpawnObstacle(randomLane);
             Debug.Log("Auto spawned obstacle in lane " + randomLane);
-            //Decrease the water levels
-            hudControls.WaterMoveManager();
+
+            if (hudControls == null) hudControls = FindFirstObjectByType<HUDControls>();
+            hudControls?.WaterMoveManager();
         }
     }
     void LevelDifficulty()
     {
-        
-            currentObstacleSet = mediumObstacles;
+        currentObstacleSet = mediumObstacles;
 
-            //Make sure 3 buttons are visible in tthe scene
-            button1.gameObject.SetActive(true);
-            button2.gameObject.SetActive(true);
-            button3.gameObject.SetActive(true);
+        if (button1 != null) button1.gameObject.SetActive(true);
+        if (button2 != null) button2.gameObject.SetActive(true);
+        if (button3 != null) button3.gameObject.SetActive(true);
+        if (button4 != null) button4.gameObject.SetActive(false);
 
-            //Hidwe the remaining buttons to deduce the difficulty
-            button4.gameObject.SetActive(false);
-
-            Debug.Log("Level 2 Loaded");
-        
-        
+        Debug.Log("Level 2 Loaded");
     }
 
     public void SpawnObstacle(int laneIndex)

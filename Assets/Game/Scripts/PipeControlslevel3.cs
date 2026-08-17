@@ -22,6 +22,7 @@ public class PipeControlslevel3 : MonoBehaviour
     //Player variables
     private float health = 100f;
     PlayerMovementOG playerMovement;
+    PlayerController playerController;
     bool isDead = false;
     private float healthIncreaseRate;
     private float tankIncreaseRate;
@@ -46,7 +47,9 @@ public class PipeControlslevel3 : MonoBehaviour
     {
         // Assign the playerscript to the variable3
         if (playerMovement == null)
-            playerMovement = FindFirstObjectByType<PlayerMovementOG>(); // Updated to use the recommended method
+            playerMovement = FindFirstObjectByType<PlayerMovementOG>();
+        if (playerController == null)
+            playerController = FindFirstObjectByType<PlayerController>();
 
         VillageProgress();
     }
@@ -69,16 +72,16 @@ public class PipeControlslevel3 : MonoBehaviour
     //all good ++
     public void SpeedControls(float playerMove)
     {
-        //Based on the parameter attach it to the player speed
+        if (playerController != null)
+        {
+            playerController.ApplySpeedModifier(playerMove, 5f);
+            Debug.Log("Player speed set to " + playerController.CurrentSpeed);
+            return;
+        }
+
+        if (playerMovement == null) return;
         playerMovement.playerSpeed = playerMove;
-        //After 5 seconds set the player speed back to normal
-        float timer = 5f;
-        timer -= Time.deltaTime;
-
-        if (timer <= 0f)
-            playerMovement.playerSpeed = 20f;
         Debug.Log("Player speed set to " + playerMovement.playerSpeed);
-
     }
     // all good ++
     public void HealthDecreaseManager()

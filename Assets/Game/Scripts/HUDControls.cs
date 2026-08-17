@@ -138,8 +138,42 @@ public class HUDControls : MonoBehaviour
     {
         materialLevel = Mathf.Clamp(materialLevel + amount, 0, maxMaterial);
         MarkDirty();
-        Debug.Log("[Level1] Material collected");
-        Debug.Log("[Level1] Material +10");
+        Debug.Log("[HUDControls] Material collected");
+    }
+
+    public void CollectLevel2WaterDroplet(float playerAmount = 15f, float bucketAmount = 15f)
+    {
+        playerWater = Mathf.Min(maxPlayerWater, playerWater + playerAmount);
+        waterLevel = Mathf.Min(maxBucketWater, waterLevel + bucketAmount);
+
+        MarkDirty();
+        Level2FeedbackUI.Show($"+{playerAmount:0} WATER", new Color(0.35f, 0.85f, 1f));
+    }
+
+    public void CollectLevel2WaterPool(float playerAmount = 15f, float bucketAmount = 15f)
+    {
+        CollectLevel2WaterDroplet(playerAmount, bucketAmount);
+    }
+
+    public void CollectBaobabWater(float amount = 20f)
+    {
+        playerWater = Mathf.Min(maxPlayerWater, playerWater + amount);
+        MarkDirty();
+        Level2FeedbackUI.Show($"+{amount:0} BAOBAB WATER", new Color(0.45f, 0.92f, 0.55f));
+    }
+
+    public void CollectLevel2Material(Level2MaterialKind kind, int amount = 10)
+    {
+        materialLevel = Mathf.Clamp(materialLevel + amount, 0, maxMaterial);
+        MarkDirty();
+        Level2FeedbackUI.Show($"+{amount} {kind.ToString().ToUpper()}", new Color(0.85f, 0.72f, 0.35f));
+    }
+
+    public void CollectLevel2SpeedFruit(float bucketCost = 5f)
+    {
+        waterLevel = Mathf.Clamp(waterLevel - Mathf.Abs(bucketCost), 0f, maxBucketWater);
+        MarkDirty();
+        Level2FeedbackUI.Show("SPEED!", new Color(1f, 0.45f, 0.12f), 1.3f);
     }
 
     public void ChangePlayerWater(float delta, string reason = null)
@@ -198,10 +232,20 @@ public class HUDControls : MonoBehaviour
         playerController = FindFirstObjectByType<PlayerController>();
 
         health = maxHealth;
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
         playerWater = maxPlayerWater;
-        waterLevel = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainGame"
-            ? mainGameStartingBucket
-            : 0f;
+        if (sceneName == "MainGame")
+        {
+            waterLevel = mainGameStartingBucket;
+        }
+        else if (sceneName == "Level3")
+        {
+            waterLevel = 25f;
+        }
+        else
+        {
+            waterLevel = 0f;
+        }
         materialLevel = 0;
         villageProgressPercent = 0f;
 
@@ -453,8 +497,42 @@ public class HUDControls : MonoBehaviour
         }
     }
 
+    public void CollectLevel3Material(string kind, int amount = 10)
+    {
+        materialLevel = Mathf.Clamp(materialLevel + amount, 0, maxMaterial);
+        MarkDirty();
+        Level3FeedbackUI.Show($"+{amount} {kind.ToUpper()}", new Color(0.85f, 0.72f, 0.35f));
+    }
+
+    public void CollectLevel3Bucket(float amount = 15f)
+    {
+        waterLevel = Mathf.Min(maxBucketWater, waterLevel + amount);
+        MarkDirty();
+        Level3FeedbackUI.Show($"+{amount:0} BUCKET", new Color(0.25f, 0.7f, 1f));
+    }
+
+    public void CollectLevel3Health(float amount = 15f)
+    {
+        health = Mathf.Min(maxHealth, health + amount);
+        MarkDirty();
+        Level3FeedbackUI.Show($"+{amount:0} HEALTH", new Color(0.35f, 0.95f, 0.45f));
+    }
+
     public void LevelProgress()
     {
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Level3")
+        {
+            if (Level3PipeRepair.AllTanksRepaired && Level3BossDirector.BossDefeated)
+            {
+                RunStateManager.Instance?.NotifyVictory();
+                Debug.Log("[HUDControls] Level3 complete");
+                return;
+            }
+
+            Lose("Repair all three tanks and restore the water system.");
+            return;
+        }
+
         if (health <= 0f)
         {
             Lose("Your health reached 0.");

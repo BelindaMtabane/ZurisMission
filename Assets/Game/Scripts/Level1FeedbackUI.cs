@@ -15,6 +15,21 @@ public class Level1FeedbackUI : MonoBehaviour
     Image toastBackground;
     Coroutine hideRoutine;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void Register()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name != "MainGame") return;
+        if (instance != null) return;
+        GameObject host = new GameObject("Level1FeedbackUI");
+        instance = host.AddComponent<Level1FeedbackUI>();
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Boot()
     {

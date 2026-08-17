@@ -16,10 +16,27 @@ public class Level1LayoutDirector : MonoBehaviour
         Level1MaterialKind.CementBag
     };
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void Register()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        BootScene(scene.name);
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Boot()
     {
-        if (SceneManager.GetActiveScene().name != "MainGame") return;
+        BootScene(SceneManager.GetActiveScene().name);
+    }
+
+    static void BootScene(string sceneName)
+    {
+        if (sceneName != "MainGame") return;
         if (FindFirstObjectByType<Level1LayoutDirector>() != null) return;
 
         GameObject host = new GameObject("Level1LayoutDirector");
@@ -38,7 +55,14 @@ public class Level1LayoutDirector : MonoBehaviour
         Level1Progress.BindFromScene(player);
         Level1Pacing.Apply();
         ClearExistingGameplay(player);
-        BuildLayout();
+        try
+        {
+            BuildLayout();
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogException(ex);
+        }
         EnsureHeatWave(player);
         Debug.Log($"[Level1] Layout ready startZ={Level1Progress.StartZ:F1} endZ={Level1Progress.EndZ:F1}");
     }

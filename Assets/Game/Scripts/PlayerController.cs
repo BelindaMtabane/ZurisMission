@@ -78,10 +78,19 @@ public class PlayerController : MonoBehaviour
     private InputAction laneRightAction;
     private readonly System.Collections.Generic.List<InputAction> localActions = new System.Collections.Generic.List<InputAction>();
 
+    private bool inputLocked;
+    private float speedFruitMultiplier = 1f;
+    private float speedFruitTimer;
+    private float mudSlowMultiplier = 1f;
+    private float mudSlowTimer;
+    private float jumpBoostMultiplier = 1f;
+    private float jumpBoostTimer;
+
     public float CurrentSpeed => currentSpeed;
     public bool IsGrounded => isGrounded;
     public bool IsSliding => isSliding;
     public bool IsGrappling => isGrappling;
+    public bool IsInputLocked => inputLocked;
     public float Stamina => stamina;
     public float MaxStamina => maxStamina;
     public int CurrentLane => currentLane;
@@ -121,24 +130,36 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         currentLane = Mathf.Clamp(startingLane, 0, lanePositions.Length - 1);
-        currentSpeed = baseSpeed;
         stamina = maxStamina;
+        LevelLanes.ConfigureForActiveScene();
         EnsureFourLanes();
         SnapLaneImmediately();
 
-        Debug.Log($"[PlayerController] Ready lanes={lanePositions.Length} speed={baseSpeed}");
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (RunnerLevelPacing.SupportsScene(sceneName))
+        {
+            RunnerLevelPacing.Apply(sceneName);
+        }
+        else
+        {
+            currentSpeed = baseSpeed;
+        }
+
+        Debug.Log($"[PlayerController] Ready lanes={lanePositions.Length} speed={currentSpeed}");
     }
 
     void Update()
     {
         if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
         if (isGrappling) return;
+        if (inputLocked) return;
 
         CheckGrounded();
         UpdateCoyoteAndBuffer();
         HandleLaneInput();
         HandleJumpInput();
         TickStamina(Time.deltaTime);
+        TickRuntimeModifiers(Time.deltaTime);
     }
 
     void FixedUpdate()
@@ -288,7 +309,7 @@ public class PlayerController : MonoBehaviour
         if (!canJump) return;
 
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-        rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        rb.AddForce(Vector3.up * (jumpForce * jumpBoostMultiplier), ForceMode.Impulse);
         isGrounded = false;
         coyoteCounter = 0f;
         jumpBufferCounter = 0f;
@@ -534,12 +555,97 @@ public class PlayerController : MonoBehaviour
         speedModRoutine = StartCoroutine(SpeedModifierRoutine(newSpeed, duration));
     }
 
+    public void ConfigureForwardSpeed(float speed)
+    {
+        baseSpeed = Mathf.Max(0.1f, speed);
+        RefreshRuntimeSpeed();
+    }
+
+    public void SetInputLocked(bool locked)
+    {
+        inputLocked = locked;
+    }
+
+    public void ApplySpeedFruit(float multiplier, float duration)
+    {
+        if (speedModRoutine != null)
+        {
+            StopCoroutine(speedModRoutine);
+            speedModRoutine = null;
+        }
+
+        speedFruitMultiplier = Mathf.Max(1f, multiplier);
+        speedFruitTimer = Mathf.Max(0.1f, duration);
+        RefreshRuntimeSpeed();
+    }
+
+    public void ApplyMudSlow(float multiplier, float duration)
+    {
+        mudSlowMultiplier = Mathf.Clamp(multiplier, 0.2f, 1f);
+        mudSlowTimer = Mathf.Max(0.1f, duration);
+        RefreshRuntimeSpeed();
+    }
+
+    public void ApplyJumpBoost(float multiplier, float duration)
+    {
+        jumpBoostMultiplier = Mathf.Max(1f, multiplier);
+        jumpBoostTimer = Mathf.Max(0.1f, duration);
+    }
+
+    void TickRuntimeModifiers(float dt)
+    {
+        bool speedDirty = false;
+
+        if (speedFruitTimer > 0f)
+        {
+            speedFruitTimer -= dt;
+            if (speedFruitTimer <= 0f)
+            {
+                speedFruitTimer = 0f;
+                speedFruitMultiplier = 1f;
+                speedDirty = true;
+            }
+        }
+
+        if (mudSlowTimer > 0f)
+        {
+            mudSlowTimer -= dt;
+            if (mudSlowTimer <= 0f)
+            {
+                mudSlowTimer = 0f;
+                mudSlowMultiplier = 1f;
+                speedDirty = true;
+            }
+        }
+
+        if (jumpBoostTimer > 0f)
+        {
+            jumpBoostTimer -= dt;
+            if (jumpBoostTimer <= 0f)
+            {
+                jumpBoostTimer = 0f;
+                jumpBoostMultiplier = 1f;
+            }
+        }
+
+        if (speedDirty)
+        {
+            RefreshRuntimeSpeed();
+        }
+    }
+
+    void RefreshRuntimeSpeed()
+    {
+        if (speedModRoutine != null) return;
+        currentSpeed = baseSpeed * speedFruitMultiplier * mudSlowMultiplier;
+    }
+
     IEnumerator SpeedModifierRoutine(float newSpeed, float duration)
     {
         currentSpeed = newSpeed;
         yield return new WaitForSeconds(duration);
-        currentSpeed = baseSpeed;
         speedModRoutine = null;
+        RefreshRuntimeSpeed();
     }
 
     void SeedTemporaryGrappleTargets()

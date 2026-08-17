@@ -32,6 +32,11 @@ public class GroundSpawnner : MonoBehaviour
     float spawnY;
     bool timerMode;
 
+    public static bool UsesStreamingTiles(string sceneName)
+    {
+        return sceneName == "MainGame" || sceneName == "Level2" || sceneName == "Level3";
+    }
+
     public void EnsureGroundLinked()
     {
         ResolveSpawnTemplate();
@@ -51,7 +56,7 @@ public class GroundSpawnner : MonoBehaviour
             spawnObjects = FindFirstObjectByType<SpawnObjects>();
         }
 
-        timerMode = SceneManager.GetActiveScene().name == "MainGame";
+        timerMode = UsesStreamingTiles(SceneManager.GetActiveScene().name);
 
         if (!ResolveSpawnTemplate())
         {
@@ -313,7 +318,31 @@ public class GroundSpawnner : MonoBehaviour
         if (tile == null) return;
         Vector3 scale = new Vector3(spawnedTileScaleX, spawnedTileScaleY, spawnedTileScaleZ);
         tile.transform.localScale = scale;
-        Level1Ground.ApplyGroundSurface(tile, groundSurfaceMaterial, scale);
+
+        if (SceneManager.GetActiveScene().name == "MainGame")
+        {
+            Level1Ground.ApplyGroundSurface(tile, groundSurfaceMaterial, scale);
+            return;
+        }
+
+        if (SceneManager.GetActiveScene().name == "Level2")
+        {
+            Level2Ground.ApplyGroundSurface(tile, groundSurfaceMaterial, scale);
+            return;
+        }
+
+        ApplySceneGroundMaterial(tile);
+    }
+
+    void ApplySceneGroundMaterial(GameObject tile)
+    {
+        if (groundSurfaceMaterial == null) return;
+
+        Renderer renderer = tile.GetComponent<Renderer>();
+        if (renderer != null)
+        {
+            renderer.sharedMaterial = groundSurfaceMaterial;
+        }
     }
 
     float MeasureTileLength(GameObject tile)

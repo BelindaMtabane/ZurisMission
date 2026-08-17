@@ -3,53 +3,71 @@ using UnityEngine.SceneManagement;
 
 public class PauseMenu : MonoBehaviour
 {
-    //Create variables
     public GameObject pauseMenuUI;
 
-    //Set methods for buttons
     public void Pause()
     {
-        //Display menu
-        pauseMenuUI.SetActive(true);
-        //Stop time
+        if (RunStateManager.Instance != null)
+        {
+            RunStateManager.Instance.Pause();
+            return;
+        }
+
+        if (pauseMenuUI != null) pauseMenuUI.SetActive(true);
         Time.timeScale = 0f;
     }
+
     public void Resume()
     {
-        //Hide menu
-        pauseMenuUI.SetActive(false);
-        //Resume time
+        if (RunStateManager.Instance != null)
+        {
+            RunStateManager.Instance.Resume();
+            return;
+        }
+
+        if (pauseMenuUI != null) pauseMenuUI.SetActive(false);
         Time.timeScale = 1f;
     }
+
     public void MainMenu()
     {
-        //Return to main menu
+        if (RunStateManager.Instance != null)
+        {
+            RunStateManager.Instance.GoToMainMenu();
+            return;
+        }
+
         Time.timeScale = 1f;
         SceneManager.LoadScene("StartScreen");
     }
+
     public void Restart()
     {
-        //Restart the game
+        if (RunStateManager.Instance != null)
+        {
+            RunStateManager.Instance.RestartRun();
+            return;
+        }
+
         Time.timeScale = 1f;
-        SceneManager.LoadScene("MainGame");
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
+
     public void HUDInfor()
     {
-        //Display HUD info
         Time.timeScale = 1f;
         SceneManager.LoadScene("StarterInfor");
     }
+
     public void Level2()
     {
-        //Go to level 2
         Time.timeScale = 1f;
         SceneManager.LoadScene("Level2");
     }
+
     public void Level3()
     {
-        //Go to level 3
         Time.timeScale = 1f;
         SceneManager.LoadScene("Level3");
     }
-
 }

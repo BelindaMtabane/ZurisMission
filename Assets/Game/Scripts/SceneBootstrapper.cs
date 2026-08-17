@@ -54,6 +54,7 @@ public class SceneBootstrapper : MonoBehaviour
         EnsureHudControls(sceneName);
         EnsurePlayerHudBase(playerController);
         EnsureGroundSpawner(sceneName);
+        EnsureLevelSystems(sceneName);
 
         Debug.Log($"[SceneBootstrapper] Phase 2 player ready in '{sceneName}' groundedCheck={playerController != null}.");
     }
@@ -133,15 +134,65 @@ public class SceneBootstrapper : MonoBehaviour
 
     void EnsureGroundSpawner(string sceneName)
     {
-        if (sceneName != "MainGame") return;
+        if (!GroundSpawnner.UsesStreamingTiles(sceneName)) return;
 
         GroundSpawnner spawner = FindFirstObjectByType<GroundSpawnner>();
         if (spawner == null)
         {
-            Debug.LogWarning("[SceneBootstrapper] GroundSpawnner not found in MainGame.");
+            Debug.LogWarning($"[SceneBootstrapper] GroundSpawnner not found in '{sceneName}'.");
             return;
         }
 
         spawner.EnsureGroundLinked();
+    }
+
+    void EnsureLevelSystems(string sceneName)
+    {
+        if (sceneName == "MainGame")
+        {
+            if (FindFirstObjectByType<Level1LayoutDirector>() == null)
+            {
+                gameObject.AddComponent<Level1LayoutDirector>();
+            }
+
+            if (FindFirstObjectByType<Level1TutorialUI>() == null)
+            {
+                new GameObject("Level1TutorialUI").AddComponent<Level1TutorialUI>();
+            }
+
+            if (FindFirstObjectByType<Level1FeedbackUI>() == null)
+            {
+                new GameObject("Level1FeedbackUI").AddComponent<Level1FeedbackUI>();
+            }
+
+            if (FindFirstObjectByType<Level1RollingLogDirector>() == null)
+            {
+                new GameObject("Level1RollingLogDirector").AddComponent<Level1RollingLogDirector>();
+            }
+        }
+        else if (sceneName == "Level2")
+        {
+            if (FindFirstObjectByType<Level2LayoutDirector>() == null)
+            {
+                gameObject.AddComponent<Level2LayoutDirector>();
+            }
+
+            if (FindFirstObjectByType<Level2FeedbackUI>() == null)
+            {
+                new GameObject("Level2FeedbackUI").AddComponent<Level2FeedbackUI>();
+            }
+        }
+        else if (sceneName == "Level3")
+        {
+            if (FindFirstObjectByType<Level3LayoutDirector>() == null)
+            {
+                gameObject.AddComponent<Level3LayoutDirector>();
+            }
+
+            if (FindFirstObjectByType<Level3FeedbackUI>() == null)
+            {
+                new GameObject("Level3FeedbackUI").AddComponent<Level3FeedbackUI>();
+            }
+        }
     }
 }

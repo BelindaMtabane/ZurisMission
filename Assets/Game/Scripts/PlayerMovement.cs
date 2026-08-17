@@ -11,9 +11,18 @@ using Random = UnityEngine.Random;
 
 public class PlayerMovement : MonoBehaviour
 {
+    void Awake()
+    {
+        if (GetComponent<PlayerController>() != null || FindFirstObjectByType<PlayerController>() != null)
+        {
+            enabled = false;
+            Debug.Log("[PlayerMovement] Disabled because PlayerController is active.");
+        }
+    }
+
     //Create variables
-    public float[] lanePositions = { -6f, -2f, 2f, 6f };
-    private int currentLane = 1;
+    public float[] lanePositions = { -8f, -4f, 0f, 4f, 8f };
+    private int currentLane = 2;
     public float playerSpeed = 25f;
     public float playerJumpPower = 10f;
     public float playerSpeedBoost = 10f;
