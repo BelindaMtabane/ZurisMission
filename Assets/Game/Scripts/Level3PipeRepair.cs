@@ -5,6 +5,7 @@ public class Level3PipeRepair : MonoBehaviour
     public static Level3PipeRepair Instance { get; private set; }
 
     readonly int[] progress = new int[3];
+    readonly int[] lastSentProgress = { -1, -1, -1 };   // track what was last pushed to HUD
     readonly GameObject[] tankVisuals = new GameObject[3];
     readonly GameObject[] flowVisuals = new GameObject[3];
     readonly GameObject[] fillVisuals = new GameObject[3];
@@ -21,11 +22,27 @@ public class Level3PipeRepair : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        // Immediately show 0% on all three tanks as soon as the level starts
+        Level3FeedbackUI.UpdateTanks(0, 0, 0);
     }
 
     void OnDestroy()
     {
         if (Instance == this) Instance = null;
+    }
+
+    void Update()
+    {
+        // Push tank percentages to the HUD panel whenever any value changes
+        if (progress[0] != lastSentProgress[0] ||
+            progress[1] != lastSentProgress[1] ||
+            progress[2] != lastSentProgress[2])
+        {
+            lastSentProgress[0] = progress[0];
+            lastSentProgress[1] = progress[1];
+            lastSentProgress[2] = progress[2];
+            Level3FeedbackUI.UpdateTanks(progress[0], progress[1], progress[2]);
+        }
     }
 
     public void BindTank(int tankIndex, GameObject tankRoot, GameObject flowRoot, GameObject fillRoot)
@@ -70,8 +87,6 @@ public class Level3PipeRepair : MonoBehaviour
             if (flowVisuals[tankIndex] != null) flowVisuals[tankIndex].SetActive(true);
         }
 
-        int village = Mathf.RoundToInt(HUDControls.Level3VillageFromTanks(progress[0], progress[1], progress[2]));
-        msg += $"  |  VILLAGE {village}%";
         Level3FeedbackUI.Show(msg, new Color(1f, 0.88f, 0.15f), 1.8f);
         FlashRepair(tankIndex);
         return true;

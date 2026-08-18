@@ -55,7 +55,8 @@ public class Level3WaterDropletPickup : MonoBehaviour
         if (collected || !other.CompareTag("Player")) return;
         if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
         collected = true;
-        FindFirstObjectByType<HUDControls>()?.CollectLevel3Bucket(amount);
+        // Water droplets act like health pickups in Level 3.
+        FindFirstObjectByType<HUDControls>()?.CollectLevel3Health(amount);
         gameObject.SetActive(false);
     }
 }

@@ -1,7 +1,5 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using TMPro;
-using UnityEngine.UI;
 
 /// <summary>
 /// Manages the 3-minute countdown for Level 3.
@@ -20,9 +18,6 @@ public class Level3TimeLimit : MonoBehaviour
     // Track which second-based warnings have fired
     bool warn120, warn90, warn60, warn30, warn20, warn10;
 
-    // Optional on-screen timer text created at runtime
-    TMP_Text timerText;
-
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -39,7 +34,6 @@ public class Level3TimeLimit : MonoBehaviour
         if (SceneManager.GetActiveScene().name != "Level3") return;
         endTime = Time.time + Level3Config.Level3TimeLimitSeconds;
         Remaining = Level3Config.Level3TimeLimitSeconds;
-        BuildTimerUI();
     }
 
     void Update()
@@ -51,14 +45,22 @@ public class Level3TimeLimit : MonoBehaviour
         Remaining = Mathf.Max(0f, endTime - Time.time);
         Urgency = 1f - (Remaining / Level3Config.Level3TimeLimitSeconds);
 
-        UpdateTimerUI();
         FireWarnings();
 
         if (Remaining <= 0f)
         {
             triggered = true;
-            Level3FeedbackUI.Show("TIME'S UP! You needed to repair all tanks!", new Color(1f, 0.2f, 0.1f), 3f);
-            RunStateManager.Instance?.NotifyDeath("Time's up! Repair the tanks before 3 minutes.");
+            // Count how many tanks are incomplete so the reason message is specific.
+            int filled = 0;
+            if (Level3PipeRepair.Instance != null)
+            {
+                for (int i = 0; i < 3; i++)
+                    if (Level3PipeRepair.Instance.GetProgress(i) >= 100) filled++;
+            }
+            string reason = filled == 0
+                ? "Time's up! None of the three tanks were repaired in time."
+                : $"Time's up! Only {filled} of 3 tanks were fully repaired.";
+            RunStateManager.Instance?.NotifyDeath(reason);
         }
     }
 
@@ -96,45 +98,4 @@ public class Level3TimeLimit : MonoBehaviour
         }
     }
 
-    // ─── UI timer in top-left ────────────────────────────────────────────────
-
-    void BuildTimerUI()
-    {
-        Canvas canvas = FindFirstObjectByType<Canvas>();
-        if (canvas == null) return;
-
-        GameObject go = new GameObject("Level3Timer");
-        go.transform.SetParent(canvas.transform, false);
-        RectTransform rt = go.AddComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0f, 1f);
-        rt.anchorMax = new Vector2(0f, 1f);
-        rt.pivot     = new Vector2(0f, 1f);
-        rt.anchoredPosition = new Vector2(18f, -18f);
-        rt.sizeDelta = new Vector2(200f, 44f);
-
-        timerText = go.AddComponent<TextMeshProUGUI>();
-        if (TMP_Settings.defaultFontAsset != null) timerText.font = TMP_Settings.defaultFontAsset;
-        timerText.fontSize = 26f;
-        timerText.fontStyle = FontStyles.Bold;
-        timerText.alignment = TextAlignmentOptions.Left;
-        timerText.raycastTarget = false;
-        timerText.text = "3:00";
-    }
-
-    void UpdateTimerUI()
-    {
-        if (timerText == null) return;
-        int mins = Mathf.FloorToInt(Remaining / 60f);
-        int secs = Mathf.CeilToInt(Remaining % 60f);
-        if (secs == 60) { mins++; secs = 0; }
-        timerText.text = $"{mins}:{secs:D2}";
-
-        // Colour shifts warm→red as time shrinks
-        if (Remaining > 60f)
-            timerText.color = Color.Lerp(Color.white, new Color(1f, 0.8f, 0.1f), Urgency * 1.3f);
-        else if (Remaining > 20f)
-            timerText.color = new Color(1f, 0.55f, 0.05f);
-        else
-            timerText.color = new Color(1f, 0.1f, 0.05f);
-    }
 }

@@ -3,6 +3,7 @@ using UnityEngine;
 public class Level3LightningZone : MonoBehaviour
 {
     const float TriggerDistanceFallback = 70f;
+    const float TutorialWarningSeconds = 30f;
 
     bool InWarningRange(Transform currentPlayer)
     {
@@ -20,6 +21,13 @@ public class Level3LightningZone : MonoBehaviour
     int countdown;
     bool damaged;
     Transform player;
+
+    bool ShouldShowCountdown()
+    {
+        // First ~30 seconds: show the normal countdown so the player learns.
+        // After that: show only one warning (no per-second countdown UI).
+        return Time.time < TutorialWarningSeconds;
+    }
 
     public void Setup(int lane, GameObject warning, GameObject bolt)
     {
@@ -41,11 +49,24 @@ public class Level3LightningZone : MonoBehaviour
                 if (InWarningRange(player))
                 {
                     phase = Phase.Warning;
-                    timer = 0.6f;
-                    Level3FeedbackUI.Show(
-                        $"LIGHTNING STRIKE IN LANE {LevelLanes.DisplayNumber(laneIndex)} — {Level3Config.LightningWarningSeconds:0} SECONDS!",
-                        new Color(1f, 0.92f, 0.25f),
-                        Level3Config.LightningWarningSeconds + 1f);
+                    bool showCountdown = ShouldShowCountdown();
+                    timer = showCountdown ? 0.6f : (0.6f + Level3Config.LightningWarningSeconds);
+
+                    if (showCountdown)
+                    {
+                        Level3FeedbackUI.Show(
+                            $"LIGHTNING STRIKE IN LANE {LevelLanes.DisplayNumber(laneIndex)} — {Level3Config.LightningWarningSeconds:0} SECONDS!",
+                            new Color(1f, 0.92f, 0.25f),
+                            Level3Config.LightningWarningSeconds + 1f);
+                    }
+                    else
+                    {
+                        // After tutorial time: only one warning, no countdown numbers.
+                        Level3FeedbackUI.Show(
+                            "LIGHTNING WILL STRIKE! STAY ALERT!",
+                            new Color(1f, 0.92f, 0.25f),
+                            2f);
+                    }
                 }
                 break;
             case Phase.Warning:
@@ -53,9 +74,22 @@ public class Level3LightningZone : MonoBehaviour
                 PulseWarning();
                 if (timer <= 0f)
                 {
-                    phase = Phase.Countdown;
-                    countdown = Mathf.CeilToInt(Level3Config.LightningWarningSeconds);
-                    ShowCountdown();
+                    bool showCountdown = ShouldShowCountdown();
+                    if (showCountdown)
+                    {
+                        phase = Phase.Countdown;
+                        countdown = Mathf.CeilToInt(Level3Config.LightningWarningSeconds);
+                        ShowCountdown();
+                    }
+                    else
+                    {
+                        phase = Phase.Strike;
+                        timer = 3f;   // bolt stays visible for 3 seconds
+                        if (warningRoot != null) warningRoot.SetActive(false);
+                        if (boltRoot != null) boltRoot.SetActive(true);
+                        Level3FeedbackUI.Show("STRIKE!", new Color(1f, 1f, 0.5f), 0.8f);
+                        TryDamagePlayer();
+                    }
                 }
                 break;
             case Phase.Countdown:
@@ -66,10 +100,10 @@ public class Level3LightningZone : MonoBehaviour
                     if (countdown <= 0)
                     {
                         phase = Phase.Strike;
-                        timer = 0.35f;
+                        timer = 3f;   // bolt stays visible for 3 seconds
                         if (warningRoot != null) warningRoot.SetActive(false);
                         if (boltRoot != null) boltRoot.SetActive(true);
-                        Level3FeedbackUI.Show("STRIKE!", new Color(1f, 1f, 0.5f), 0.5f);
+                        Level3FeedbackUI.Show("STRIKE!", new Color(1f, 1f, 0.5f), 0.8f);
                         TryDamagePlayer();
                     }
                     else
@@ -80,6 +114,7 @@ public class Level3LightningZone : MonoBehaviour
                 break;
             case Phase.Strike:
                 timer -= Time.deltaTime;
+                TryDamagePlayer();
                 if (timer <= 0f)
                 {
                     phase = Phase.Clear;
@@ -99,22 +134,39 @@ public class Level3LightningZone : MonoBehaviour
     {
         if (damaged || player == null) return;
 
+        // Ensure we only damage when the player is actually at the bolt position.
+        if (Mathf.Abs(player.position.z - transform.position.z) > 2.0f) return;
+
         int playerLane = ClosestLane(player.position.x);
         if (playerLane != laneIndex) return;
 
         PlayerController controller = player.GetComponent<PlayerController>();
-        if (controller != null && !controller.IsGrounded)
-        {
-            Level3FeedbackUI.Show("JUMPED CLEAR!", new Color(0.4f, 0.95f, 0.45f), 0.9f);
-            damaged = true;
-            return;
-        }
+        // No "jumped clear" immunity: contact always damages.
 
         damaged = true;
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         hud?.ChangeHealth(-Level3Config.LightningHealthDamage, "Lightning struck you!");
-        hud?.LoseMaterialPercent(Level3Config.LightningMaterialLossPercent);
-        Level3FeedbackUI.Show("LIGHTNING!", new Color(1f, 0.95f, 0.35f), 1.1f);
+        Level3FeedbackUI.Show("LIGHTNING STRUCK!", new Color(1f, 0.95f, 0.35f), 1.1f);
+    }
+
+    void OnTriggerEnter(Collider other) => TryDamagePlayer(other);
+    void OnTriggerStay(Collider other) => TryDamagePlayer(other);
+
+    void TryDamagePlayer(Collider other)
+    {
+        if (damaged || phase != Phase.Strike || other == null) return;
+        if (!other.CompareTag("Player") && other.GetComponentInParent<PlayerController>() == null) return;
+        if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
+
+        Transform target = other.GetComponentInParent<PlayerController>() != null
+            ? other.GetComponentInParent<PlayerController>().transform
+            : other.transform;
+        int playerLane = ClosestLane(target.position.x);
+        if (playerLane != laneIndex) return;
+
+        damaged = true;
+        FindFirstObjectByType<HUDControls>()?.ChangeHealth(-Level3Config.LightningHealthDamage, "Lightning struck you!");
+        Level3FeedbackUI.Show("LIGHTNING STRUCK!", new Color(1f, 0.95f, 0.35f), 1.1f);
     }
 
     static int ClosestLane(float x)

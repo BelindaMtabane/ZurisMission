@@ -27,20 +27,28 @@ public static class Level3Config
     public const float WarthogHealthDamage = 5f;
     public const float SnakeApproachSpeed = 20f;
     public const float TreeBucketLossPercent = 0.05f;
-    public const float AcidHealthDamage = 4f;
+    // Acid rain now deals flat damage on contact (see Level3AcidRainZone)
+    public const float AcidHealthDamage = 10f;
     public const float AcidMaterialLossPercent = 0.05f;
     public const float RollingLogHealthDamage = 6f;
 
     // Acid rain warning cadence (like lightning)
     public const float AcidWarningSeconds = 2f;
 
-    // Speed fruit (temporary run boost)
-    public const float SpeedFruitBoostSpeed = 45f;
+    // Speed fruit (temporary partial run boost — not a full max-speed sprint)
+    public const float SpeedFruitBoostSpeed = 35f;
     public const float SpeedFruitDurationSeconds = 6f;
     public const float SpeedFruitSpawnChance = 0.12f;
 
-    // Mud
-    public const float MudMaterialLossPercent = 0.05f;
+    // Mud — flat material deduction
+    public const float MudMaterialLossPercent = 0.05f;   // kept for legacy paths
+    public const int   MudMaterialLoss        = 5;
+
+    // Tree — flat material deduction
+    public const int   TreeMaterialLoss       = 10;
+
+    // Rolling logs also damage materials (no health damage in Level 3)
+    public const int   LogMaterialLoss        = 10;
 
     // Pickups (defaults — layout may override per pickup)
     public static readonly float[] DropletAmounts = { 10f, 15f, 20f };

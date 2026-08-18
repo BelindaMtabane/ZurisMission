@@ -29,7 +29,6 @@ public class Level3Obstacle : MonoBehaviour
         PlayerController controller = other.GetComponent<PlayerController>();
         if (jumpable && controller != null && !controller.IsGrounded)
         {
-            Level3FeedbackUI.Show(kind == Level3ObstacleKind.MudPuddle ? "CLEARED MUD!" : "JUMPED!", new Color(0.4f, 0.95f, 0.45f), 0.8f);
             return;
         }
 
@@ -37,24 +36,26 @@ public class Level3Obstacle : MonoBehaviour
         {
             if (applied) return;
             applied = true;
-            FindFirstObjectByType<HUDControls>()?.LoseMaterialPercent(Level3Config.MudMaterialLossPercent);
-            Level3FeedbackUI.Show("MUD — MATERIALS LOST!", new Color(0.62f, 0.42f, 0.18f), 1.2f);
+            FindFirstObjectByType<HUDControls>()?.BreakMaterials(Level3Config.MudMaterialLoss);
+            controller?.ApplySpeedModifier(controller.CurrentSpeed * 0.45f, 2.2f);
             return;
         }
 
+        // Tree: health damage + flat 10 material loss
         if (kind == Level3ObstacleKind.Tree)
         {
             if (applied) return;
             applied = true;
-            FindFirstObjectByType<HUDControls>()?.LoseBucketPercent(Level3Config.TreeBucketLossPercent);
-            Level3FeedbackUI.Show("TREE HIT — BUCKET -5%!", new Color(0.2f, 0.55f, 0.25f), 1.2f);
+            HUDControls hud = FindFirstObjectByType<HUDControls>();
+            // Trees no longer damage health on contact; they only break materials.
+            hud?.BreakMaterials(Level3Config.TreeMaterialLoss);
             return;
         }
 
+        // Rock: slow only, no health damage
         if (applied) return;
         applied = true;
-        FindFirstObjectByType<HUDControls>()?.ChangeHealth(-rockDamage, "A rock hit you!");
-        Level3FeedbackUI.Show("ROCK!", new Color(0.55f, 0.35f, 0.22f), 0.8f);
+        controller?.ApplySpeedModifier(controller.CurrentSpeed * 0.5f, 1.8f);
     }
 
     void OnTriggerExit(Collider other)

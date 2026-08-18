@@ -55,14 +55,13 @@ public class Level3RollingLog : MonoBehaviour
         PlayerController controller = other.GetComponentInParent<PlayerController>();
         if (controller != null && !controller.IsGrounded)
         {
-            Level3FeedbackUI.Show("JUMPED THE LOG!", new Color(0.4f, 0.95f, 0.45f), 0.8f);
             hit = true;
             return;
         }
 
         hit = true;
-        FindFirstObjectByType<HUDControls>()?.ChangeHealth(-Level3Config.RollingLogHealthDamage, "A rolling log hit you!");
-        Level3FeedbackUI.Show("ROLLING LOG!", new Color(0.75f, 0.35f, 0.15f), 1f);
+        // Log: materials loss only (no health damage, no slowdown in Level 3)
+        FindFirstObjectByType<HUDControls>()?.BreakMaterials(Level3Config.LogMaterialLoss);
     }
 
     void CachePlayer()

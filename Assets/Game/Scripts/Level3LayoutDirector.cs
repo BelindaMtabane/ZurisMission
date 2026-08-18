@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 [DefaultExecutionOrder(-40)]
 public class Level3LayoutDirector : MonoBehaviour
@@ -54,6 +55,7 @@ public class Level3LayoutDirector : MonoBehaviour
     int healthIndex;
     int snakeLaneIndex;
     int acidLaneIndex;
+    readonly List<float>[] reservedLaneZs = { new List<float>(), new List<float>(), new List<float>(), new List<float>() };
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Register()
@@ -247,12 +249,15 @@ public class Level3LayoutDirector : MonoBehaviour
         healthIndex = 0;
         snakeLaneIndex = 0;
         acidLaneIndex = 0;
+        for (int i = 0; i < reservedLaneZs.Length; i++) reservedLaneZs[i].Clear();
 
         // Level 3 is time-limited (~3 minutes).
         if (GetComponent<Level3TimeLimit>() == null)
-        {
             gameObject.AddComponent<Level3TimeLimit>();
-        }
+
+        // Wave director controls snake / warthog alternation at runtime.
+        if (GetComponent<Level3WaveDirector>() == null)
+            gameObject.AddComponent<Level3WaveDirector>();
 
         float openingEnd = SpawnInitialOpening(layoutRoot);
         SpawnAllPipeRepairs(layoutRoot);
@@ -286,7 +291,6 @@ public class Level3LayoutDirector : MonoBehaviour
         DropletAt(root, 1, z + 4f);
         MatAt(root, 3, z + 6f);
         SnakeAt(root, z + 22f, 0.02f);
-        WarthogAt(root, z + 48f, Level3EnemyPace.Medium, true);
         TreeAt(root, 0, z + 12f);
         RockAt(root, 3, z + 16f);
 
@@ -350,7 +354,7 @@ public class Level3LayoutDirector : MonoBehaviour
             case 0: DropletAt(root, 1, z); break;
             case 1: MatAt(root, 3, z); break;
             case 2: DropletAt(root, 0, z); RockAt(root, 2, z); TreeAt(root, 3, z + 6f); break;
-            case 3: HealthAt(root, 2, z); break;
+            case 3: HealthAt(root, 2, z); MudAt(root, 1, z + 5f); break;
             case 4: MatAt(root, 1, z); break;
             default:
                 DropletAt(root, 3, z);
@@ -371,17 +375,19 @@ public class Level3LayoutDirector : MonoBehaviour
     {
         switch (beat)
         {
-            case 0: DropletAt(root, 1, z); break;
+            case 0: DropletAt(root, 1, z); if (Random.value < 0.45f) MudAt(root, 0, z + 4f); break;
             case 1: MatAt(root, 3, z); break;
             case 2:
                 DropletAt(root, 0, z);
                 HealthAt(root, 2, z + 2f);
+                if (Random.value < 0.55f) MudAt(root, 3, z + 6f);
                 break;
-            case 3: MatAt(root, 1, z); RockAt(root, 2, z); break;
-            case 4: DropletAt(root, 2, z); break;
+            case 3: MatAt(root, 1, z); RockAt(root, 2, z); MudAt(root, 0, z + 5f); break;
+            case 4: DropletAt(root, 2, z); if (Random.value < 0.5f) MudAt(root, 1, z + 4f); break;
             default:
                 DropletAt(root, (lane + 1) % 4, z);
                 MatAt(root, (lane + 3) % 4, z);
+                if (Random.value < 0.6f) MudAt(root, (lane + 2) % 4, z + 5f);
 
                 // Occasional speed-boost pickups during the run.
                 if (Random.value < Level3Config.SpeedFruitSpawnChance)
@@ -397,38 +403,215 @@ public class Level3LayoutDirector : MonoBehaviour
     {
         int lane = Mathf.Abs(Mathf.RoundToInt(z)) % 4;
         Level3EnemyPace pace = p < 0.35f ? Level3EnemyPace.Slow : p < 0.7f ? Level3EnemyPace.Medium : Level3EnemyPace.Fast;
-        int kind = (Mathf.Abs(Mathf.RoundToInt(z * 0.2f)) + intensity) % 7;
 
-        switch (kind)
+        // Determine what the wave director wants right now
+        Level3WaveDirector.WaveMode waveMode = Level3WaveDirector.Instance != null
+            ? Level3WaveDirector.Instance.CurrentMode
+            : Level3WaveDirector.WaveMode.None;
+
+        // Snake wave (0.20–0.50 and 0.75–0.90): snakes + logs + many trees scattered across lanes
+        if (waveMode == Level3WaveDirector.WaveMode.Snakes)
         {
-            case 0:
-                LightningAt(root, lane, z);
-                DropletAt(root, (lane + 2) % 4, z);
-                break;
-            case 1:
-                WarthogAt(root, z, pace, lane % 2 == 0);
-                break;
-            case 2:
-                MudAt(root, lane, z);
-                MatAt(root, (lane + 1) % 4, z);
-                break;
-            case 3:
-                SnakeAt(root, z, p);
-                DropletAt(root, (lane + 3) % 4, z);
-                break;
+            int kind = (Mathf.Abs(Mathf.RoundToInt(z * 0.25f)) + intensity) % 7;
+            switch (kind)
+            {
+                case 0:
+                    SnakeAt(root, z, p);
+                    TreeAt(root, (lane + 1) % 4, z + 6f);
+                    TreeAt(root, (lane + 3) % 4, z + 12f);
+                    break;
+                case 1:
+                    LightningClusterAt(root, z, p);
+                    SnakeAt(root, z + 8f, p);
+                    LogAt(root, (lane + 1) % 3, z + 14f, p);
+                    TreeAt(root, (lane + 2) % 4, z + 20f);
+                    break;
+                case 2:
+                    SnakeAt(root, z, p);
+                    LogAt(root, lane % 3, z + 6f, p);
+                    TreeAt(root, (lane + 2) % 4, z + 10f);
+                    DropletAt(root, (lane + 3) % 4, z + 2f);
+                    MudAt(root, lane, z + 15f);
+                    break;
+                case 3:
+                    SnakeAt(root, z, p);
+                    TreeAt(root, lane % 4, z + 5f);
+                    TreeAt(root, (lane + 2) % 4, z + 11f);
+                    MudAt(root, (lane + 1) % 4, z + 16f);
+                    break;
+                case 4:
+                    AcidClusterAt(root, z, p);
+                    SnakeAt(root, z + 6f, p);
+                    TreeAt(root, (lane + 3) % 4, z + 10f);
+                    LogAt(root, (lane + 2) % 3, z + 15f, p);
+                    MudAt(root, (lane + 1) % 4, z + 20f);
+                    break;
+                case 5:
+                    SnakeAt(root, z, p);
+                    TreeAt(root, (lane + 1) % 4, z + 4f);
+                    LogAt(root, lane % 3, z + 9f, p);
+                    TreeAt(root, (lane + 3) % 4, z + 14f);
+                    break;
+                default:
+                    SnakeAt(root, z, p);
+                    LogAt(root, lane % 3, z + 8f, p);
+                    TreeAt(root, (lane + 2) % 4, z + 13f);
+                    HealthAt(root, (lane + 3) % 4, z + 4f);
+                    break;
+            }
+            return;
+        }
+
+        // Warthog wave (0.50–0.75): warthogs + many trees scattered across lanes
+        if (waveMode == Level3WaveDirector.WaveMode.Warthogs)
+        {
+            int kind = (Mathf.Abs(Mathf.RoundToInt(z * 0.25f)) + intensity) % 6;
+            switch (kind)
+            {
+                case 0:
+                    WarthogAt(root, z, pace, true);
+                    TreeAt(root, (lane + 1) % 4, z + 6f);
+                    TreeAt(root, (lane + 3) % 4, z + 12f);
+                    DropletAt(root, (lane + 2) % 4, z + 2f);
+                    MudAt(root, lane, z + 17f);
+                    break;
+                case 1:
+                    WarthogAt(root, z, pace, false);
+                    TreeAt(root, lane % 4, z + 5f);
+                    TreeAt(root, (lane + 2) % 4, z + 11f);
+                    LightningClusterAt(root, z + 18f, p);
+                    break;
+                case 2:
+                    WarthogAt(root, z, pace, lane % 2 == 0);
+                    TreeAt(root, (lane + 3) % 4, z + 4f);
+                    MudAt(root, lane, z + 9f);
+                    TreeAt(root, (lane + 1) % 4, z + 14f);
+                    break;
+                case 3:
+                    WarthogAt(root, z, pace, true);
+                    AcidClusterAt(root, z + 8f, p);
+                    TreeAt(root, (lane + 2) % 4, z + 5f);
+                    TreeAt(root, (lane + 3) % 4, z + 14f);
+                    break;
+                case 4:
+                    WarthogAt(root, z, pace, false);
+                    TreeAt(root, lane % 4, z + 3f);
+                    LogAt(root, (lane + 1) % 3, z + 8f, p);
+                    TreeAt(root, (lane + 2) % 4, z + 13f);
+                    MudAt(root, (lane + 3) % 4, z + 18f);
+                    break;
+                default:
+                    WarthogAt(root, z, pace, true);
+                    TreeAt(root, (lane + 1) % 4, z + 4f);
+                    TreeAt(root, (lane + 3) % 4, z + 9f);
+                    DropletAt(root, (lane + 2) % 4, z + 7f);
+                    break;
+            }
+            return;
+        }
+
+        // Combined phase (0.90–0.95): snakes + warthogs + trees
+        if (waveMode == Level3WaveDirector.WaveMode.Combined)
+        {
+            int kind = (Mathf.Abs(Mathf.RoundToInt(z * 0.3f)) + intensity) % 5;
+            switch (kind)
+            {
+                case 0:
+                    SnakeAt(root, z, p);
+                    WarthogAt(root, z + 5f, pace, true);
+                    TreeAt(root, (lane + 2) % 4, z + 10f);
+                    MudAt(root, lane, z + 15f);
+                    break;
+                case 1:
+                    WarthogAt(root, z, pace, false);
+                    SnakeAt(root, z + 7f, p);
+                    TreeAt(root, lane % 4, z + 4f);
+                    LightningClusterAt(root, z + 14f, p);
+                    break;
+                case 2:
+                    SnakeAt(root, z, p);
+                    TreeAt(root, (lane + 1) % 4, z + 4f);
+                    SnakeAt(root, z + 8f, p);
+                    WarthogAt(root, z + 12f, pace, lane % 2 == 0);
+                    break;
+                case 3:
+                    WarthogAt(root, z, pace, true);
+                    TreeAt(root, (lane + 3) % 4, z + 5f);
+                    WarthogAt(root, z + 9f, pace, false);
+                    SnakeAt(root, z + 14f, p);
+                    break;
+                default:
+                    SnakeAt(root, z, p);
+                    WarthogAt(root, z + 6f, pace, true);
+                    TreeAt(root, (lane + 2) % 4, z + 3f);
+                    TreeAt(root, (lane + 3) % 4, z + 11f);
+                    MudAt(root, (lane + 1) % 4, z + 16f);
+                    break;
+            }
+            return;
+        }
+
+        // Hard combined phase (0.95–1.00): faster warthogs, more snakes, trees everywhere
+        if (waveMode == Level3WaveDirector.WaveMode.CombinedHard)
+        {
+            Level3EnemyPace hardPace = Level3EnemyPace.Fast;
+            int kind = (Mathf.Abs(Mathf.RoundToInt(z * 0.35f)) + intensity) % 5;
+            switch (kind)
+            {
+                case 0:
+                    WarthogAt(root, z, hardPace, true);
+                    SnakeAt(root, z + 4f, p);
+                    TreeAt(root, (lane + 1) % 4, z + 2f);
+                    WarthogAt(root, z + 10f, hardPace, false);
+                    TreeAt(root, (lane + 3) % 4, z + 8f);
+                    break;
+                case 1:
+                    SnakeAt(root, z, p);
+                    WarthogAt(root, z + 5f, hardPace, false);
+                    TreeAt(root, lane % 4, z + 3f);
+                    SnakeAt(root, z + 10f, p);
+                    TreeAt(root, (lane + 2) % 4, z + 13f);
+                    MudAt(root, (lane + 3) % 4, z + 18f);
+                    break;
+                case 2:
+                    WarthogAt(root, z, hardPace, true);
+                    TreeAt(root, (lane + 1) % 4, z + 3f);
+                    WarthogAt(root, z + 7f, hardPace, false);
+                    TreeAt(root, (lane + 3) % 4, z + 10f);
+                    LightningClusterAt(root, z + 15f, 0.98f);
+                    break;
+                case 3:
+                    SnakeAt(root, z, p);
+                    SnakeAt(root, z + 5f, p);
+                    WarthogAt(root, z + 9f, hardPace, true);
+                    TreeAt(root, (lane + 2) % 4, z + 4f);
+                    TreeAt(root, (lane + 3) % 4, z + 12f);
+                    break;
+                default:
+                    WarthogAt(root, z, hardPace, false);
+                    TreeAt(root, lane % 4, z + 2f);
+                    SnakeAt(root, z + 6f, p);
+                    WarthogAt(root, z + 11f, hardPace, true);
+                    TreeAt(root, (lane + 2) % 4, z + 9f);
+                    break;
+            }
+            return;
+        }
+
+        // Before wave windows open (p < 0.20) or between windows: standard hazard mix
+        int fallback = (Mathf.Abs(Mathf.RoundToInt(z * 0.2f)) + intensity) % 6;
+        switch (fallback)
+        {
+            case 0: LightningClusterAt(root, z, p); DropletAt(root, (lane + 2) % 4, z); break;
+            case 1: MudAt(root, lane, z); MatAt(root, (lane + 1) % 4, z); MudAt(root, (lane + 2) % 4, z + 6f); break;
+            case 2: AcidClusterAt(root, z, p); HealthAt(root, (lane + 2) % 4, z + 6f); break;
+            case 3: LogAt(root, lane % 3, z, p); DropletAt(root, (lane + 3) % 4, z); break;
             case 4:
-                AcidAt(root, z);
-                HealthAt(root, (lane + 2) % 4, z + 6f);
-                break;
-            case 5:
-                LogAt(root, lane % 3, z, p);
-                DropletAt(root, (lane + 3) % 4, z);
-                break;
-            default:
                 if (lane % 2 == 0) RockAt(root, lane, z);
                 else TreeAt(root, lane, z);
                 HealthAt(root, (lane + 2) % 4, z);
                 break;
+            default: MudAt(root, lane, z); MudAt(root, (lane + 1) % 4, z + 5f); LightningClusterAt(root, z + 10f, p); break;
         }
     }
 
@@ -470,58 +653,189 @@ public class Level3LayoutDirector : MonoBehaviour
 
     static float Z(float p) => Level3Progress.WorldZ(p);
 
+    bool IsReserved(int lane, float z, float gap)
+    {
+        if (lane < 0 || lane >= reservedLaneZs.Length) return true;
+        List<float> used = reservedLaneZs[lane];
+        for (int i = 0; i < used.Count; i++)
+        {
+            if (Mathf.Abs(used[i] - z) < gap) return true;
+        }
+        return false;
+    }
+
+    void ReserveLane(int lane, float z)
+    {
+        if (lane < 0 || lane >= reservedLaneZs.Length) return;
+        reservedLaneZs[lane].Add(z);
+    }
+
+    int FindFreeLane(int preferredLane, float z, float gap)
+    {
+        int start = Mathf.Clamp(preferredLane, 0, LevelLanes.Count - 1);
+        for (int offset = 0; offset < LevelLanes.Count; offset++)
+        {
+            int lane = (start + offset) % LevelLanes.Count;
+            if (!IsReserved(lane, z, gap)) return lane;
+        }
+        return start;
+    }
+
+    float FindFreeZ(int lane, float z, float gap)
+    {
+        float candidate = z;
+        int guard = 0;
+        while (IsReserved(lane, candidate, gap) && guard < 12)
+        {
+            candidate += Mathf.Max(4f, gap * 0.6f);
+            guard++;
+        }
+        return candidate;
+    }
+
+    int FindFreeSpanStart(int preferredStartLane, int laneSpan, float z, float gap)
+    {
+        int maxStart = LevelLanes.Count - laneSpan;
+        int start = Mathf.Clamp(preferredStartLane, 0, maxStart);
+        for (int offset = 0; offset <= maxStart; offset++)
+        {
+            int laneStart = (start + offset) % (maxStart + 1);
+            bool free = true;
+            for (int i = 0; i < laneSpan; i++)
+            {
+                if (IsReserved(laneStart + i, z, gap))
+                {
+                    free = false;
+                    break;
+                }
+            }
+            if (free) return laneStart;
+        }
+        return start;
+    }
+
     void DropletAt(Transform root, int lane, float z)
     {
+        lane = FindFreeLane(lane, z, Level3Config.MinimumObjectSpacing);
+        z = FindFreeZ(lane, z, Level3Config.MinimumObjectSpacing);
         float amount = Level3Config.DropletAmounts[dropletIndex % Level3Config.DropletAmounts.Length];
         Level3Primitives.MakeWaterDroplet(root, lane, z, amount);
+        ReserveLane(lane, z);
         dropletIndex++;
         LogSpawn("Droplet", lane, z);
     }
 
     void MatAt(Transform root, int lane, float z)
     {
+        lane = FindFreeLane(lane, z, Level3Config.MinimumObjectSpacing);
+        z = FindFreeZ(lane, z, Level3Config.MinimumObjectSpacing);
         Level3Primitives.MakeMaterial(root, lane, z, MaterialCycle[materialIndex % MaterialCycle.Length]);
+        ReserveLane(lane, z);
         materialIndex++;
         LogSpawn("Material", lane, z);
     }
 
     void HealthAt(Transform root, int lane, float z)
     {
+        lane = FindFreeLane(lane, z, Level3Config.MinimumObjectSpacing);
+        z = FindFreeZ(lane, z, Level3Config.MinimumObjectSpacing);
         float amount = Level3Config.HealthAmounts[healthIndex % Level3Config.HealthAmounts.Length];
         Level3Primitives.MakeHealth(root, lane, z, amount);
+        ReserveLane(lane, z);
         healthIndex++;
         LogSpawn("Health", lane, z);
     }
 
-    static void RockAt(Transform root, int lane, float z) => Level3Primitives.MakeRock(root, lane, z);
-    static void TreeAt(Transform root, int lane, float z) => Level3Primitives.MakeTree(root, lane, z);
-    static void MudAt(Transform root, int lane, float z) => Level3Primitives.MakeMudPuddle(root, lane, z);
-    static void LightningAt(Transform root, int lane, float z) => Level3Primitives.MakeLightning(root, lane, z);
+    // Each of these picks a fully random lane so obstacles are never predictably placed
+    static void RockAt(Transform root, int lane, float z)
+    {
+        Level3LayoutDirector director = FindFirstObjectByType<Level3LayoutDirector>();
+        int randomLane = director != null ? director.FindFreeLane(Random.Range(0, LevelLanes.Count), z, Level3Config.MinimumHazardSpacing) : Random.Range(0, LevelLanes.Count);
+        float safeZ = director != null ? director.FindFreeZ(randomLane, z, Level3Config.MinimumHazardSpacing) : z;
+        Level3Primitives.MakeRock(root, randomLane, safeZ);
+        director?.ReserveLane(randomLane, safeZ);
+    }
+    static void TreeAt(Transform root, int lane, float z)
+    {
+        Level3LayoutDirector director = FindFirstObjectByType<Level3LayoutDirector>();
+        int randomLane = director != null ? director.FindFreeLane(Random.Range(0, LevelLanes.Count), z, Level3Config.MinimumHazardSpacing) : Random.Range(0, LevelLanes.Count);
+        float safeZ = director != null ? director.FindFreeZ(randomLane, z, Level3Config.MinimumHazardSpacing) : z;
+        Level3Primitives.MakeTree(root, randomLane, safeZ);
+        director?.ReserveLane(randomLane, safeZ);
+    }
+    static void MudAt(Transform root, int lane, float z)
+    {
+        Level3LayoutDirector director = FindFirstObjectByType<Level3LayoutDirector>();
+        int randomLane = director != null ? director.FindFreeLane(Random.Range(0, LevelLanes.Count), z, Level3Config.MinimumHazardSpacing) : Random.Range(0, LevelLanes.Count);
+        float safeZ = director != null ? director.FindFreeZ(randomLane, z, Level3Config.MinimumHazardSpacing) : z;
+        Level3Primitives.MakeMudPuddle(root, randomLane, safeZ);
+        director?.ReserveLane(randomLane, safeZ);
+    }
+    static void LightningAt(Transform root, int lane, float z)
+    {
+        Level3LayoutDirector director = FindFirstObjectByType<Level3LayoutDirector>();
+        int safeLane = director != null ? director.FindFreeLane(lane, z, Level3Config.MinimumHazardSpacing) : lane;
+        float safeZ = director != null ? director.FindFreeZ(safeLane, z, Level3Config.MinimumHazardSpacing) : z;
+        Level3Primitives.MakeLightning(root, safeLane, safeZ);
+        director?.ReserveLane(safeLane, safeZ);
+    }
+    void LightningClusterAt(Transform root, float z, float progress)
+    {
+        int laneCount = progress >= 0.90f ? 3 : progress >= 0.50f ? 2 : 1;
+        int startLane = Random.Range(0, LevelLanes.Count - laneCount + 1);
+        for (int i = 0; i < laneCount; i++)
+        {
+            int lane = startLane + i;
+            Level3Primitives.MakeLightning(root, lane, z);
+            LogSpawn("Lightning", lane, z);
+        }
+    }
     void AcidAt(Transform root, float z)
     {
         int lane = Random.Range(0, LevelLanes.Count);
         acidLaneIndex++;
+        lane = FindFreeLane(lane, z, Level3Config.MinimumHazardSpacing);
+        z = FindFreeZ(lane, z, Level3Config.MinimumHazardSpacing);
         Level3Primitives.MakeAcidRain(root, lane, z);
+        ReserveLane(lane, z);
         LogSpawn("AcidRain", lane, z);
+    }
+    void AcidClusterAt(Transform root, float z, float progress)
+    {
+        int laneCount = progress >= 0.90f ? 3 : progress >= 0.50f ? 2 : 1;
+        int startLane = Random.Range(0, LevelLanes.Count - laneCount + 1);
+        for (int i = 0; i < laneCount; i++)
+        {
+            int lane = startLane + i;
+            Level3Primitives.MakeAcidRain(root, lane, z);
+            LogSpawn("AcidRain", lane, z);
+        }
     }
 
     void LogAt(Transform root, int lane, float z, float p)
     {
         int span = p >= 0.5f ? 3 : 2;
-        int startLane = Random.Range(0, LevelLanes.Count - span + 1);
+        int startLane = FindFreeSpanStart(Random.Range(0, LevelLanes.Count - span + 1), span, z, Level3Config.MinimumHazardSpacing);
+        z = FindFreeZ(startLane, z, Level3Config.MinimumHazardSpacing);
         Level3Primitives.MakeRollingLog(root, startLane, z, span);
+        for (int i = 0; i < span; i++) ReserveLane(startLane + i, z);
         LogSpawn(span >= 3 ? "RollingLog3" : "RollingLog2", startLane, z);
     }
 
     void SpeedFruitAt(Transform root, int lane, float z)
     {
+        lane = FindFreeLane(lane, z, Level3Config.MinimumObjectSpacing);
+        z = FindFreeZ(lane, z, Level3Config.MinimumObjectSpacing);
         Level3Primitives.MakeSpeedFruit(root, lane, z);
+        ReserveLane(lane, z);
     }
     void SnakeAt(Transform root, float z, float p)
     {
-        int lane = snakeLaneIndex % 4;
+        int lane = FindFreeLane(snakeLaneIndex % 4, z, Level3Config.MinimumHazardSpacing);
+        z = FindFreeZ(lane, z, Level3Config.MinimumHazardSpacing);
         snakeLaneIndex++;
         Level3Primitives.MakeApproachSnake(root, lane, z, p);
+        ReserveLane(lane, z);
         LogSpawn("Snake", lane, z);
     }
     static void WarthogAt(Transform root, float z, Level3EnemyPace pace, bool right) => Level3Primitives.MakeWarthog(root, z, pace, right);

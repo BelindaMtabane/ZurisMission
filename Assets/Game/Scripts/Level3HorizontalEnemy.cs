@@ -40,7 +40,8 @@ public class Level3HorizontalEnemy : MonoBehaviour
         if (warningRoot != null) warningRoot.SetActive(true);
     }
 
-    float StartAhead => Mathf.Max(120f, Level3Config.VisibleSpawnDistance + 40f);
+    // Trigger the cross when the player is close enough to actually see the warthog on screen
+    float StartAhead => 55f;
 
     void Update()
     {
@@ -99,8 +100,8 @@ public class Level3HorizontalEnemy : MonoBehaviour
         }
 
         hit = true;
-        FindFirstObjectByType<HUDControls>()?.ChangeHealth(-healthDamage, "A warthog hit you!");
-        Level3FeedbackUI.Show("WARTHOG!", new Color(0.9f, 0.25f, 0.15f), 1f);
+        FindFirstObjectByType<HUDControls>()?.ChangeHealth(-healthDamage, "A warthog charged into you!");
+        Level3FeedbackUI.Show("WARTHOG CHARGE!", new Color(0.9f, 0.25f, 0.15f), 1f);
     }
 
     void CrossStep()

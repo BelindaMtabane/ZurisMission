@@ -28,7 +28,8 @@ public static class Level3Primitives
     public static readonly Color Tank1Pipe = new Color(0.55f, 0.82f, 0.98f);
     public static readonly Color Tank2Pipe = new Color(0.92f, 0.28f, 0.22f);
     public static readonly Color Tank3Pipe = new Color(0.58f, 0.36f, 0.18f);
-    public static readonly Color Warthog = new Color(0.42f, 0.28f, 0.16f);
+    public static readonly Color Warthog     = new Color(0.78f, 0.55f, 0.30f);   // light tan-brown, clearly visible
+    public static readonly Color WarthogSnout = new Color(0.65f, 0.42f, 0.22f);   // slightly darker for contrast
     public static readonly Color Tank = new Color(0.55f, 0.6f, 0.66f);
     public static readonly Color WaterFlow = new Color(0.25f, 0.7f, 1f, 0.55f);
     public static readonly Color Acid = new Color(0.55f, 0.95f, 0.38f, 0.32f);
@@ -135,30 +136,217 @@ public static class Level3Primitives
         GameObject root = new GameObject($"Material_{kind}");
         root.transform.SetParent(parent, false);
         root.transform.position = Level3Ground.LanePosition(lane, z, 0.5f);
+
         if (kind == "Nails")
         {
-            Visual(PrimitiveType.Cube, root.transform, new Vector3(0f, 0.35f, 0f), new Vector3(0.5f, 0.15f, 0.5f), NailMetal, "Box");
+            BuildNails(root.transform);
         }
         else if (kind == "Hammer")
         {
-            Visual(PrimitiveType.Cube, root.transform, new Vector3(0f, 0.35f, 0f), new Vector3(0.35f, 0.35f, 0.55f), HammerHead, "Head");
-            Visual(PrimitiveType.Cube, root.transform, new Vector3(0f, 0.12f, 0f), new Vector3(0.12f, 0.35f, 0.12f), HammerHandle, "Handle");
+            BuildHammer(root.transform);
         }
         else if (kind == "Tape")
         {
-            Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.4f, 0f), new Vector3(0.7f, 0.18f, 0.7f), Tape, "Roll");
-            Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.4f, 0f), new Vector3(0.28f, 0.2f, 0.28f), Color.white, "Core");
+            BuildTape(root.transform);
         }
-        else
+        else // Pipe (default)
         {
-            Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.55f, 0f), new Vector3(0.35f, 0.55f, 0.35f), PipeMetal, "Pipe");
+            BuildPipe(root.transform);
         }
 
-        TallTrigger(root, 1.4f, 1.4f);
+        TallTrigger(root, 1.8f, 1.8f, 3.5f, 1.2f);
         Kinematic(root);
         root.AddComponent<Level3MaterialPickup>().Setup(kind, 10);
         root.AddComponent<Level3PickupBob>();
         return root;
+    }
+
+    // ── Pipe ──────────────────────────────────────────────────────────────────
+    // A thick horizontal pipe section lying on the ground — clearly a cylinder tube.
+    static void BuildPipe(Transform root)
+    {
+        // Main pipe body — horizontal cylinder (rotated 90° on Z so it lies flat)
+        GameObject body = Visual(PrimitiveType.Cylinder, root,
+            new Vector3(0f, 0.85f, 0f),
+            new Vector3(0.55f, 1.4f, 0.55f),
+            PipeMetal, "PipeBody");
+        body.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+
+        // Left end cap — darker disc sealing the tube end
+        Color capColor = new Color(0.38f, 0.40f, 0.45f);
+        GameObject capL = Visual(PrimitiveType.Cylinder, root,
+            new Vector3(-1.35f, 0.85f, 0f),
+            new Vector3(0.58f, 0.12f, 0.58f),
+            capColor, "CapL");
+        capL.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+
+        // Right end cap
+        GameObject capR = Visual(PrimitiveType.Cylinder, root,
+            new Vector3(1.35f, 0.85f, 0f),
+            new Vector3(0.58f, 0.12f, 0.58f),
+            capColor, "CapR");
+        capR.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+
+        // Collar rings — decorative bands near each end (slightly wider, darker)
+        Color collarColor = new Color(0.30f, 0.32f, 0.36f);
+        GameObject collarL = Visual(PrimitiveType.Cylinder, root,
+            new Vector3(-1.05f, 0.85f, 0f),
+            new Vector3(0.65f, 0.14f, 0.65f),
+            collarColor, "CollarL");
+        collarL.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+
+        GameObject collarR = Visual(PrimitiveType.Cylinder, root,
+            new Vector3(1.05f, 0.85f, 0f),
+            new Vector3(0.65f, 0.14f, 0.65f),
+            collarColor, "CollarR");
+        collarR.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+    }
+
+    // ── Nails ─────────────────────────────────────────────────────────────────
+    // Five nails arranged in a fan: each nail has a long shaft and a wide flat head.
+    static void BuildNails(Transform root)
+    {
+        Color head  = NailMetal;
+        Color shaft = new Color(0.50f, 0.50f, 0.54f);
+
+        // Nail positions and tilt angles (fan spread)
+        float[] xOffsets = { -0.55f, -0.27f, 0f, 0.27f, 0.55f };
+        float[] tilts    = { -22f,   -10f,   0f,  10f,   22f   };
+
+        for (int i = 0; i < 5; i++)
+        {
+            float x   = xOffsets[i];
+            float tilt = tilts[i];
+            float baseY = 0.12f;
+
+            // Shaft — long thin cylinder standing upright, slightly tilted
+            GameObject shaft_go = Visual(PrimitiveType.Cylinder, root,
+                new Vector3(x, baseY + 0.6f, 0f),
+                new Vector3(0.07f, 0.6f, 0.07f),
+                shaft, $"Shaft_{i}");
+            shaft_go.transform.localRotation = Quaternion.Euler(0f, 0f, tilt);
+
+            // Head — flat wide cylinder on top of the shaft
+            GameObject head_go = Visual(PrimitiveType.Cylinder, root,
+                new Vector3(x + Mathf.Sin(tilt * Mathf.Deg2Rad) * 0.55f, baseY + 1.22f, 0f),
+                new Vector3(0.22f, 0.055f, 0.22f),
+                head, $"Head_{i}");
+            head_go.transform.localRotation = Quaternion.Euler(0f, 0f, tilt);
+        }
+
+        // Small wooden board they rest on — so they don't float in mid-air
+        Visual(PrimitiveType.Cube, root,
+            new Vector3(0f, 0.06f, 0f),
+            new Vector3(1.5f, 0.1f, 0.5f),
+            new Color(0.52f, 0.34f, 0.16f), "Board");
+    }
+
+    // ── Tape ──────────────────────────────────────────────────────────────────
+    // Donut shape: wide outer roll + hollow inner hole + a dangling strip of tape.
+    static void BuildTape(Transform root)
+    {
+        Color tapeColor  = Tape;                              // yellow-amber
+        Color tapeEdge   = new Color(0.75f, 0.58f, 0.08f);  // slightly darker edge
+        Color tapeStrip  = new Color(0.96f, 0.84f, 0.28f);  // bright tape face
+        Color core       = new Color(0.88f, 0.88f, 0.88f);  // grey cardboard inner core
+
+        float rollY = 1.0f;
+
+        // Outer roll body — flat wide cylinder (the reel)
+        Visual(PrimitiveType.Cylinder, root,
+            new Vector3(0f, rollY, 0f),
+            new Vector3(1.1f, 0.28f, 1.1f),
+            tapeColor, "OuterRoll");
+
+        // Inner core cylinder — slightly taller so it pokes through the hole
+        Visual(PrimitiveType.Cylinder, root,
+            new Vector3(0f, rollY, 0f),
+            new Vector3(0.36f, 0.34f, 0.36f),
+            core, "InnerCore");
+
+        // Top face ring — shows the tape wound on top
+        Visual(PrimitiveType.Cylinder, root,
+            new Vector3(0f, rollY + 0.27f, 0f),
+            new Vector3(1.08f, 0.04f, 1.08f),
+            tapeStrip, "TopFace");
+
+        // Bottom face ring
+        Visual(PrimitiveType.Cylinder, root,
+            new Vector3(0f, rollY - 0.27f, 0f),
+            new Vector3(1.08f, 0.04f, 1.08f),
+            tapeStrip, "BottomFace");
+
+        // Edge band around the outer rim — slightly darker to show depth
+        Visual(PrimitiveType.Cylinder, root,
+            new Vector3(0f, rollY, 0f),
+            new Vector3(1.14f, 0.22f, 1.14f),
+            tapeEdge, "RimBand");
+
+        // Dangling tape strip hanging off the side — three thin cubes cascading down
+        Color stripColor = tapeStrip;
+        Visual(PrimitiveType.Cube, root,
+            new Vector3(1.06f, rollY - 0.05f, 0f),
+            new Vector3(0.12f, 0.32f, 0.58f),
+            stripColor, "StripTop");
+        Visual(PrimitiveType.Cube, root,
+            new Vector3(1.14f, rollY - 0.38f, 0f),
+            new Vector3(0.10f, 0.26f, 0.56f),
+            stripColor, "StripMid");
+        Visual(PrimitiveType.Cube, root,
+            new Vector3(1.18f, rollY - 0.62f, 0f),
+            new Vector3(0.08f, 0.18f, 0.52f),
+            stripColor, "StripBot");
+    }
+
+    // ── Hammer ────────────────────────────────────────────────────────────────
+    // Classic T-shape: long wooden handle + chunky metal head with a striking face.
+    static void BuildHammer(Transform root)
+    {
+        float handleBaseY = 0.1f;
+        float handleH     = 1.55f;   // total handle length
+        float headY       = handleBaseY + handleH + 0.18f;
+
+        // Handle — long rounded rectangular shaft
+        Visual(PrimitiveType.Cube, root,
+            new Vector3(0f, handleBaseY + handleH * 0.5f, 0f),
+            new Vector3(0.18f, handleH, 0.18f),
+            HammerHandle, "Handle");
+
+        // Grip wrap — slightly darker band at the bottom of the handle
+        Visual(PrimitiveType.Cube, root,
+            new Vector3(0f, handleBaseY + 0.22f, 0f),
+            new Vector3(0.22f, 0.3f, 0.22f),
+            new Color(0.28f, 0.16f, 0.06f), "GripWrap");
+
+        // Main head body — wide horizontal block (the bulk of the hammerhead)
+        Visual(PrimitiveType.Cube, root,
+            new Vector3(0f, headY, 0f),
+            new Vector3(1.05f, 0.38f, 0.36f),
+            HammerHead, "HeadBody");
+
+        // Striking face — brighter flat plate on the right side
+        Visual(PrimitiveType.Cube, root,
+            new Vector3(0.54f, headY, 0f),
+            new Vector3(0.12f, 0.36f, 0.34f),
+            new Color(0.70f, 0.70f, 0.74f), "StrikeFace");
+
+        // Poll (back face) — slightly rounded flat plate on the left
+        Visual(PrimitiveType.Cube, root,
+            new Vector3(-0.54f, headY, 0f),
+            new Vector3(0.10f, 0.32f, 0.32f),
+            new Color(0.60f, 0.60f, 0.64f), "Poll");
+
+        // Neck — narrowing block between handle top and head (wedge look)
+        Visual(PrimitiveType.Cube, root,
+            new Vector3(0f, headY - 0.24f, 0f),
+            new Vector3(0.26f, 0.22f, 0.26f),
+            HammerHead, "Neck");
+
+        // Top chamfer — small bevel on the crown of the head
+        Visual(PrimitiveType.Cube, root,
+            new Vector3(0f, headY + 0.19f, 0f),
+            new Vector3(0.92f, 0.08f, 0.30f),
+            new Color(0.48f, 0.48f, 0.52f), "TopChamfer");
     }
 
     public static GameObject MakeWaterDroplet(Transform parent, int lane, float z, float amount)
@@ -221,15 +409,25 @@ public static class Level3Primitives
         root.transform.SetParent(parent, false);
         root.transform.position = new Vector3(LevelLanes.PathCenterX, Level3Ground.SurfaceY, z);
 
+        // Warning: just an empty container — no yellow cylinder
         GameObject warning = new GameObject("Warning");
         warning.transform.SetParent(root.transform, false);
-        Visual(PrimitiveType.Cylinder, warning.transform, new Vector3(0f, 0.06f, 0f), new Vector3(11f, 0.05f, 1.6f), Warning, "Dust");
         warning.SetActive(true);
 
+        // Body — wide tan-brown rectangle
         GameObject visual = new GameObject("Visual");
         visual.transform.SetParent(root.transform, false);
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(0f, 0.7f, 0f), new Vector3(2.4f, 1.1f, 1.1f), Warthog, "Body");
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.2f, 0.85f, 0f), new Vector3(0.9f, 0.7f, 0.8f), Warthog, "Head");
+        Visual(PrimitiveType.Cube, visual.transform, new Vector3(0f, 0.65f, 0f),   new Vector3(2.6f, 1.0f, 1.2f), Warthog,      "Body");
+        // Head — slightly darker snout box
+        Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.4f, 0.80f, 0f), new Vector3(0.85f, 0.65f, 0.9f), WarthogSnout, "Head");
+        // Tusks — two small white cubes on each side of the snout
+        Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.85f, 0.58f,  0.25f), new Vector3(0.25f, 0.18f, 0.18f), Color.white, "TuskL");
+        Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.85f, 0.58f, -0.25f), new Vector3(0.25f, 0.18f, 0.18f), Color.white, "TuskR");
+        // Legs — four short dark brown stubs
+        Visual(PrimitiveType.Cube, visual.transform, new Vector3( 0.7f, 0.18f,  0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegFL");
+        Visual(PrimitiveType.Cube, visual.transform, new Vector3( 0.7f, 0.18f, -0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegFR");
+        Visual(PrimitiveType.Cube, visual.transform, new Vector3(-0.7f, 0.18f,  0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegBL");
+        Visual(PrimitiveType.Cube, visual.transform, new Vector3(-0.7f, 0.18f, -0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegBR");
         visual.SetActive(true);
 
         TallTrigger(root, 2.8f, 1.5f, 5f, 1.4f);
@@ -302,19 +500,24 @@ public static class Level3Primitives
 
         GameObject bolt = new GameObject("Bolt");
         bolt.transform.SetParent(root.transform, false);
-        // Main neon-yellow cylinder — wide and obvious
+        // Tall neon-yellow outer column — reaches high into the sky
         GameObject outer = Visual(PrimitiveType.Cylinder, bolt.transform,
-            new Vector3(0f, 5f, 0f), new Vector3(0.7f, 5f, 0.7f), Lightning, "Outer");
+            new Vector3(0f, 22f, 0f), new Vector3(0.75f, 22f, 0.75f), Lightning, "Outer");
         MakeTransparent(outer.GetComponent<Renderer>(), new Color(1f, 0.95f, 0.05f, 0.88f));
-        // Bright white-yellow inner core
+        // Bright white-yellow inner core — taller than the outer for a glow-through effect
         GameObject core = Visual(PrimitiveType.Cylinder, bolt.transform,
-            new Vector3(0f, 5f, 0f), new Vector3(0.28f, 5.2f, 0.28f), LightningCore, "Core");
+            new Vector3(0f, 22f, 0f), new Vector3(0.28f, 23f, 0.28f), LightningCore, "Core");
         MakeTransparent(core.GetComponent<Renderer>(), new Color(1f, 1f, 0.85f, 0.95f));
-        // Wide ground-flash ring
+        // Wide ground-flash ring at the base
         GameObject flash = Visual(PrimitiveType.Cylinder, bolt.transform,
-            new Vector3(0f, 0.05f, 0f), new Vector3(2.4f, 0.07f, 2.4f), Lightning, "GroundFlash");
-        MakeTransparent(flash.GetComponent<Renderer>(), new Color(1f, 0.9f, 0.1f, 0.75f));
+            new Vector3(0f, 0.05f, 0f), new Vector3(2.8f, 0.07f, 2.8f), Lightning, "GroundFlash");
+        MakeTransparent(flash.GetComponent<Renderer>(), new Color(1f, 0.9f, 0.1f, 0.78f));
         bolt.SetActive(false);
+
+        BoxCollider hitbox = root.AddComponent<BoxCollider>();
+        hitbox.isTrigger = true;
+        hitbox.center = new Vector3(0f, 11f, 0f);
+        hitbox.size = new Vector3(2.8f, 22f, 2.8f);
 
         Kinematic(root);
         root.AddComponent<Level3LightningZone>().Setup(lane, warning, bolt);
@@ -411,57 +614,39 @@ public static class Level3Primitives
 
     public static GameObject MakeAcidRain(Transform parent, int lane, float z)
     {
-        const float barHeight = 1.65f;
-        const float laneBarWidth = 5.2f;
-        const float warningWidth = 7.4f;
+        // One single large vertical column from sky to ground.
+        const float colCenterY = 20f;
+        const float colHalfH   = 20f;
+        const float colRadius  = 1.1f;
 
         GameObject root = new GameObject("AcidRain");
         root.transform.SetParent(parent, false);
         root.transform.position = Level3Ground.LanePosition(lane, z);
 
-        GameObject visual = new GameObject("Visual");
-        visual.transform.SetParent(root.transform, false);
-
-        // Warning is bigger, like lightning's "before strike" signage.
-        GameObject warning = Visual(
-            PrimitiveType.Cylinder,
-            visual.transform,
-            new Vector3(0f, barHeight, 0f),
-            new Vector3(1.05f, warningWidth * 0.5f, 1.05f),
-            Acid,
-            "WarningBar");
-        warning.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-        MakeTransparent(warning.GetComponent<Renderer>(), new Color(0.55f, 0.95f, 0.35f, 0.18f));
+        GameObject warning = new GameObject("Warning");
+        warning.transform.SetParent(root.transform, false);
+        GameObject warnOuter = Visual(PrimitiveType.Cylinder, warning.transform,
+            new Vector3(0f, colCenterY, 0f),
+            new Vector3(colRadius, colHalfH, colRadius),
+            Acid, "WarnOuter");
+        MakeTransparent(warnOuter.GetComponent<Renderer>(), new Color(0.45f, 0.92f, 0.22f, 0.16f));
 
         GameObject active = new GameObject("ActiveRoot");
-        active.transform.SetParent(visual.transform, false);
-
-        GameObject bar = Visual(
-            PrimitiveType.Cylinder,
-            active.transform,
-            new Vector3(0f, barHeight, 0f),
-            new Vector3(1.05f, laneBarWidth * 0.5f, 1.05f),
-            Acid,
-            "RainBar");
-        bar.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-        MakeTransparent(bar.GetComponent<Renderer>(), new Color(0.55f, 0.95f, 0.35f, 0.26f));
-
-        GameObject mist = Visual(
-            PrimitiveType.Cylinder,
-            active.transform,
-            new Vector3(0f, 0.12f, 0f),
-            new Vector3(1.8f, 0.08f, 1.8f),
-            Acid,
-            "GroundMist");
-        MakeTransparent(mist.GetComponent<Renderer>(), new Color(0.5f, 0.92f, 0.32f, 0.22f));
+        active.transform.SetParent(root.transform, false);
+        GameObject outer = Visual(PrimitiveType.Cylinder, active.transform,
+            new Vector3(0f, colCenterY, 0f),
+            new Vector3(colRadius, colHalfH, colRadius),
+            Acid, "Outer");
+        MakeTransparent(outer.GetComponent<Renderer>(), new Color(0.45f, 0.95f, 0.22f, 0.30f));
 
         warning.SetActive(false);
         active.SetActive(false);
 
         BoxCollider box = root.AddComponent<BoxCollider>();
         box.isTrigger = true;
-        box.center = new Vector3(0f, barHeight, 0f);
-        box.size = new Vector3(laneBarWidth, 2.1f, 2.1f);
+        box.center = new Vector3(0f, colCenterY, 0f);
+        box.size   = new Vector3(colRadius * 2.4f, colHalfH * 2f, colRadius * 2.4f);
+
         Kinematic(root);
         root.AddComponent<Level3AcidRainZone>().Setup(lane, warning, active);
         return root;

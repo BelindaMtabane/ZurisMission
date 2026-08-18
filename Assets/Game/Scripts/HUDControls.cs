@@ -549,21 +549,18 @@ public class HUDControls : MonoBehaviour
     {
         materialLevel = Mathf.Clamp(materialLevel + amount, 0, maxMaterial);
         MarkDirty();
-        Level3FeedbackUI.Show($"+{amount} {kind.ToUpper()}", new Color(0.85f, 0.72f, 0.35f));
     }
 
     public void CollectLevel3Bucket(float amount = 15f)
     {
         waterLevel = Mathf.Min(maxBucketWater, waterLevel + amount);
         MarkDirty();
-        Level3FeedbackUI.Show($"+{amount:0} BUCKET WATER", new Color(0.25f, 0.7f, 1f));
     }
 
     public void CollectLevel3Health(float amount = 15f)
     {
         health = Mathf.Min(maxHealth, health + amount);
         MarkDirty();
-        Level3FeedbackUI.Show($"+{amount:0} HEALTH", new Color(0.35f, 0.95f, 0.45f));
     }
 
     public void LevelProgress()

@@ -60,6 +60,8 @@ public class Level3FeedbackUI : MonoBehaviour
         instance = this;
         BuildToast();
         BuildTankHud();
+        // Show starting state immediately so the player can see all three tanks at 0%
+        SetTankText(0, 0, 0);
     }
 
     void OnDestroy()
@@ -149,38 +151,54 @@ public class Level3FeedbackUI : MonoBehaviour
 
     void SetTankText(int tank1, int tank2, int tank3)
     {
-        if (!tankHudReady) BuildTankHud();
-        if (sceneTankTexts != null && sceneTankTexts.Length >= 3)
+        // Tank texts in the scene might be renamed (e.g. "tank1 (1)") and/or created
+        // after this UI component's Awake(). So we re-attempt wiring whenever we
+        // don't have all 3 references yet.
+        string Line(string label, int pct)
         {
-            if (sceneTankTexts[0] != null) sceneTankTexts[0].text = $"Tank 1: {tank1}% / 100%";
-            if (sceneTankTexts[1] != null) sceneTankTexts[1].text = $"Tank 2: {tank2}% / 100%";
-            if (sceneTankTexts[2] != null) sceneTankTexts[2].text = $"Tank 3: {tank3}% / 100%";
-            return;
+            // Full green when 100%, yellow while in progress, white at 0%
+            string col = pct >= 100 ? "#4AFF6A" : pct > 0 ? "#FFE040" : "#FFFFFF";
+            return $"<color={col}>{label}: {pct}% / 100%</color>";
         }
 
+        string combined = Line("Tank 1", tank1) + "\n" +
+                          Line("Tank 2", tank2) + "\n" +
+                          Line("Tank 3", tank3);
+
+        // Update every matching scene HUD text, not just the first one Unity returns.
+        UpdateAllSceneTankTexts("tank1", Line("Tank 1", tank1));
+        UpdateAllSceneTankTexts("tank2", Line("Tank 2", tank2));
+        UpdateAllSceneTankTexts("tank3", Line("Tank 3", tank3));
+
+        // Always also update runtime HUD as a fallback (in case scene texts are missing).
         if (tankHudText == null) BuildTankHud();
         if (tankHudText == null) return;
-        tankHudText.text = $"Tank 1: {tank1}% / 100%\nTank 2: {tank2}% / 100%\nTank 3: {tank3}% / 100%";
+        tankHudText.text = combined;
     }
 
     void BuildTankHud()
     {
         if (tankHudReady) return;
-        tankHudReady = true;
 
         TMP_Text t1 = FindSceneTankText("tank1");
         TMP_Text t2 = FindSceneTankText("tank2");
         TMP_Text t3 = FindSceneTankText("tank3");
         if (t1 != null && t2 != null && t3 != null)
         {
+            tankHudReady = true;
             tankHudText = null;
             sceneTankTexts = new[] { t1, t2, t3 };
             RemoveRuntimeTankHud();
+            // Ensure rich text so the colored <color=...> tags render.
+            for (int i = 0; i < sceneTankTexts.Length; i++)
+                if (sceneTankTexts[i] != null) sceneTankTexts[i].richText = true;
             return;
         }
 
         Canvas canvas = FindFirstObjectByType<Canvas>();
         if (canvas == null) return;
+
+        tankHudReady = true;
 
         GameObject root = new GameObject("Level3TankHud");
         root.transform.SetParent(canvas.transform, false);
@@ -188,8 +206,8 @@ public class Level3FeedbackUI : MonoBehaviour
         rt.anchorMin = new Vector2(1f, 0f);
         rt.anchorMax = new Vector2(1f, 0f);
         rt.pivot = new Vector2(1f, 0f);
-        rt.anchoredPosition = new Vector2(-18f, 18f);
-        rt.sizeDelta = new Vector2(260f, 110f);
+        rt.anchoredPosition = new Vector2(-18f, 40f);
+        rt.sizeDelta = new Vector2(300f, 130f);
 
         GameObject bgGo = new GameObject("Background");
         bgGo.transform.SetParent(root.transform, false);
@@ -211,11 +229,13 @@ public class Level3FeedbackUI : MonoBehaviour
         textRt.offsetMax = new Vector2(-12f, -8f);
         tankHudText = textGo.AddComponent<TextMeshProUGUI>();
         if (TMP_Settings.defaultFontAsset != null) tankHudText.font = TMP_Settings.defaultFontAsset;
-        tankHudText.fontSize = 22f;
+        tankHudText.fontSize = 26f;
         tankHudText.fontStyle = FontStyles.Bold;
         tankHudText.alignment = TextAlignmentOptions.MidlineRight;
         tankHudText.raycastTarget = false;
-        tankHudText.text = "Tank 1: 0% / 100%\nTank 2: 0% / 100%\nTank 3: 0% / 100%";
+        tankHudText.richText = true;
+        tankHudText.enableWordWrapping = false;
+        tankHudText.text = "<color=#FFFFFF>Tank 1: 0% / 100%</color>\n<color=#FFFFFF>Tank 2: 0% / 100%</color>\n<color=#FFFFFF>Tank 3: 0% / 100%</color>";
     }
 
     static void RemoveRuntimeTankHud()
@@ -226,11 +246,71 @@ public class Level3FeedbackUI : MonoBehaviour
 
     static TMP_Text FindSceneTankText(string objectName)
     {
+        string Normalize(string s)
+        {
+            if (s == null) return "";
+            // keep only letters/digits so names like "tank 1 (1)" still match "tank1"
+            System.Text.StringBuilder sb = new System.Text.StringBuilder(s.Length);
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (char.IsLetterOrDigit(c)) sb.Append(char.ToLowerInvariant(c));
+            }
+            return sb.ToString();
+        }
+
+        string normNeedle = Normalize(objectName);
+
         TMP_Text[] all = FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         for (int i = 0; i < all.Length; i++)
         {
-            if (all[i] != null && all[i].gameObject.name == objectName) return all[i];
+            if (all[i] == null) continue;
+            // Scene objects might be renamed by Unity (e.g. "tank1 (1)").
+            // Match by prefix so we still find them reliably.
+            string n = all[i].gameObject.name;
+            if (n == objectName) return all[i];
+            if (n != null && n.StartsWith(objectName)) return all[i];
+            // Some scenes might have different casing.
+            if (n != null && n.ToLower().StartsWith(objectName.ToLower())) return all[i];
+
+            string normHay = Normalize(n);
+            if (!string.IsNullOrEmpty(normNeedle) && normHay.StartsWith(normNeedle)) return all[i];
+            if (!string.IsNullOrEmpty(normNeedle) && normHay.Contains(normNeedle)) return all[i];
         }
         return null;
+    }
+
+    static void UpdateAllSceneTankTexts(string objectName, string text)
+    {
+        string Normalize(string s)
+        {
+            if (s == null) return "";
+            System.Text.StringBuilder sb = new System.Text.StringBuilder(s.Length);
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (char.IsLetterOrDigit(c)) sb.Append(char.ToLowerInvariant(c));
+            }
+            return sb.ToString();
+        }
+
+        string normNeedle = Normalize(objectName);
+        TMP_Text[] all = FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < all.Length; i++)
+        {
+            if (all[i] == null) continue;
+            string n = all[i].gameObject.name;
+            string normHay = Normalize(n);
+            bool match =
+                n == objectName ||
+                (n != null && n.StartsWith(objectName)) ||
+                (n != null && n.ToLower().StartsWith(objectName.ToLower())) ||
+                (!string.IsNullOrEmpty(normNeedle) && normHay.StartsWith(normNeedle)) ||
+                (!string.IsNullOrEmpty(normNeedle) && normHay.Contains(normNeedle));
+
+            if (!match) continue;
+            all[i].richText = true;
+            all[i].text = text;
+        }
     }
 }
