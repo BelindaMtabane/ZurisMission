@@ -36,7 +36,7 @@ public class Level1LayoutDirector : MonoBehaviour
 
     static void BootScene(string sceneName)
     {
-        if (sceneName != "MainGame") return;
+        if (sceneName != SceneCatalog.MainGame) return;
         if (FindFirstObjectByType<Level1LayoutDirector>() != null) return;
 
         GameObject host = new GameObject("Level1LayoutDirector");
@@ -45,7 +45,7 @@ public class Level1LayoutDirector : MonoBehaviour
 
     void Start()
     {
-        if (SceneManager.GetActiveScene().name != "MainGame")
+        if (SceneManager.GetActiveScene().name != SceneCatalog.MainGame)
         {
             Destroy(this);
             return;
@@ -53,6 +53,7 @@ public class Level1LayoutDirector : MonoBehaviour
 
         Transform player = FindPlayer();
         Level1Progress.BindFromScene(player);
+        RunnerPlayerSetup.Apply(SceneCatalog.MainGame, player);
         Level1Pacing.Apply();
         ClearExistingGameplay(player);
         try
@@ -64,7 +65,16 @@ public class Level1LayoutDirector : MonoBehaviour
             Debug.LogException(ex);
         }
         EnsureHeatWave(player);
+        EnsureLowWaterMonitor();
         Debug.Log($"[Level1] Layout ready startZ={Level1Progress.StartZ:F1} endZ={Level1Progress.EndZ:F1}");
+    }
+
+    void EnsureLowWaterMonitor()
+    {
+        if (FindFirstObjectByType<Level1LowWaterMonitor>() == null)
+        {
+            gameObject.AddComponent<Level1LowWaterMonitor>();
+        }
     }
 
     void EnsureHeatWave(Transform player)
@@ -184,205 +194,193 @@ public class Level1LayoutDirector : MonoBehaviour
             Destroy(existing);
         }
 
+        Level1LayoutPlacement.Reset();
+
         Transform root = new GameObject(RootName).transform;
         int materialIndex = 0;
 
-        // === 0–20% LEARN + PLAY ===
-
-        // 0–5% Welcome — cactus teaches lane movement
-        CactusWater(root, 1, 0.03f);
-        CactusWater(root, 2, 0.045f);
-        MaterialTool(root, 0, 0.048f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        // ── LEARN (0–22%): one object per lane slot ──
+        MaterialTool(root, 0, 0.03f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
         CactusWater(root, 3, 0.06f);
+        MaterialTool(root, 2, 0.08f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        Rock(root, 3, 0.10f);
+        MaterialTool(root, 1, 0.125f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        CactusWater(root, 0, 0.14f);
+        Sand(root, 2, 0.16f);
+        MaterialTool(root, 3, 0.175f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        Rock(root, 1, 0.20f);
+        Health(root, 2, 0.21f);
+        CactusWater(root, 0, 0.225f);
+        MaterialTool(root, 1, 0.075f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
 
-        // 5–8% First lane dodge
-        Rock(root, 0, 0.065f);
-        CactusWater(root, 2, 0.072f);
-        Rock(root, 2, 0.078f);
-        CactusWater(root, 0, 0.085f);
+        // ── PRACTICE (23–50%): danger then recovery on separate lane slots ──
+        CactusWater(root, 1, 0.265f);
+        MaterialTool(root, 2, 0.285f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        Snake(root, 3, 0.305f);
+        CactusWater(root, 0, 0.325f);
+        MaterialTool(root, 1, 0.345f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        Sand(root, 2, 0.365f);
+        Snake(root, 1, 0.395f);
+        CactusWater(root, 2, 0.415f);
+        Rock(root, 0, 0.435f);
+        MaterialTool(root, 3, 0.455f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        Snake(root, 3, 0.475f);
+        CactusWall(root, new[] { true, false, true, false }, 0.495f);
+        MaterialTool(root, 1, 0.515f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        MaterialTool(root, 0, 0.405f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
 
-        // 8–11% Sand pit → reward
-        Sand(root, 1, 0.095f);
-        CactusWater(root, 3, 0.105f);
-        MaterialTool(root, 1, 0.108f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-
-        // 11–13% Rock cluster → reward
-        RockClusterLanes(root, new[] { 0, 1 }, 0.115f);
-        CactusWater(root, 2, 0.125f);
-
-        // 13–15% Extra cactus reward
-        CactusWater(root, 2, 0.135f);
-        CactusWater(root, 3, 0.14f);
-        CactusWater(root, 0, 0.145f);
-
-        // 15–17% First horizontal cactus wall (L3 open)
-        CactusWall(root, new[] { true, true, false, true }, 0.155f);
-        CactusWater(root, 2, 0.165f);
-
-        // 17–20% First rolling log lesson + safe run
-        RollingLogLesson(root, 0.175f);
-        CactusWater(root, 2, 0.188f);
-        CactusWater(root, 1, 0.195f);
-        MaterialTool(root, 3, 0.198f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-
-        // === 20–25% BUILD — Heat at 20%, warned snakes before 25% ===
-        CactusWater(root, 0, 0.205f);
-        CactusWater(root, 3, 0.212f);
-        Snake(root, 2, 0.22f);
-        CactusWater(root, 1, 0.228f);
-        CactusWater(root, 0, 0.235f);
-        Snake(root, 1, 0.245f);
-        CactusWater(root, 3, 0.252f);
-        CactusWater(root, 2, 0.26f);
-        CactusWater(root, 1, 0.268f);
-        CactusWater(root, 0, 0.276f);
-        CactusWater(root, 3, 0.284f);
-        CactusWater(root, 2, 0.292f);
-        Sand(root, 3, 0.3f);
-        MaterialTool(root, 0, 0.303f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        CactusWater(root, 1, 0.31f);
-        RockClusterLanes(root, new[] { 2, 3 }, 0.318f);
-        CactusWater(root, 0, 0.326f);
-        CactusWater(root, 1, 0.334f);
-        CactusWater(root, 2, 0.342f);
-        CactusWall(root, new[] { false, true, true, false }, 0.35f);
-        CactusWater(root, 0, 0.358f);
-        Log(root, 2, 0.366f);
-        CactusWater(root, 3, 0.374f);
-        MaterialTool(root, 1, 0.382f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        Snake(root, 2, 0.405f);
-        CactusWater(root, 1, 0.415f);
-        Rock(root, 0, 0.425f);
-
-        // === 40–60% WEAVE ===
-        Snake(root, 1, 0.435f);
-        CactusWater(root, 3, 0.448f);
-        CactusWater(root, 0, 0.465f);
-        Snake(root, 0, 0.482f);
-        CactusWater(root, 2, 0.498f);
-        MaterialTool(root, 2, 0.512f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        CactusWall(root, new[] { true, false, true, false }, 0.525f);
-        CactusWater(root, 1, 0.538f);
-        Log(root, 1, 0.552f);
-        CactusWater(root, 2, 0.565f);
-        CactusWater(root, 0, 0.578f);
-        CactusWater(root, 3, 0.592f);
-        Snake(root, 1, 0.598f);
-        RockClusterLanes(root, new[] { 2, 3 }, 0.612f);
-
-        // === 60–70% RECOVER ===
-        CactusWater(root, 1, 0.622f);
-        CactusWater(root, 2, 0.632f);
-        CactusWater(root, 0, 0.642f);
-        CactusWater(root, 3, 0.652f);
-        MaterialTool(root, 1, 0.662f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        CactusWater(root, 2, 0.672f);
-        CactusWater(root, 1, 0.682f);
-        CactusWater(root, 3, 0.692f);
-        CactusWater(root, 0, 0.702f);
-
-        // === 70–85% ESCALATE ===
-        RockClusterLanes(root, new[] { 0, 1 }, 0.705f);
+        // ── COMBINE (51–72%): tutorial log reserves lanes 1–2 at ~53%; keep other spawns clear ──
+        RollingLogLesson(root, 0.510f);
+        CactusWater(root, 0, 0.565f);
+        Snake(root, 3, 0.585f);
+        RollingLog(root, 2, 0.610f, 2, 13f);
+        CactusWater(root, 1, 0.640f);
+        MaterialTool(root, 0, 0.665f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        RockClusterLanes(root, new[] { 0, 3 }, 0.690f);
         Snake(root, 2, 0.715f);
-        CactusWater(root, 3, 0.725f);
-        Log(root, 0, 0.735f);
-        MaterialTool(root, 2, 0.745f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        CactusWall(root, new[] { false, true, true, true }, 0.755f);
-        CactusWater(root, 0, 0.765f);
-        CactusWater(root, 3, 0.775f);
-        Snake(root, 1, 0.785f);
+        CactusWater(root, 3, 0.740f);
+        Sand(root, 1, 0.760f);
+        Health(root, 0, 0.775f);
+        MaterialTool(root, 2, 0.575f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+
+        // ── RECOVERY (73–76%) ──
         CactusWater(root, 2, 0.795f);
-        Sand(root, 1, 0.805f);
-        CactusWater(root, 1, 0.825f);
-        Log(root, 2, 0.835f);
-        MaterialTool(root, 0, 0.845f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        MaterialTool(root, 3, 0.810f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
 
-        // === 85–95% SURVIVE ===
-        CactusWall(root, new[] { true, true, false, true }, 0.855f);
-        Snake(root, 2, 0.865f);
-        CactusWater(root, 1, 0.875f);
-        CactusWater(root, 0, 0.885f);
-        CactusWater(root, 3, 0.895f);
-        RockClusterLanes(root, new[] { 0, 1 }, 0.915f);
-        CactusWater(root, 2, 0.925f);
-        MaterialTool(root, 3, 0.935f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        Log(root, 1, 0.945f);
+        // ── CHALLENGE (77–88%) ──
+        Snake(root, 1, 0.830f);
+        RollingLog(root, 3, 0.855f, 2, 14f);
+        CactusWater(root, 0, 0.880f);
+        Rock(root, 2, 0.905f);
+        Snake(root, 3, 0.930f);
+        MaterialTool(root, 1, 0.805f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
 
-        // === 95–100% FINAL CHALLENGE ===
-        CactusWall(root, new[] { true, true, false, true }, 0.955f);
-        Snake(root, 1, 0.962f);
-        CactusWater(root, 2, 0.972f);
-        CactusWater(root, 0, 0.978f);
-        Log(root, 3, 0.984f);
-        CactusWall(root, new[] { false, true, false, true }, 0.99f);
-        CactusWater(root, 1, 0.994f);
-        MaterialTool(root, 2, 0.997f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-
-        // Materials + health for win condition
-        MaterialTool(root, 3, 0.10f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        MaterialTool(root, 0, 0.18f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        MaterialTool(root, 2, 0.28f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        MaterialTool(root, 1, 0.38f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        MaterialTool(root, 3, 0.48f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        MaterialTool(root, 0, 0.52f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        MaterialTool(root, 2, 0.62f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        MaterialTool(root, 1, 0.72f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        MaterialTool(root, 3, 0.82f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        MaterialTool(root, 0, 0.92f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        MaterialTool(root, 2, 0.96f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        MaterialTool(root, 1, 0.99f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-
-        Health(root, 1, 0.50f);
-        Health(root, 3, 0.78f);
+        // ── FINISH (89–100%) ──
+        CactusWater(root, 1, 0.950f);
+        MaterialTool(root, 2, 0.970f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
+        Health(root, 3, 0.960f);
+        RollingLog(root, 0, 0.985f, 2, 15f);
+        MaterialTool(root, 0, 0.995f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
 
         PlaceWaterPools(root);
+        EnsureFinishTrigger();
+    }
+
+    static void EnsureFinishTrigger()
+    {
+        GameObject ender = GameObject.Find("Ender1");
+        if (ender == null)
+        {
+            ender = new GameObject("Ender1");
+        }
+
+        ender.SetActive(true);
+        try
+        {
+            ender.tag = "EndLevel1";
+        }
+        catch
+        {
+            // Tag may already exist in the project.
+        }
+
+        float pathCenter = (LevelLanes.X(0) + LevelLanes.X(LevelLanes.Count - 1)) * 0.5f;
+        ender.transform.position = new Vector3(pathCenter, 4f, Level1Progress.EndZ);
+        ender.transform.rotation = Quaternion.identity;
+        ender.transform.localScale = Vector3.one;
+
+        BoxCollider box = ender.GetComponent<BoxCollider>();
+        if (box == null) box = ender.AddComponent<BoxCollider>();
+        box.isTrigger = true;
+        float width = Mathf.Abs(LevelLanes.X(0) - LevelLanes.X(LevelLanes.Count - 1)) + 16f;
+        box.size = new Vector3(width, 18f, 20f);
+        box.center = Vector3.zero;
+
+        if (ender.GetComponent<Level1FinishGate>() == null)
+        {
+            ender.AddComponent<Level1FinishGate>();
+        }
     }
 
     static void PlaceWaterPools(Transform root)
     {
-        int[] lanes = { 1, 3, 0, 2, 1, 3, 2, 0, 1, 3, 0, 2, 3, 1, 2, 0, 3, 1, 0, 2 };
+        int[] lanes = { 1, 0, 2, 3, 3, 0, 1, 2, 0, 1, 3, 2, 0, 1 };
         float[] progress =
         {
-            0.04f, 0.09f, 0.14f, 0.19f, 0.24f, 0.29f, 0.34f, 0.39f, 0.44f, 0.49f,
-            0.54f, 0.59f, 0.64f, 0.69f, 0.74f, 0.79f, 0.84f, 0.89f, 0.94f, 0.98f
+            0.04f, 0.102f, 0.188f, 0.240f,
+            0.270f, 0.358f, 0.440f, 0.508f,
+            0.600f, 0.670f, 0.765f, 0.820f,
+            0.903f, 0.925f
         };
 
-        for (int i = 0; i < lanes.Length; i++)
+        for (int i = 0; i < lanes.Length && i < progress.Length; i++)
         {
             WaterPool(root, lanes[i], progress[i]);
         }
     }
 
+    static int[] BlockedLanes(bool[] blockedLanes)
+    {
+        if (blockedLanes == null) return System.Array.Empty<int>();
+
+        int count = 0;
+        for (int lane = 0; lane < LevelLanes.Count && lane < blockedLanes.Length; lane++)
+        {
+            if (blockedLanes[lane]) count++;
+        }
+
+        if (count == 0) return System.Array.Empty<int>();
+
+        int[] lanes = new int[count];
+        int index = 0;
+        for (int lane = 0; lane < LevelLanes.Count && lane < blockedLanes.Length; lane++)
+        {
+            if (!blockedLanes[lane]) continue;
+            lanes[index++] = lane;
+        }
+
+        return lanes;
+    }
+
     static void CactusWall(Transform root, bool[] blockedLanes, float progress)
     {
-        Level1Primitives.MakeCactusWall(root, blockedLanes, Z(progress));
+        int[] lanes = BlockedLanes(blockedLanes);
+        if (!Level1LayoutPlacement.TryReserveLanes(lanes, progress, out float usedProgress)) return;
+        Level1Primitives.MakeCactusWall(root, blockedLanes, Z(usedProgress));
     }
 
     static void RockClusterLanes(Transform root, int[] lanes, float progress)
     {
-        Level1Primitives.MakeRockClusterLanes(root, lanes, Z(progress));
+        if (!Level1LayoutPlacement.TryReserveLanes(lanes, progress, out float usedProgress)) return;
+        Level1Primitives.MakeRockClusterLanes(root, lanes, Z(usedProgress));
     }
 
     static void RollingLogLesson(Transform root, float progress)
     {
-        Level1Primitives.MakeRollingLogLesson(root, Z(progress));
+        float lessonZ = Z(progress);
+        float spawnProgress = Level1LayoutPlacement.ProgressFromWorldZ(lessonZ + 18f);
+        Level1LayoutPlacement.TryReserveLanes(new[] { 1, 2 }, spawnProgress, out _);
+        Level1Primitives.MakeRollingLogLesson(root, lessonZ);
     }
 
     static void CactusWater(Transform root, int lane, float progress)
     {
-        Level1Primitives.MakeCactusWater(root, lane, Z(progress));
+        if (!Level1LayoutPlacement.TryReserve(lane, progress, out float usedProgress, out int usedLane)) return;
+        Level1Primitives.MakeCactusWater(root, usedLane, Z(usedProgress));
     }
 
     static float Z(float progress) => Level1Progress.WorldZ(progress);
 
     static void WaterPool(Transform root, int lane, float progress)
     {
-        Level1Primitives.MakeWaterPool(root, lane, Z(progress));
+        if (!Level1LayoutPlacement.TryReserve(lane, progress, out float usedProgress, out int usedLane)) return;
+        Level1Primitives.MakeWaterPool(root, usedLane, Z(usedProgress));
     }
 
     static void MaterialTool(Transform root, int lane, float progress, Level1MaterialKind kind)
     {
-        Level1Primitives.MakeMaterialTool(root, lane, Z(progress), kind);
+        if (!Level1LayoutPlacement.TryReserve(lane, progress, out float usedProgress, out int usedLane)) return;
+        Level1Primitives.MakeMaterialTool(root, usedLane, Z(usedProgress), kind);
     }
 
     static void Aloe(Transform root, int lane, float progress)
@@ -395,14 +393,22 @@ public class Level1LayoutDirector : MonoBehaviour
         Level1Primitives.MakeSuperFruit(root, lane, Z(progress));
     }
 
+    static void RollingLog(Transform root, int lane, float progress, int laneSpan = 2, float speed = 13f)
+    {
+        int[] lanes = Level1LayoutPlacement.GetRollingLogLanes(lane, laneSpan);
+        if (!Level1LayoutPlacement.TryReserveLanes(lanes, progress, out float usedProgress)) return;
+        Level1Primitives.MakeRollingLog(root, lane, Z(usedProgress), laneSpan, speed);
+    }
+
     static void Log(Transform root, int lane, float progress)
     {
-        Level1Primitives.MakeLogBarrier(root, lane, Z(progress));
+        RollingLog(root, lane, progress);
     }
 
     static void Health(Transform root, int lane, float progress)
     {
-        Level1Primitives.MakeHealthPickup(root, lane, Z(progress));
+        if (!Level1LayoutPlacement.TryReserve(lane, progress, out float usedProgress, out int usedLane)) return;
+        Level1Primitives.MakeHealthPickup(root, usedLane, Z(usedProgress));
     }
 
     static void Cluster(Transform root, int[] lanes, float progress)
@@ -412,12 +418,20 @@ public class Level1LayoutDirector : MonoBehaviour
 
     static void Rock(Transform root, int lane, float progress)
     {
-        Level1Primitives.MakeRockCluster(root, lane, Z(progress));
+        if (!Level1LayoutPlacement.TryReserve(lane, progress, out float usedProgress, out int usedLane)) return;
+        Level1Primitives.MakeRockCluster(root, usedLane, Z(usedProgress));
     }
 
     static void Sand(Transform root, int lane, float progress)
     {
-        Level1Primitives.MakeSandPit(root, lane, Z(progress));
+        if (!Level1LayoutPlacement.TryReserve(lane, progress, out float usedProgress, out int usedLane)) return;
+        Level1Primitives.MakeSandPit(root, usedLane, Z(usedProgress));
+    }
+
+    static void BlackPit(Transform root, int lane, float progress)
+    {
+        if (!Level1LayoutPlacement.TryReserve(lane, progress, out float usedProgress, out int usedLane)) return;
+        Level1Primitives.MakeBlackPit(root, usedLane, Z(usedProgress));
     }
 
     static void Barrier(Transform root, int lane, float progress)
@@ -427,6 +441,7 @@ public class Level1LayoutDirector : MonoBehaviour
 
     static void Snake(Transform root, int lane, float progress)
     {
-        Level1Primitives.MakeSnake(root, lane, Z(progress), progress);
+        if (!Level1LayoutPlacement.TryReserve(lane, progress, out float usedProgress, out int usedLane)) return;
+        Level1Primitives.MakeSnake(root, usedLane, Z(usedProgress), usedProgress);
     }
 }

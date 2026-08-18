@@ -969,11 +969,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7350468063802258203, guid: 0504766475c4dbf43b8b5e23b77bec56, type: 3}
       propertyPath: m_LocalScale.z
-      value: 139.35419
+      value: 185.9821
       objectReference: {fileID: 0}
     - target: {fileID: 7350468063802258203, guid: 0504766475c4dbf43b8b5e23b77bec56, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -34.88622
+      value: -62
       objectReference: {fileID: 0}
     - target: {fileID: 7350468063802258203, guid: 0504766475c4dbf43b8b5e23b77bec56, type: 3}
       propertyPath: m_LocalPosition.y
@@ -981,7 +981,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7350468063802258203, guid: 0504766475c4dbf43b8b5e23b77bec56, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 344.75385
+      value: 409
       objectReference: {fileID: 0}
     - target: {fileID: 7350468063802258203, guid: 0504766475c4dbf43b8b5e23b77bec56, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1864,7 +1864,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 4.37, z: -10.26}
+  m_LocalPosition: {x: 0, y: 6.12, z: -14.36}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4418,7 +4418,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7119704244507837109, guid: 20801ef420b285e44af54eb7c38f2ad5, type: 3}
       propertyPath: m_LocalScale.z
-      value: 57.529945
+      value: 77.98184
       objectReference: {fileID: 0}
     - target: {fileID: 7119704244507837109, guid: 20801ef420b285e44af54eb7c38f2ad5, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4430,7 +4430,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7119704244507837109, guid: 20801ef420b285e44af54eb7c38f2ad5, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 292.75385
+      value: 347
       objectReference: {fileID: 0}
     - target: {fileID: 7119704244507837109, guid: 20801ef420b285e44af54eb7c38f2ad5, type: 3}
       propertyPath: m_LocalRotation.w
@@ -9405,7 +9405,7 @@ MonoBehaviour:
   maxPlayerWater: 100
   maxMaterial: 100
   waterIncreaseRate: 30
-  villageProgressPercent: 0
+  villageProgressPercent: 35
   mainGameVillageMaxPercent: 34
   material: {fileID: 2125801969}
   villageProgressText: {fileID: 234030179}
@@ -10768,7 +10768,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7119704244507837109, guid: 20801ef420b285e44af54eb7c38f2ad5, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -35.118217
+      value: -49
       objectReference: {fileID: 0}
     - target: {fileID: 7119704244507837109, guid: 20801ef420b285e44af54eb7c38f2ad5, type: 3}
       propertyPath: m_LocalPosition.y
@@ -11961,7 +11961,6 @@ GameObject:
   - component: {fileID: 1875673032}
   - component: {fileID: 1875673031}
   - component: {fileID: 1875673030}
-  - component: {fileID: 1875673035}
   - component: {fileID: 1875673034}
   - component: {fileID: 1875673037}
   - component: {fileID: 1875673038}
@@ -12092,29 +12091,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
---- !u!114 &1875673035
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1875673029}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ae33304e25f763941b45edb4c75bcbae, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  lanePositions:
-  - -6
-  - -2
-  - 2
-  - 6
-  playerSpeed: 20
-  playerJumpPower: 10
-  playerSpeedBoost: 10
-  playerSlowDown: 3
-  isGrounded: 0
-  rb: {fileID: 1875673034}
 --- !u!114 &1875673037
 MonoBehaviour:
   m_ObjectHideFlags: 0

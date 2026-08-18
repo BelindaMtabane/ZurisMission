@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -9,7 +10,6 @@ using UnityEngine.SceneManagement;
 public class Level2LayoutDirector : MonoBehaviour
 {
     const string RootName = "Level2_Layout";
-    const string SceneName = "Level2";
 
     static readonly Level2MaterialKind[] MaterialCycle =
     {
@@ -20,6 +20,7 @@ public class Level2LayoutDirector : MonoBehaviour
 
     [SerializeField] float mudSlowMultiplier = Level2MudSlowEffect.DefaultMultiplier;
     [SerializeField] float mudSlowDuration = Level2MudSlowEffect.DefaultDuration;
+    readonly List<float>[] reservedLaneZs = { new List<float>(), new List<float>(), new List<float>(), new List<float>() };
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Register()
@@ -41,7 +42,7 @@ public class Level2LayoutDirector : MonoBehaviour
 
     static void BootScene(string sceneName)
     {
-        if (sceneName != SceneName) return;
+        if (sceneName != SceneCatalog.Level2) return;
         if (FindFirstObjectByType<Level2LayoutDirector>() != null) return;
 
         GameObject host = new GameObject("Level2LayoutDirector");
@@ -56,7 +57,7 @@ public class Level2LayoutDirector : MonoBehaviour
 
     void Start()
     {
-        if (SceneManager.GetActiveScene().name != SceneName)
+        if (SceneManager.GetActiveScene().name != SceneCatalog.Level2)
         {
             Destroy(this);
             return;
@@ -64,8 +65,8 @@ public class Level2LayoutDirector : MonoBehaviour
 
         Transform player = FindPlayer();
         Level2Progress.BindFromScene(player);
-        RunnerLevelPacing.Apply(SceneName);
-        ConfigureLanes(player);
+        RunnerPlayerSetup.Apply(SceneCatalog.Level2, player);
+        RunnerLevelPacing.Apply(SceneCatalog.Level2);
         ClearExistingGameplay(player);
         try
         {
@@ -75,55 +76,10 @@ public class Level2LayoutDirector : MonoBehaviour
         {
             Debug.LogException(ex);
         }
+        EnsureFinishTrigger();
         RefreshGroundTiles();
 
         Debug.Log("[Level2] Mudlands layout built.");
-    }
-
-    static void ConfigureLanes(Transform player)
-    {
-        LevelLanes.ConfigureForActiveScene();
-        AlignLaneMarkers();
-        SnapPlayerToNearestLane(player);
-
-        Debug.Log($"[Level2] Lanes centered on path x={LevelLanes.PathCenterX:F2} " +
-                  $"[{LevelLanes.X(0):F1}, {LevelLanes.X(1):F1}, {LevelLanes.X(2):F1}, {LevelLanes.X(3):F1}]");
-    }
-
-    static void AlignLaneMarkers()
-    {
-        string[] markerNames = { "LaneSpawn1", "LaneSpawn2", "LaneSpawn3", "LaneSpawn4" };
-        for (int i = 0; i < markerNames.Length; i++)
-        {
-            GameObject marker = GameObject.Find(markerNames[i]);
-            if (marker == null) continue;
-
-            Vector3 pos = marker.transform.position;
-            pos.x = LevelLanes.X(i);
-            marker.transform.position = pos;
-            marker.SetActive(true);
-        }
-
-        Lanemanager2 laneManager = FindFirstObjectByType<Lanemanager2>();
-        if (laneManager == null || laneManager.laneSpawnsPositions == null) return;
-
-        for (int i = 0; i < laneManager.laneSpawnsPositions.Length && i < LevelLanes.Count; i++)
-        {
-            if (laneManager.laneSpawnsPositions[i] == null) continue;
-
-            Vector3 pos = laneManager.laneSpawnsPositions[i].position;
-            pos.x = LevelLanes.X(i);
-            laneManager.laneSpawnsPositions[i].position = pos;
-        }
-    }
-
-    static void SnapPlayerToNearestLane(Transform player)
-    {
-        if (player == null) return;
-
-        Vector3 pos = player.position;
-        pos.x = LevelLanes.X(LevelLanes.Count / 2);
-        player.position = pos;
     }
 
     static Transform FindPlayer()
@@ -226,155 +182,146 @@ public class Level2LayoutDirector : MonoBehaviour
 
         Transform root = new GameObject(RootName).transform;
         int materialIndex = 0;
+        int healthIndex = 0;
+        for (int i = 0; i < reservedLaneZs.Length; i++) reservedLaneZs[i].Clear();
 
-        // === 0–5% OPENING: droplet, tall baobab, material ===
-        WaterDrop(root, 2, 0.018f);
-        Baobab(root, 1, 0.032f);
-        MaterialPickup(root, 3, 0.042f, NextMaterial(ref materialIndex));
+        // === 0–15% TUTORIAL: cactus, mud, rocks, pickups — room to learn ===
+        WaterDrop(root, 2, 0.010f);
+        MudPuddle(root, 0, 0.022f);
+        MaterialPickup(root, 1, 0.034f, NextMaterial(ref materialIndex));
+        HealthFruit(root, 2, 0.046f, NextHealth(ref healthIndex));
+        WaterPool(root, 1, 0.058f);
+        Cactus(root, 3, 0.070f);
+        Rock(root, 1, 0.082f);
+        MudPuddle(root, 3, 0.090f);
+        MaterialPickup(root, 2, 0.094f, NextMaterial(ref materialIndex));
+        MudPuddle(root, 2, 0.106f);
+        Baobab(root, 0, 0.118f);
+        WaterDrop(root, 3, 0.140f);
+        HealthFruit(root, 0, 0.148f, NextHealth(ref healthIndex));
 
-        // === 5–8% ROCKS ===
-        Rock(root, 0, 0.055f);
-        WaterDrop(root, 2, 0.065f);
-        Rock(root, 3, 0.074f);
-        MaterialPickup(root, 1, 0.078f, NextMaterial(ref materialIndex));
+        // === 15–30% warthogs enter, still dodgeable ===
+        Warthog(root, 0.168f, true, 36f);
+        WaterDrop(root, 1, 0.182f);
+        MaterialPickup(root, 0, 0.194f, NextMaterial(ref materialIndex));
+        Rock(root, 3, 0.206f);
+        MudPuddle(root, 2, 0.218f);
+        MudPuddle(root, 0, 0.226f);
+        HealthFruit(root, 3, 0.230f, NextHealth(ref healthIndex));
+        WaterPool(root, 1, 0.242f);
+        Warthog(root, 0.272f, false, 36f);
+        MaterialPickup(root, 2, 0.286f, NextMaterial(ref materialIndex));
+        BubbleShield(root, 3, 0.298f);
 
-        // === 8–11% MUD PUDDLE ===
-        MudPuddle(root, 1, 0.088f);
-        WaterDrop(root, 3, 0.098f);
-        MaterialPickup(root, 2, 0.105f, NextMaterial(ref materialIndex));
+        // === 30–45% logs, warthogs, light poison — gaps between ===
+        RollingLog(root, 1, 0.318f, 2);
+        MaterialPickup(root, 0, 0.334f, NextMaterial(ref materialIndex));
+        HealthFruit(root, 3, 0.358f, NextHealth(ref healthIndex));
+        Poison(root, 0, 0.372f);
+        WaterDrop(root, 1, 0.386f);
+        Warthog(root, 0.402f, true, 38f);
+        MudPuddle(root, 3, 0.416f);
+        MudPuddle(root, 1, 0.422f);
+        WaterPool(root, 0, 0.428f);
+        RollingLog(root, 2, 0.444f, 2);
+        MaterialPickup(root, 3, 0.458f, NextMaterial(ref materialIndex));
 
-        // === 11–14% POISON PLANT ===
-        Poison(root, 0, 0.118f);
-        WaterDrop(root, 2, 0.128f);
-        Baobab(root, 3, 0.136f);
+        // === 45–60% mid-run: denser hazards with dodge lanes ===
+        Monster(root, 2, 0.470f);
+        Cactus(root, 1, 0.482f);
+        WaterPool(root, 3, 0.490f);
+        Rock(root, 0, 0.500f);
+        Warthog(root, 0.512f, false, 38f);
+        MudPuddle(root, 2, 0.524f);
+        MudPuddle(root, 0, 0.538f);
+        MaterialPickup(root, 0, 0.532f, NextMaterial(ref materialIndex));
+        Poison(root, 2, 0.544f);
+        Baobab(root, 3, 0.550f);
+        HealthFruit(root, 1, 0.554f, NextHealth(ref healthIndex));
+        RollingLog(root, 1, 0.566f, 2);
+        BubbleShield(root, 1, 0.588f);
+        Monster(root, 0, 0.600f);
+        Rock(root, 3, 0.610f);
+        WaterDrop(root, 2, 0.618f);
+        MudPuddle(root, 1, 0.628f);
+        MudPuddle(root, 3, 0.636f);
 
-        // === 14–17% FIRST MUD MONSTER ===
-        Monster(root, 2, 0.148f);
-        MaterialPickup(root, 1, 0.158f, NextMaterial(ref materialIndex));
-        WaterDrop(root, 3, 0.165f);
+        // === 60–75% mixed pressure ===
+        Warthog(root, 0.640f, true, 40f);
+        MaterialPickup(root, 2, 0.658f, NextMaterial(ref materialIndex));
+        Poison(root, 3, 0.668f);
+        Rock(root, 1, 0.678f);
+        HealthFruit(root, 1, 0.686f, NextHealth(ref healthIndex));
+        RollingLog(root, 1, 0.698f, 2);
+        MudPuddle(root, 2, 0.708f);
+        MudPuddle(root, 1, 0.740f);
+        Rock(root, 0, 0.716f);
+        BubbleShield(root, 2, 0.726f);
+        Monster(root, 3, 0.736f);
+        WaterPool(root, 0, 0.754f);
+        Warthog(root, 0.766f, false, 42f);
+        Poison(root, 0, 0.776f);
+        Baobab(root, 2, 0.780f);
 
-        // === 17–20% BUBBLE THEN MONSTER ===
-        BubbleShield(root, 2, 0.175f);
-        Monster(root, 2, 0.188f);
-        WaterDrop(root, 1, 0.196f);
+        // === 75–100% finish stretch — more obstacles, still recoverable ===
+        RollingLog(root, 2, 0.786f, 2);
+        MaterialPickup(root, 3, 0.802f, NextMaterial(ref materialIndex));
+        Rock(root, 0, 0.810f);
+        Monster(root, 2, 0.820f);
+        HealthFruit(root, 1, 0.828f, NextHealth(ref healthIndex));
+        MudPuddle(root, 3, 0.836f);
+        MudPuddle(root, 0, 0.844f);
+        Warthog(root, 0.846f, true, 43f);
+        Poison(root, 1, 0.856f);
+        WaterDrop(root, 2, 0.872f);
+        RollingLog(root, 0, 0.882f, 2);
+        Warthog(root, 0.892f, false, 43f);
+        MaterialPickup(root, 2, 0.900f, NextMaterial(ref materialIndex));
+        Rock(root, 3, 0.908f);
+        WaterPool(root, 1, 0.916f);
+        Monster(root, 0, 0.926f);
+        HealthFruit(root, 3, 0.934f, NextHealth(ref healthIndex));
+        Baobab(root, 0, 0.950f);
+        MudPuddle(root, 1, 0.958f);
+        MudPuddle(root, 3, 0.972f);
+        MaterialPickup(root, 1, 0.966f, NextMaterial(ref materialIndex));
+        Warthog(root, 0.974f, true, 45f);
+        WaterPool(root, 2, 0.982f);
+        HealthFruit(root, 0, 0.990f, NextHealth(ref healthIndex));
 
-        // === 20–35% MAIN GAMEPLAY (two hazards at a time) ===
-        Rocks(root, new[] { 0, 3 }, 0.208f);
-        MudPuddle(root, 1, 0.218f);
-        WaterDrop(root, 2, 0.226f);
-        Poison(root, 3, 0.235f);
-        MaterialPickup(root, 0, 0.242f, NextMaterial(ref materialIndex));
-        Monster(root, 1, 0.252f);
-        Rocks(root, new[] { 1, 2 }, 0.262f);
-        WaterDrop(root, 0, 0.270f);
-        MudPuddle(root, 3, 0.278f);
-        Baobab(root, 2, 0.286f);
-        Poison(root, 1, 0.295f);
-        MaterialPickup(root, 3, 0.302f, NextMaterial(ref materialIndex));
-        Monster(root, 0, 0.312f);
-        Rocks(root, new[] { 2, 3 }, 0.322f);
-        WaterDrop(root, 1, 0.330f);
-        MudPuddle(root, 0, 0.338f);
-        MaterialPickup(root, 2, 0.345f, NextMaterial(ref materialIndex));
+        // Extra recovery pickups so the player can finish with full materials, health, water, and bucket
+        MaterialPickup(root, 0, 0.055f, NextMaterial(ref materialIndex));
+        MaterialPickup(root, 3, 0.155f, NextMaterial(ref materialIndex));
+        MaterialPickup(root, 1, 0.255f, NextMaterial(ref materialIndex));
+        MaterialPickup(root, 2, 0.355f, NextMaterial(ref materialIndex));
+        MaterialPickup(root, 0, 0.455f, NextMaterial(ref materialIndex));
+        MaterialPickup(root, 3, 0.555f, NextMaterial(ref materialIndex));
+        MaterialPickup(root, 1, 0.655f, NextMaterial(ref materialIndex));
+        MaterialPickup(root, 2, 0.755f, NextMaterial(ref materialIndex));
+        MaterialPickup(root, 0, 0.855f, NextMaterial(ref materialIndex));
+        MaterialPickup(root, 3, 0.955f, NextMaterial(ref materialIndex));
 
-        // === 35–50% SPEED FRUIT + JUMP BOOST RISK ROUTES ===
-        SpeedFruit(root, 1, 0.358f);
-        Poison(root, 2, 0.358f);
-        WaterDrop(root, 0, 0.368f);
-        JumpBoost(root, 3, 0.378f);
-        Rock(root, 1, 0.378f);
-        Monster(root, 0, 0.390f);
-        MaterialPickup(root, 2, 0.398f, NextMaterial(ref materialIndex));
-        SpeedFruit(root, 2, 0.410f);
-        Poison(root, 3, 0.410f);
-        MudPuddle(root, 1, 0.420f);
-        JumpBoost(root, 0, 0.430f);
-        Rocks(root, new[] { 1, 2 }, 0.430f);
-        Baobab(root, 3, 0.440f);
-        Monster(root, 2, 0.450f);
-        WaterDrop(root, 1, 0.458f);
-        SpeedFruit(root, 0, 0.468f);
-        Poison(root, 1, 0.468f);
-        MaterialPickup(root, 3, 0.476f, NextMaterial(ref materialIndex));
-        JumpBoost(root, 2, 0.486f);
-        MudPuddle(root, 0, 0.492f);
+        WaterDrop(root, 0, 0.088f);
+        WaterDrop(root, 2, 0.188f);
+        WaterDrop(root, 1, 0.388f);
+        WaterDrop(root, 3, 0.588f);
+        WaterDrop(root, 0, 0.788f);
+        WaterDrop(root, 2, 0.888f);
 
-        // === 50–65% FIRST MAJOR COMBINATION ===
-        MudPuddle(root, 1, 0.508f);
-        Monster(root, 2, 0.516f);
-        Rock(root, 0, 0.524f);
-        BubbleShield(root, 3, 0.534f);
-        WaterDrop(root, 2, 0.542f);
-        MudPuddle(root, 0, 0.552f);
-        Monster(root, 3, 0.560f);
-        Rocks(root, new[] { 1, 2 }, 0.568f);
-        MaterialPickup(root, 0, 0.576f, NextMaterial(ref materialIndex));
-        Poison(root, 2, 0.586f);
-        SpeedFruit(root, 1, 0.586f);
-        Monster(root, 0, 0.598f);
-        MudPuddle(root, 3, 0.606f);
-        JumpBoost(root, 2, 0.614f);
-        Rock(root, 1, 0.622f);
-        BubbleShield(root, 0, 0.632f);
-        WaterDrop(root, 3, 0.640f);
-        Baobab(root, 1, 0.648f);
+        HealthFruit(root, 1, 0.118f, NextHealth(ref healthIndex));
+        HealthFruit(root, 2, 0.318f, NextHealth(ref healthIndex));
+        HealthFruit(root, 0, 0.518f, NextHealth(ref healthIndex));
+        HealthFruit(root, 3, 0.618f, NextHealth(ref healthIndex));
+        HealthFruit(root, 1, 0.718f, NextHealth(ref healthIndex));
+        HealthFruit(root, 2, 0.838f, NextHealth(ref healthIndex));
+        HealthFruit(root, 1, 0.918f, NextHealth(ref healthIndex));
+    }
 
-        // === 65–75% RECOVERY / FUN ===
-        WaterDrop(root, 2, 0.658f);
-        Baobab(root, 0, 0.666f);
-        SpeedFruit(root, 3, 0.674f);
-        JumpBoost(root, 1, 0.682f);
-        MaterialPickup(root, 2, 0.690f, NextMaterial(ref materialIndex));
-        WaterDrop(root, 0, 0.698f);
-        BubbleShield(root, 2, 0.706f);
-        Baobab(root, 3, 0.714f);
-        MaterialPickup(root, 1, 0.722f, NextMaterial(ref materialIndex));
-        WaterDrop(root, 2, 0.730f);
-        SpeedFruit(root, 0, 0.738f);
-        JumpBoost(root, 3, 0.746f);
-
-        // === 75–90% DIFFICULTY INCREASE ===
-        Poison(root, 0, 0.758f);
-        MudPuddle(root, 2, 0.766f);
-        Monster(root, 3, 0.774f);
-        Rock(root, 1, 0.782f);
-        MaterialPickup(root, 2, 0.790f, NextMaterial(ref materialIndex));
-        Poison(root, 3, 0.800f);
-        MudPuddle(root, 1, 0.808f);
-        Monster(root, 0, 0.816f);
-        Rocks(root, new[] { 1, 2 }, 0.824f);
-        SpeedFruit(root, 3, 0.832f);
-        JumpBoost(root, 0, 0.840f);
-        Poison(root, 2, 0.848f);
-        MudPuddle(root, 0, 0.856f);
-        Monster(root, 1, 0.864f);
-        Rock(root, 3, 0.872f);
-        BubbleShield(root, 2, 0.880f);
-        WaterDrop(root, 1, 0.888f);
-        MaterialPickup(root, 0, 0.894f, NextMaterial(ref materialIndex));
-
-        // === 90–100% FINAL CHALLENGE ===
-        Poison(root, 0, 0.905f);
-        MudPuddle(root, 2, 0.912f);
-        Monster(root, 3, 0.920f);
-        SpeedFruit(root, 1, 0.928f);
-        Rock(root, 0, 0.936f);
-        JumpBoost(root, 2, 0.944f);
-        WaterDrop(root, 3, 0.952f);
-        Baobab(root, 1, 0.960f);
-        MaterialPickup(root, 2, 0.968f, NextMaterial(ref materialIndex));
-        WaterDrop(root, 0, 0.976f);
-        MaterialPickup(root, 3, 0.984f, NextMaterial(ref materialIndex));
-        WaterDrop(root, 2, 0.992f);
-
-        MaterialPickup(root, 0, 0.102f, NextMaterial(ref materialIndex));
-        MaterialPickup(root, 3, 0.21f, NextMaterial(ref materialIndex));
-        MaterialPickup(root, 0, 0.33f, NextMaterial(ref materialIndex));
-        MaterialPickup(root, 2, 0.48f, NextMaterial(ref materialIndex));
-        MaterialPickup(root, 1, 0.62f, NextMaterial(ref materialIndex));
-        MaterialPickup(root, 3, 0.72f, NextMaterial(ref materialIndex));
-        MaterialPickup(root, 0, 0.82f, NextMaterial(ref materialIndex));
-        MaterialPickup(root, 2, 0.94f, NextMaterial(ref materialIndex));
+    static float NextHealth(ref int healthIndex)
+    {
+        float amount = Level2Config.HealthAmounts[healthIndex % Level2Config.HealthAmounts.Length];
+        healthIndex++;
+        return amount;
     }
 
     static Level2MaterialKind NextMaterial(ref int materialIndex)
@@ -386,62 +333,213 @@ public class Level2LayoutDirector : MonoBehaviour
 
     static float Z(float progress) => Level2Progress.WorldZ(progress);
 
-    static void WaterDrop(Transform root, int lane, float progress)
+    bool IsReserved(int lane, float z, float gap)
     {
-        Level2Primitives.MakeWaterDroplet(root, lane, Z(progress));
+        if (lane < 0 || lane >= reservedLaneZs.Length) return true;
+        List<float> used = reservedLaneZs[lane];
+        for (int i = 0; i < used.Count; i++)
+        {
+            if (Mathf.Abs(used[i] - z) < gap) return true;
+        }
+        return false;
     }
 
-    static void Baobab(Transform root, int lane, float progress)
+    void ReserveLane(int lane, float z)
     {
-        Level2Primitives.MakeBaobab(root, lane, Z(progress));
+        if (lane < 0 || lane >= reservedLaneZs.Length) return;
+        reservedLaneZs[lane].Add(z);
     }
 
-    static void MaterialPickup(Transform root, int lane, float progress, Level2MaterialKind kind)
+    int FindFreeLane(int preferredLane, float z, float gap)
     {
-        Level2Primitives.MakeMaterial(root, lane, Z(progress), kind);
+        int start = Mathf.Clamp(preferredLane, 0, LevelLanes.Count - 1);
+        for (int offset = 0; offset < LevelLanes.Count; offset++)
+        {
+            int lane = (start + offset) % LevelLanes.Count;
+            if (!IsReserved(lane, z, gap)) return lane;
+        }
+        return start;
     }
 
-    static void Rock(Transform root, int lane, float progress)
+    float FindFreeZ(int lane, float z, float gap)
     {
-        Level2Primitives.MakeRock(root, lane, Z(progress));
+        float candidate = z;
+        int guard = 0;
+        while (IsReserved(lane, candidate, gap) && guard < 12)
+        {
+            candidate += Mathf.Max(4f, gap * 0.6f);
+            guard++;
+        }
+        return candidate;
     }
 
-    static void Rocks(Transform root, int[] lanes, float progress)
+    int FindFreeSpanStart(int preferredStartLane, int laneSpan, float z, float gap)
+    {
+        int maxStart = Mathf.Max(0, LevelLanes.Count - laneSpan);
+        int start = Mathf.Clamp(preferredStartLane, 0, maxStart);
+        for (int offset = 0; offset <= maxStart; offset++)
+        {
+            int laneStart = (start + offset) % (maxStart + 1);
+            bool free = true;
+            for (int i = 0; i < laneSpan; i++)
+            {
+                if (IsReserved(laneStart + i, z, gap))
+                {
+                    free = false;
+                    break;
+                }
+            }
+            if (free) return laneStart;
+        }
+        return start;
+    }
+
+    float FindFreeZAllLanes(float z, float gap)
+    {
+        float candidate = z;
+        int guard = 0;
+        while (guard < 14)
+        {
+            bool blocked = false;
+            for (int lane = 0; lane < LevelLanes.Count; lane++)
+            {
+                if (IsReserved(lane, candidate, gap))
+                {
+                    blocked = true;
+                    break;
+                }
+            }
+            if (!blocked) return candidate;
+            candidate += Mathf.Max(4f, gap * 0.6f);
+            guard++;
+        }
+        return candidate;
+    }
+
+    void ReserveSpan(int startLane, int laneSpan, float z)
+    {
+        for (int i = 0; i < laneSpan; i++) ReserveLane(startLane + i, z);
+    }
+
+    void ReserveAllLanes(float z)
+    {
+        for (int lane = 0; lane < LevelLanes.Count; lane++) ReserveLane(lane, z);
+    }
+
+    void PlacePickup(int preferredLane, float progress, float gap, System.Action<int, float> spawn)
+    {
+        float z = Z(progress);
+        int lane = FindFreeLane(preferredLane, z, gap);
+        z = FindFreeZ(lane, z, gap);
+        spawn(lane, z);
+        ReserveLane(lane, z);
+    }
+
+    void WaterDrop(Transform root, int lane, float progress)
+    {
+        PlacePickup(lane, progress, Level2Config.MinimumObjectSpacing, (freeLane, z) =>
+            Level2Primitives.MakeWaterDroplet(root, freeLane, z));
+    }
+
+    void Baobab(Transform root, int lane, float progress)
+    {
+        PlacePickup(lane, progress, Level2Config.MinimumHazardSpacing, (freeLane, z) =>
+            Level2Primitives.MakeBaobab(root, freeLane, z));
+    }
+
+    void MaterialPickup(Transform root, int lane, float progress, Level2MaterialKind kind)
+    {
+        PlacePickup(lane, progress, Level2Config.MinimumObjectSpacing, (freeLane, z) =>
+            Level2Primitives.MakeMaterial(root, freeLane, z, kind));
+    }
+
+    void Rock(Transform root, int lane, float progress)
+    {
+        PlacePickup(lane, progress, Level2Config.MinimumHazardSpacing, (freeLane, z) =>
+            Level2Primitives.MakeRock(root, freeLane, z));
+    }
+
+    void Rocks(Transform root, int[] lanes, float progress)
     {
         for (int i = 0; i < lanes.Length; i++)
         {
-            Level2Primitives.MakeRock(root, lanes[i], Z(progress));
+            Rock(root, lanes[i], progress);
         }
     }
 
-    static void MudPuddle(Transform root, int lane, float progress)
+    void MudPuddle(Transform root, int lane, float progress)
     {
-        Level2Primitives.MakeMudPuddle(root, lane, Z(progress));
+        PlacePickup(lane, progress, Level2Config.MinimumHazardSpacing, (freeLane, z) =>
+            Level2Primitives.MakeMudPuddle(root, freeLane, z));
     }
 
-    static void Poison(Transform root, int lane, float progress)
+    void Poison(Transform root, int lane, float progress)
     {
-        Level2Primitives.MakePoisonPlant(root, lane, Z(progress), progress);
+        float z = Z(progress);
+        int startLane = FindFreeSpanStart(lane, 2, z, Level2Config.MinimumHazardSpacing);
+        z = FindFreeZ(startLane, z, Level2Config.MinimumHazardSpacing);
+        Level2Primitives.MakePoisonPlant(root, startLane, z, progress);
+        ReserveSpan(startLane, 2, z);
     }
 
-    static void Monster(Transform root, int lane, float progress)
+    void Monster(Transform root, int lane, float progress)
     {
-        Level2Primitives.MakeMudMonster(root, lane, Z(progress), progress);
+        PlacePickup(lane, progress, Level2Config.MinimumHazardSpacing, (freeLane, z) =>
+            Level2Primitives.MakeMudMonster(root, freeLane, z, progress));
     }
 
-    static void BubbleShield(Transform root, int lane, float progress)
+    void BubbleShield(Transform root, int lane, float progress)
     {
-        Level2Primitives.MakeBubbleShieldPickup(root, lane, Z(progress));
+        PlacePickup(lane, progress, Level2Config.MinimumObjectSpacing, (freeLane, z) =>
+            Level2Primitives.MakeBubbleShieldPickup(root, freeLane, z));
     }
 
-    static void SpeedFruit(Transform root, int lane, float progress)
+    void SpeedFruit(Transform root, int lane, float progress)
     {
-        Level2Primitives.MakeSpeedFruit(root, lane, Z(progress));
+        PlacePickup(lane, progress, Level2Config.MinimumObjectSpacing, (freeLane, z) =>
+            Level2Primitives.MakeSpeedFruit(root, freeLane, z));
     }
 
-    static void JumpBoost(Transform root, int lane, float progress)
+    void JumpBoost(Transform root, int lane, float progress)
     {
-        Level2Primitives.MakeJumpBoost(root, lane, Z(progress));
+        PlacePickup(lane, progress, Level2Config.MinimumObjectSpacing, (freeLane, z) =>
+            Level2Primitives.MakeJumpBoost(root, freeLane, z));
+    }
+
+    void RollingLog(Transform root, int lane, float progress, int laneSpan = 2)
+    {
+        int span = Mathf.Clamp(laneSpan, 2, 3);
+        float z = Z(progress);
+        int startLane = FindFreeSpanStart(lane, span, z, Level2Config.MinimumHazardSpacing);
+        z = FindFreeZAllLanes(z, Level2Config.MinimumHazardSpacing);
+        float speed = progress >= 0.65f ? 15f : 12f;
+        Level2Primitives.MakeRollingLog(root, startLane, z, span, speed);
+        ReserveSpan(startLane, span, z);
+    }
+
+    void Cactus(Transform root, int lane, float progress)
+    {
+        PlacePickup(lane, progress, Level2Config.MinimumHazardSpacing, (freeLane, z) =>
+            Level2Primitives.MakeCactus(root, freeLane, z));
+    }
+
+    void HealthFruit(Transform root, int lane, float progress, float amount = 15f)
+    {
+        PlacePickup(lane, progress, Level2Config.MinimumObjectSpacing, (freeLane, z) =>
+            Level2Primitives.MakeHealthFruit(root, freeLane, z, amount));
+    }
+
+    void WaterPool(Transform root, int lane, float progress)
+    {
+        PlacePickup(lane, progress, Level2Config.MinimumHazardSpacing, (freeLane, z) =>
+            Level2Primitives.MakeWaterPool(root, freeLane, z));
+    }
+
+    void Warthog(Transform root, float progress, bool goRight, float speed = 38f)
+    {
+        float z = FindFreeZAllLanes(Z(progress), Level2Config.MinimumHazardSpacing);
+        Level2Primitives.MakeWarthog(root, z, goRight, speed);
+        ReserveAllLanes(z);
     }
 
     static void RefreshGroundTiles()
@@ -451,6 +549,65 @@ public class Level2LayoutDirector : MonoBehaviour
         {
             spawner.EnsureGroundLinked();
         }
+    }
+
+    static void EnsureFinishTrigger()
+    {
+        float endZ = FindMountainEndZ();
+        if (endZ > Level2Progress.StartZ + 10f)
+        {
+            Level2Progress.EndZ = endZ;
+        }
+
+        GameObject ender = GameObject.Find("Ender2");
+        if (ender == null)
+        {
+            ender = new GameObject("Ender2");
+        }
+
+        ender.SetActive(true);
+        try
+        {
+            ender.tag = "EndLevel2";
+        }
+        catch
+        {
+            // Tag may already be assigned in the scene.
+        }
+
+        float pathCenter = (LevelLanes.X(0) + LevelLanes.X(LevelLanes.Count - 1)) * 0.5f;
+        ender.transform.position = new Vector3(pathCenter, 4f, Level2Progress.EndZ);
+        ender.transform.rotation = Quaternion.identity;
+        ender.transform.localScale = Vector3.one;
+
+        BoxCollider box = ender.GetComponent<BoxCollider>();
+        if (box == null) box = ender.AddComponent<BoxCollider>();
+        box.isTrigger = true;
+        float width = Mathf.Abs(LevelLanes.X(0) - LevelLanes.X(LevelLanes.Count - 1)) + 16f;
+        box.size = new Vector3(width, 18f, 20f);
+        box.center = Vector3.zero;
+
+        if (ender.GetComponent<Level2FinishGate>() == null)
+        {
+            ender.AddComponent<Level2FinishGate>();
+        }
+    }
+
+    static float FindMountainEndZ()
+    {
+        float endZ = Level2Progress.EndZ;
+        GameObject environment = GameObject.Find("Environment");
+        if (environment == null) return endZ;
+
+        float maxZ = endZ;
+        Transform[] transforms = environment.GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            if (transforms[i] == null) continue;
+            maxZ = Mathf.Max(maxZ, transforms[i].position.z);
+        }
+
+        return maxZ + 8f;
     }
 
     static void DisableByName(string name)

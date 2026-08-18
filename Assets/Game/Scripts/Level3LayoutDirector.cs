@@ -6,27 +6,18 @@ using System.Collections.Generic;
 public class Level3LayoutDirector : MonoBehaviour
 {
     const string RootName = "Level3_Layout";
-    const string SceneName = "Level3";
 
     static readonly string[] MaterialCycle = { "Pipe", "Nails", "Tape", "Hammer" };
 
-    static readonly (int lane, float p)[] Tank1Pipes =
+    static readonly (int tank, float p)[] ScatteredPipes =
     {
-        (1, 0.004f), (2, 0.05f), (0, 0.10f), (3, 0.16f),
-        (1, 0.22f), (2, 0.28f), (0, 0.34f), (3, 0.40f)
-    };
-
-    static readonly (int lane, float p)[] Tank2Pipes =
-    {
-        (0, 0.42f), (3, 0.46f), (1, 0.50f), (2, 0.54f),
-        (0, 0.58f), (3, 0.62f), (1, 0.66f), (2, 0.70f),
-        (0, 0.74f), (3, 0.77f), (1, 0.80f), (2, 0.83f),
-        (0, 0.86f), (3, 0.88f), (1, 0.90f)
-    };
-
-    static readonly (int lane, float p)[] Tank3Pipes =
-    {
-        (2, 0.88f), (1, 0.92f), (3, 0.95f), (0, 0.97f), (2, 0.99f)
+        (0, 0.018f), (1, 0.048f), (2, 0.078f), (0, 0.110f),
+        (1, 0.142f), (0, 0.174f), (1, 0.206f), (2, 0.238f),
+        (1, 0.270f), (0, 0.302f), (1, 0.334f), (0, 0.366f),
+        (1, 0.398f), (2, 0.430f), (1, 0.462f), (0, 0.494f),
+        (1, 0.526f), (2, 0.558f), (1, 0.590f), (0, 0.622f),
+        (1, 0.654f), (1, 0.686f), (0, 0.718f), (1, 0.750f),
+        (2, 0.782f), (1, 0.814f), (1, 0.846f), (0, 0.878f)
     };
 
     [Header("Spawn Distances (world units)")]
@@ -36,7 +27,7 @@ public class Level3LayoutDirector : MonoBehaviour
     [SerializeField] float visibleSpawnDistance = 80f;
     [SerializeField] float minimumObjectSpacing = 18f;
     [SerializeField] float minimumHazardSpacing = 26f;
-    [SerializeField] float minimumPipeSpacing = 80f;
+    [SerializeField] float minimumPipeSpacing = 52f;
     [SerializeField] bool enableSpawnDebug;
 
     [Header("Enemy Speeds")]
@@ -71,7 +62,7 @@ public class Level3LayoutDirector : MonoBehaviour
 
     static void BootScene(string sceneName)
     {
-        if (sceneName != SceneName) return;
+        if (sceneName != SceneCatalog.Level3) return;
         if (FindFirstObjectByType<Level3LayoutDirector>() != null) return;
         new GameObject("Level3LayoutDirector").AddComponent<Level3LayoutDirector>();
     }
@@ -101,7 +92,7 @@ public class Level3LayoutDirector : MonoBehaviour
 
     void Start()
     {
-        if (SceneManager.GetActiveScene().name != SceneName)
+        if (SceneManager.GetActiveScene().name != SceneCatalog.Level3)
         {
             Destroy(this);
             return;
@@ -110,13 +101,10 @@ public class Level3LayoutDirector : MonoBehaviour
         ApplySpawnSettings();
         player = FindPlayer();
         Level3Progress.BindFromScene(player);
-        RunnerLevelPacing.Apply(SceneName);
-        LevelLanes.ConfigureForActiveScene();
+        RunnerLevelPacing.Apply(SceneCatalog.Level3);
+        RunnerPlayerSetup.Apply(SceneCatalog.Level3, player);
         if (player != null)
         {
-            Vector3 pos = player.position;
-            pos.x = LevelLanes.X(1);
-            player.position = pos;
             Level3Progress.BindFromScene(player);
         }
 
@@ -132,7 +120,7 @@ public class Level3LayoutDirector : MonoBehaviour
 
     void Update()
     {
-        if (SceneManager.GetActiveScene().name != SceneName) return;
+        if (SceneManager.GetActiveScene().name != SceneCatalog.Level3) return;
         if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
 
         ApplyUrgencyDifficulty();
@@ -285,8 +273,6 @@ public class Level3LayoutDirector : MonoBehaviour
         HealthAt(root, 3, z);
         DropletAt(root, 1, z + 4f);
         z += gap + 4f;
-        Level3Primitives.MakePipeRepair(root, 0, 1, z);
-        z += gap;
         MudAt(root, 2, z);
         DropletAt(root, 1, z + 4f);
         MatAt(root, 3, z + 6f);
@@ -624,30 +610,34 @@ public class Level3LayoutDirector : MonoBehaviour
 
     void SpawnAllPipeRepairs(Transform root)
     {
-        float lastZ = float.NegativeInfinity;
-        SpawnPipeSet(root, Tank1Pipes, 0, ref lastZ);
-        lastZ = float.NegativeInfinity;
-        SpawnPipeSet(root, Tank2Pipes, 1, ref lastZ);
-        lastZ = float.NegativeInfinity;
-        SpawnPipeSet(root, Tank3Pipes, 2, ref lastZ);
-    }
-
-    void SpawnPipeSet(Transform root, (int lane, float p)[] pipes, int tank, ref float lastZ)
-    {
-        for (int i = 0; i < pipes.Length; i++)
+        int[] tanks = new int[ScatteredPipes.Length];
+        int write = 0;
+        for (int i = 0; i < Level3Config.Tank1Opportunities; i++) tanks[write++] = 0;
+        for (int i = 0; i < Level3Config.Tank2Opportunities; i++) tanks[write++] = 1;
+        for (int i = 0; i < Level3Config.Tank3Opportunities; i++) tanks[write++] = 2;
+        for (int i = 0; i < tanks.Length; i++)
         {
-            float z = Z(pipes[i].p);
-            if (z - lastZ < Level3Config.MinimumPipeSpacing)
+            int swap = Random.Range(i, tanks.Length);
+            int tmp = tanks[i];
+            tanks[i] = tanks[swap];
+            tanks[swap] = tmp;
+        }
+
+        float lastZ = float.NegativeInfinity;
+        int count = Mathf.Min(ScatteredPipes.Length, tanks.Length);
+        for (int i = 0; i < count; i++)
+        {
+            float z = Z(ScatteredPipes[i].p);
+            if (z - lastZ < Level3Config.MinimumPipeSpacing * 0.55f)
             {
-                z = lastZ + Level3Config.MinimumPipeSpacing;
+                z = lastZ + Level3Config.MinimumPipeSpacing * 0.55f;
             }
 
-            if (tank == 0 && i == 0) continue;
-
-            // Randomize which lane-pair the pipe appears on.
-            int leftLane = Random.Range(0, LevelLanes.Count - 1); // safe: rightLane = leftLane+1
-            Level3Primitives.MakePipeRepair(root, tank, leftLane, z);
-            lastZ = z;
+            int leftLane = Random.Range(0, LevelLanes.Count - 1);
+            float safeZ = FindFreeZAllLanes(z, Level3Config.MinimumPipeSpacing * 0.45f);
+            Level3Primitives.MakePipeRepair(root, tanks[i], leftLane, safeZ);
+            ReserveSpan(leftLane, 2, safeZ);
+            lastZ = safeZ;
         }
     }
 
@@ -712,6 +702,39 @@ public class Level3LayoutDirector : MonoBehaviour
             if (free) return laneStart;
         }
         return start;
+    }
+
+    float FindFreeZAllLanes(float z, float gap)
+    {
+        float candidate = z;
+        int guard = 0;
+        while (guard < 14)
+        {
+            bool blocked = false;
+            for (int lane = 0; lane < LevelLanes.Count; lane++)
+            {
+                if (IsReserved(lane, candidate, gap))
+                {
+                    blocked = true;
+                    break;
+                }
+            }
+
+            if (!blocked) return candidate;
+            candidate += Mathf.Max(4f, gap * 0.55f);
+            guard++;
+        }
+        return candidate;
+    }
+
+    void ReserveSpan(int startLane, int laneSpan, float z)
+    {
+        for (int i = 0; i < laneSpan; i++) ReserveLane(startLane + i, z);
+    }
+
+    void ReserveAllLanes(float z)
+    {
+        for (int lane = 0; lane < LevelLanes.Count; lane++) ReserveLane(lane, z);
     }
 
     void DropletAt(Transform root, int lane, float z)
@@ -782,11 +805,13 @@ public class Level3LayoutDirector : MonoBehaviour
     void LightningClusterAt(Transform root, float z, float progress)
     {
         int laneCount = progress >= 0.90f ? 3 : progress >= 0.50f ? 2 : 1;
-        int startLane = Random.Range(0, LevelLanes.Count - laneCount + 1);
+        int startLane = FindFreeSpanStart(Random.Range(0, LevelLanes.Count - laneCount + 1), laneCount, z, Level3Config.MinimumHazardSpacing);
+        z = FindFreeZ(startLane, z, Level3Config.MinimumHazardSpacing);
         for (int i = 0; i < laneCount; i++)
         {
             int lane = startLane + i;
             Level3Primitives.MakeLightning(root, lane, z);
+            ReserveLane(lane, z);
             LogSpawn("Lightning", lane, z);
         }
     }
@@ -803,11 +828,13 @@ public class Level3LayoutDirector : MonoBehaviour
     void AcidClusterAt(Transform root, float z, float progress)
     {
         int laneCount = progress >= 0.90f ? 3 : progress >= 0.50f ? 2 : 1;
-        int startLane = Random.Range(0, LevelLanes.Count - laneCount + 1);
+        int startLane = FindFreeSpanStart(Random.Range(0, LevelLanes.Count - laneCount + 1), laneCount, z, Level3Config.MinimumHazardSpacing);
+        z = FindFreeZ(startLane, z, Level3Config.MinimumHazardSpacing);
         for (int i = 0; i < laneCount; i++)
         {
             int lane = startLane + i;
             Level3Primitives.MakeAcidRain(root, lane, z);
+            ReserveLane(lane, z);
             LogSpawn("AcidRain", lane, z);
         }
     }
@@ -838,7 +865,13 @@ public class Level3LayoutDirector : MonoBehaviour
         ReserveLane(lane, z);
         LogSpawn("Snake", lane, z);
     }
-    static void WarthogAt(Transform root, float z, Level3EnemyPace pace, bool right) => Level3Primitives.MakeWarthog(root, z, pace, right);
+    void WarthogAt(Transform root, float z, Level3EnemyPace pace, bool right)
+    {
+        float safeZ = FindFreeZAllLanes(z, Level3Config.MinimumHazardSpacing);
+        Level3Primitives.MakeWarthog(root, safeZ, pace, right);
+        // Warthog crosses across lanes, so reserve all lanes at this Z.
+        ReserveAllLanes(safeZ);
+    }
 
     static void LogSpawn(string type, int lane, float z)
     {

@@ -23,7 +23,7 @@ public class Level3FeedbackUI : MonoBehaviour
 
     static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name != "Level3") return;
+        if (scene.name != SceneCatalog.Level3) return;
         instance = null;
         Ensure();
     }
@@ -31,7 +31,7 @@ public class Level3FeedbackUI : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Boot()
     {
-        if (SceneManager.GetActiveScene().name != "Level3") return;
+        if (SceneManager.GetActiveScene().name != SceneCatalog.Level3) return;
         Ensure();
     }
 

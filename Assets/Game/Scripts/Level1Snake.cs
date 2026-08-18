@@ -1,15 +1,25 @@
 using UnityEngine;
 
 /// <summary>
-/// Snake hazard: single-lane approach ahead of the player, one active at a time.
-/// Snakes placed in the first 25% of the level show a warning before moving.
+/// Snake hazard: spawns ahead of the player with a lane warning, then rolls toward them.
+/// Later snakes appear closer for a tougher finish.
 /// </summary>
 public class Level1Snake : MonoBehaviour
 {
-    const float WarningProgressCutoff = 0.25f;
-    const float TriggerDistance = 58f;
-    const float WarningDuration = 2.8f;
-    const float ApproachSpeed = 8f;
+    const float ActivationLookahead = 18f;
+    const float MinLeadDistance = 28f;
+    const float EarlyLeadDistance = 70f;
+    const float LateLeadDistance = 34f;
+    const float ChallengeProgressStart = 0.70f;
+    const float EarlyWarningDuration = 2.2f;
+    const float LateWarningDuration = 1.35f;
+    const float WarningCreepSpeed = 7.5f;
+    const float MidWarningCreepSpeed = 9f;
+    const float LateWarningCreepSpeed = 10.5f;
+    const float ApproachSpeed = 14.5f;
+    const float MidApproachSpeed = 16.5f;
+    const float LateApproachSpeed = 18.5f;
+    const float MidChallengeProgress = Level1Config.SnakeIntroProgress;
     const float DespawnBehind = 14f;
     const float WaterDamage = 2f;
 
@@ -29,8 +39,9 @@ public class Level1Snake : MonoBehaviour
     Phase phase = Phase.Wait;
     float warningTimer;
     bool hit;
-    bool dodged;
-    bool nearMissShown;
+    bool approachPopupShown;
+    bool placedAhead;
+    float triggerZ;
     Transform player;
 
     public void Setup(int lane, GameObject visuals, float progress, GameObject warning)
@@ -39,12 +50,13 @@ public class Level1Snake : MonoBehaviour
         visualRoot = visuals;
         warningRoot = warning;
         spawnProgress = progress;
+        triggerZ = transform.position.z;
 
         if (visualRoot != null) visualRoot.SetActive(false);
         if (warningRoot != null) warningRoot.SetActive(false);
     }
 
-    bool UsesWarning => spawnProgress <= WarningProgressCutoff;
+    public float SpawnProgress => spawnProgress;
 
     void Start()
     {
@@ -65,34 +77,25 @@ public class Level1Snake : MonoBehaviour
         CachePlayer();
         if (player == null) return;
 
-        float x = LevelLanes.X(laneIndex);
-        Vector3 p = transform.position;
-        p.x = x;
-        p.y = Level1Ground.SurfaceY + 0.45f;
-        transform.position = p;
-
         if (phase == Phase.Wait)
         {
-            if (player.position.z > transform.position.z - TriggerDistance)
+            if (player.position.z >= triggerZ - ActivationLookahead)
             {
-                if (UsesWarning)
-                {
-                    phase = Phase.Warning;
-                    BeginWarning();
-                }
-                else
-                {
-                    phase = Phase.Queued;
-                }
+                PlaceAheadOfPlayer();
+                phase = Phase.Warning;
+                BeginWarning();
             }
 
             return;
         }
 
+        LockLanePosition();
+
         if (phase == Phase.Warning)
         {
             warningTimer -= Time.deltaTime;
             PulseWarning();
+            MoveTowardPlayer(GetCreepSpeed());
 
             if (warningTimer <= 0f)
             {
@@ -105,35 +108,20 @@ public class Level1Snake : MonoBehaviour
 
         if (phase == Phase.Queued)
         {
+            MoveTowardPlayer(GetCreepSpeed());
+
             if (!Level1SnakeDirector.TryStartSnake(this))
             {
                 return;
             }
 
             phase = Phase.Approach;
-            if (visualRoot != null) visualRoot.SetActive(true);
-            Debug.Log($"[Level1] Snake moving lane {LevelLanes.DisplayNumber(laneIndex)}");
+            Debug.Log($"[Level1] Snake charging lane {LevelLanes.DisplayNumber(laneIndex)} (lead was {GetLeadDistance():F0}m)");
             return;
         }
 
-        transform.position += Vector3.back * (ApproachSpeed * Time.deltaTime);
-
-        if (!dodged && !hit && player != null)
-        {
-            float laneDelta = Mathf.Abs(player.position.x - x);
-
-            if (laneDelta > 2.5f && transform.position.z < player.position.z + 2f && transform.position.z > player.position.z - 8f)
-            {
-                dodged = true;
-                Level1FeedbackUI.Show("GREAT!", new Color(0.35f, 0.95f, 0.45f), 1.2f);
-            }
-            else if (!nearMissShown && !dodged && laneDelta > 1.8f && laneDelta <= 2.5f
-                && transform.position.z < player.position.z + 1f && transform.position.z > player.position.z - 6f)
-            {
-                nearMissShown = true;
-                Level1FeedbackUI.Show("NEAR MISS!", new Color(1f, 0.85f, 0.25f), 0.9f);
-            }
-        }
+        MoveTowardPlayer(GetApproachSpeed());
+        LockLanePosition();
 
         if (transform.position.z < player.position.z - DespawnBehind)
         {
@@ -142,19 +130,117 @@ public class Level1Snake : MonoBehaviour
         }
     }
 
+    void MoveTowardPlayer(float speed)
+    {
+        transform.position += Vector3.back * (speed * Time.deltaTime);
+    }
+
+    float GetCreepSpeed()
+    {
+        if (spawnProgress <= MidChallengeProgress)
+        {
+            return WarningCreepSpeed;
+        }
+
+        if (spawnProgress <= ChallengeProgressStart)
+        {
+            float midT = Mathf.InverseLerp(MidChallengeProgress, ChallengeProgressStart, spawnProgress);
+            return Mathf.Lerp(WarningCreepSpeed, MidWarningCreepSpeed, midT);
+        }
+
+        float lateT = Mathf.InverseLerp(ChallengeProgressStart, 1f, spawnProgress);
+        return Mathf.Lerp(MidWarningCreepSpeed, LateWarningCreepSpeed, lateT);
+    }
+
+    float GetApproachSpeed()
+    {
+        if (spawnProgress <= MidChallengeProgress)
+        {
+            return ApproachSpeed;
+        }
+
+        if (spawnProgress <= ChallengeProgressStart)
+        {
+            float midT = Mathf.InverseLerp(MidChallengeProgress, ChallengeProgressStart, spawnProgress);
+            return Mathf.Lerp(ApproachSpeed, MidApproachSpeed, midT);
+        }
+
+        float lateT = Mathf.InverseLerp(ChallengeProgressStart, 1f, spawnProgress);
+        return Mathf.Lerp(MidApproachSpeed, LateApproachSpeed, lateT);
+    }
+
+    void PlaceAheadOfPlayer()
+    {
+        if (placedAhead || player == null) return;
+
+        placedAhead = true;
+        float lead = GetLeadDistance();
+        float z = player.position.z + lead;
+        z = Mathf.Max(z, player.position.z + MinLeadDistance);
+
+        Vector3 p = transform.position;
+        p.x = LevelLanes.X(laneIndex);
+        p.y = Level1Ground.SurfaceY + 0.45f;
+        p.z = z;
+        transform.position = p;
+    }
+
+    void LockLanePosition()
+    {
+        float x = LevelLanes.X(laneIndex);
+        Vector3 p = transform.position;
+        p.x = x;
+        p.y = Level1Ground.SurfaceY + 0.45f;
+        transform.position = p;
+    }
+
+    float GetLeadDistance()
+    {
+        if (spawnProgress <= ChallengeProgressStart)
+        {
+            return EarlyLeadDistance;
+        }
+
+        float t = Mathf.InverseLerp(ChallengeProgressStart, 1f, spawnProgress);
+        return Mathf.Lerp(EarlyLeadDistance, LateLeadDistance, t);
+    }
+
+    float GetWarningDuration()
+    {
+        if (spawnProgress <= ChallengeProgressStart)
+        {
+            return EarlyWarningDuration;
+        }
+
+        float t = Mathf.InverseLerp(ChallengeProgressStart, 1f, spawnProgress);
+        return Mathf.Lerp(EarlyWarningDuration, LateWarningDuration, t);
+    }
+
     void BeginWarning()
     {
-        warningTimer = WarningDuration;
+        warningTimer = GetWarningDuration();
+
+        if (visualRoot != null)
+        {
+            visualRoot.SetActive(true);
+        }
 
         if (warningRoot != null)
         {
             warningRoot.SetActive(true);
         }
 
+        ShowApproachWarning();
+    }
+
+    void ShowApproachWarning()
+    {
+        if (approachPopupShown) return;
+        approachPopupShown = true;
         Level1FeedbackUI.Show(
-            $"SNAKE AHEAD! Lane {LevelLanes.DisplayNumber(laneIndex)} — use A or D!",
+            $"SNAKE APPROACHING! Lane {LevelLanes.DisplayNumber(laneIndex)} — use A or D!",
             new Color(1f, 0.45f, 0.2f),
-            WarningDuration);
+            2.2f);
     }
 
     void PulseWarning()
@@ -179,6 +265,10 @@ public class Level1Snake : MonoBehaviour
         hit = true;
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         hud?.DrainPlayerWater(WaterDamage);
+        Level1FeedbackUI.Show(
+            $"-{WaterDamage:0} WATER (snake bite!)",
+            new Color(0.85f, 0.35f, 0.15f),
+            1.4f);
         Debug.Log($"[Level1] Snake hit — water -{WaterDamage:0}");
     }
 

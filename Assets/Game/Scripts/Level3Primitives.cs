@@ -41,8 +41,8 @@ public static class Level3Primitives
         GameObject go = GameObject.CreatePrimitive(type);
         go.name = name;
         go.transform.SetParent(parent, false);
-        go.transform.localPosition = localPos;
-        go.transform.localScale = scale;
+        go.transform.localPosition = RunnerVisualScale.V(localPos);
+        go.transform.localScale = RunnerVisualScale.L3V(scale);
         Renderer r = go.GetComponent<Renderer>();
         if (r != null) r.material.color = color;
         Collider col = go.GetComponent<Collider>();
@@ -78,8 +78,8 @@ public static class Level3Primitives
         BoxCollider box = root.GetComponent<BoxCollider>();
         if (box == null) box = root.AddComponent<BoxCollider>();
         box.isTrigger = true;
-        box.center = new Vector3(0f, centerY, 0f);
-        box.size = new Vector3(width, height, depth);
+        box.center = new Vector3(0f, RunnerVisualScale.L3(centerY), 0f);
+        box.size = new Vector3(RunnerVisualScale.L3(width), RunnerVisualScale.L3(height), RunnerVisualScale.L3(depth));
         return box;
     }
 
@@ -156,7 +156,7 @@ public static class Level3Primitives
 
         TallTrigger(root, 1.8f, 1.8f, 3.5f, 1.2f);
         Kinematic(root);
-        root.AddComponent<Level3MaterialPickup>().Setup(kind, 10);
+        root.AddComponent<Level3MaterialPickup>().Setup(kind, Level3Config.DefaultMaterialPickup);
         root.AddComponent<Level3PickupBob>();
         return root;
     }
@@ -516,8 +516,8 @@ public static class Level3Primitives
 
         BoxCollider hitbox = root.AddComponent<BoxCollider>();
         hitbox.isTrigger = true;
-        hitbox.center = new Vector3(0f, 11f, 0f);
-        hitbox.size = new Vector3(2.8f, 22f, 2.8f);
+        hitbox.center = RunnerVisualScale.L3V(new Vector3(0f, 11f, 0f));
+        hitbox.size = RunnerVisualScale.L3V(new Vector3(2.8f, 22f, 2.8f));
 
         Kinematic(root);
         root.AddComponent<Level3LightningZone>().Setup(lane, warning, bolt);
@@ -644,8 +644,8 @@ public static class Level3Primitives
 
         BoxCollider box = root.AddComponent<BoxCollider>();
         box.isTrigger = true;
-        box.center = new Vector3(0f, colCenterY, 0f);
-        box.size   = new Vector3(colRadius * 2.4f, colHalfH * 2f, colRadius * 2.4f);
+        box.center = new Vector3(0f, RunnerVisualScale.L3(colCenterY), 0f);
+        box.size = RunnerVisualScale.L3V(new Vector3(colRadius * 2.4f, colHalfH * 2f, colRadius * 2.4f));
 
         Kinematic(root);
         root.AddComponent<Level3AcidRainZone>().Setup(lane, warning, active);
@@ -673,8 +673,8 @@ public static class Level3Primitives
 
         BoxCollider box = root.AddComponent<BoxCollider>();
         box.isTrigger = true;
-        box.center = new Vector3(0f, 0.78f, 0f);
-        box.size = new Vector3(width, 1.45f, 1.7f);
+        box.center = RunnerVisualScale.L3V(new Vector3(0f, 0.78f, 0f));
+        box.size = RunnerVisualScale.L3V(new Vector3(width, 2.2f, 1.9f));
         Kinematic(root);
         root.AddComponent<Level3RollingLog>().Setup(14f);
         return root;

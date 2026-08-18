@@ -21,7 +21,7 @@ public class Level2FeedbackUI : MonoBehaviour
 
     static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name != "Level2") return;
+        if (scene.name != SceneCatalog.Level2) return;
         if (instance != null) return;
         GameObject host = new GameObject("Level2FeedbackUI");
         instance = host.AddComponent<Level2FeedbackUI>();
@@ -30,7 +30,7 @@ public class Level2FeedbackUI : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Boot()
     {
-        if (SceneManager.GetActiveScene().name != "Level2") return;
+        if (SceneManager.GetActiveScene().name != SceneCatalog.Level2) return;
         if (instance != null) return;
 
         GameObject host = new GameObject("Level2FeedbackUI");

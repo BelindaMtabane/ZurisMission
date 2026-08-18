@@ -1,5 +1,4 @@
 using System;
-using UnityEditor;
 using UnityEngine;
 
 namespace ithappy.Animals_FREE
@@ -60,12 +59,15 @@ namespace ithappy.Animals_FREE
             m_Controller = GetComponent<CharacterController>();
             m_Animator = GetComponent<Animator>();
 
+            if (m_Controller == null || m_Animator == null) return;
+
             m_Movement = new MovementHandler(m_Controller, m_Transform, m_WalkSpeed, m_RunSpeed, m_RotateSpeed, m_JumpHeight, m_Space);
             m_Animation = new AnimationHandler(m_Animator, m_VerticalID, m_StateID);
         }
 
         private void Update()
         {
+            EnsureHandlers();
             if (m_Movement == null || m_Animation == null) return;
 
             m_Movement.Move(Time.deltaTime, in m_Axis, in m_Target, m_IsRun, m_IsMoving, out var animAxis, out var isAir);
@@ -74,8 +76,21 @@ namespace ithappy.Animals_FREE
 
         private void OnAnimatorIK()
         {
+            EnsureHandlers();
             if (m_Animation == null) return;
             m_Animation.AnimateIK(in m_Target, m_LookWeight);
+        }
+
+        private void EnsureHandlers()
+        {
+            if (m_Movement != null && m_Animation != null) return;
+            if (m_Transform == null) m_Transform = transform;
+            if (m_Controller == null) m_Controller = GetComponent<CharacterController>();
+            if (m_Animator == null) m_Animator = GetComponent<Animator>();
+            if (m_Controller == null || m_Animator == null) return;
+
+            m_Movement = new MovementHandler(m_Controller, m_Transform, m_WalkSpeed, m_RunSpeed, m_RotateSpeed, m_JumpHeight, m_Space);
+            m_Animation = new AnimationHandler(m_Animator, m_VerticalID, m_StateID);
         }
 
         public void SetInput(in Vector2 axis, in Vector3 target, in bool isRun, in bool isJump)
@@ -98,6 +113,7 @@ namespace ithappy.Animals_FREE
 
         private void OnControllerColliderHit(ControllerColliderHit hit)
         {
+            if (m_Movement == null || m_Controller == null || hit == null) return;
             if(hit.normal.y > m_Controller.stepOffset)
             {
                 m_Movement.SetSurface(hit.normal);
@@ -214,12 +230,19 @@ namespace ithappy.Animals_FREE
                 displacement += m_GravityAcelleration;
                 displacement *= deltaTime;
 
+                if (m_Controller == null) return;
                 m_Controller.Move(displacement);
             }
 
             private void CaculateGravity(float deltaTime, out bool isAir)
             {
                 m_jumpTimer = Mathf.Max(m_jumpTimer - deltaTime, 0f);
+
+                if (m_Controller == null)
+                {
+                    isAir = true;
+                    return;
+                }
 
                 if (m_Controller.isGrounded)
                 {
@@ -307,6 +330,7 @@ namespace ithappy.Animals_FREE
 
             public void Animate(in Vector2 axis, float state, float deltaTime)
             {
+                if (m_Animator == null) return;
                 m_Animator.SetFloat(m_VerticalID, m_FlowAxis.magnitude);
                 m_Animator.SetFloat(m_StateID, Mathf.Clamp01(m_FlowState));
 
@@ -316,6 +340,7 @@ namespace ithappy.Animals_FREE
 
             public void AnimateIK(in Vector3 target, in LookWeight lookWeight)
             {
+                if (m_Animator == null) return;
                 m_Animator.SetLookAtPosition(target);
                 m_Animator.SetLookAtWeight(lookWeight.weight, lookWeight.body, lookWeight.head, lookWeight.eyes);
             }

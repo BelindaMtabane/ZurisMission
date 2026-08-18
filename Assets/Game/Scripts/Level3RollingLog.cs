@@ -46,7 +46,10 @@ public class Level3RollingLog : MonoBehaviour
         }
     }
 
-    void OnTriggerEnter(Collider other)
+    void OnTriggerEnter(Collider other) => TryHandleHit(other);
+    void OnTriggerStay(Collider other) => TryHandleHit(other);
+
+    void TryHandleHit(Collider other)
     {
         if (hit || phase != Phase.Roll) return;
         if (!other.CompareTag("Player") && other.GetComponentInParent<PlayerController>() == null) return;

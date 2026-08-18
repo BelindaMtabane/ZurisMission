@@ -6,6 +6,8 @@ public static class Level1Primitives
     public static readonly Color CactusAccent = new Color(0.12f, 0.42f, 0.16f);
     public static readonly Color Rock = new Color(0.48f, 0.32f, 0.18f);
     public static readonly Color Sand = new Color(0.84f, 0.70f, 0.32f);
+    public static readonly Color BlackPit = new Color(0.06f, 0.06f, 0.07f);
+    public static readonly Color BlackPitRim = new Color(0.18f, 0.16f, 0.14f);
     public static readonly Color Dust = new Color(0.78f, 0.52f, 0.18f);
     public static readonly Color Dew = new Color(0.35f, 0.75f, 0.85f);
     public static readonly Color WaterPool = new Color(0.12f, 0.55f, 0.95f);
@@ -31,13 +33,20 @@ public static class Level1Primitives
     public static readonly Color LogDark = new Color(0.32f, 0.18f, 0.08f);
     public static readonly Color LogBark = new Color(0.38f, 0.22f, 0.10f);
 
+    public const float CactusHealthDamage = 10f;
     public const float CactusWallDamage = 3f;
     public const float SandPitDamage = 1.5f;
+    public const float BlackPitHealthDamage = 5f;
+    public const float BlackPitSlowSpeed = 10f;
+    public const float BlackPitSlowDuration = 2.2f;
     public const float RockClusterDamage = 1f;
     public const float DustHazardDamage = 6f;
     public const float LowBarrierDamage = 1f;
     public const float LogDamage = 1f;
+    public const float LogHealthDamage = 5f;
+    public const int LogJumpMaterialLoss = 5;
     public const float JumpLogHalfLength = 1.85f;
+    const float CactusHeightScale = 1.38f;
     public const float RollingLogHalfLength = 24f;
     public const float RollingLogRadius = 0.58f;
 
@@ -46,8 +55,8 @@ public static class Level1Primitives
         GameObject go = GameObject.CreatePrimitive(type);
         go.name = name;
         go.transform.SetParent(parent, false);
-        go.transform.localPosition = localPos;
-        go.transform.localScale = scale;
+        go.transform.localPosition = RunnerVisualScale.V(localPos);
+        go.transform.localScale = RunnerVisualScale.V(scale);
         Renderer r = go.GetComponent<Renderer>();
         if (r != null)
         {
@@ -72,9 +81,23 @@ public static class Level1Primitives
         }
 
         box.isTrigger = true;
-        box.center = new Vector3(0f, 4f, 0f);
-        box.size = new Vector3(width, 10f, depth);
+        box.center = new Vector3(0f, RunnerVisualScale.F(4f), 0f);
+        box.size = new Vector3(RunnerVisualScale.F(width), RunnerVisualScale.F(10f), RunnerVisualScale.F(depth));
         return box;
+    }
+
+    static void ScalePlantVisuals(GameObject root)
+    {
+        GameObject body = new GameObject("PlantBody");
+        body.transform.SetParent(root.transform, false);
+        for (int i = root.transform.childCount - 1; i >= 0; i--)
+        {
+            Transform child = root.transform.GetChild(i);
+            if (child == body.transform) continue;
+            child.SetParent(body.transform, true);
+        }
+
+        body.transform.localScale = Vector3.one * RunnerVisualScale.PlantBoost;
     }
 
     public static GameObject MakeCactusWater(Transform parent, int lane, float z)
@@ -83,22 +106,22 @@ public static class Level1Primitives
         root.transform.SetParent(parent, false);
         root.transform.position = Level1Ground.LanePosition(lane, z);
 
-        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.72f, 0f), new Vector3(0.65f, 0.72f, 0.65f), Cactus, "Stem");
-        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0.42f, 1.02f, 0f), new Vector3(0.32f, 0.48f, 0.32f), CactusAccent, "ArmR");
-        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(-0.42f, 1.02f, 0f), new Vector3(0.32f, 0.48f, 0.32f), CactusAccent, "ArmL");
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(0f, 1.42f, 0f), new Vector3(0.52f, 0.38f, 0.52f), Cactus, "Top");
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(0.28f, 1.65f, 0.18f), new Vector3(0.32f, 0.32f, 0.32f), Dew, "WaterDrop");
+        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.98f, 0f), new Vector3(0.72f, 0.98f, 0.72f), Cactus, "Stem");
+        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0.48f, 1.38f, 0f), new Vector3(0.36f, 0.58f, 0.36f), CactusAccent, "ArmR");
+        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(-0.48f, 1.38f, 0f), new Vector3(0.36f, 0.58f, 0.36f), CactusAccent, "ArmL");
+        Visual(PrimitiveType.Sphere, root.transform, new Vector3(0f, 1.88f, 0f), new Vector3(0.58f, 0.44f, 0.58f), Cactus, "Top");
+        ScalePlantVisuals(root);
+        root.transform.localScale *= CactusHeightScale;
 
-        TallTrigger(root, 1.6f, 1.4f);
+        TallTrigger(root, 2.0f * RunnerVisualScale.PlantBoost * CactusHeightScale, 1.4f * RunnerVisualScale.PlantBoost);
         KinematicBody(root);
-        AnchorPickup(root);
-        root.AddComponent<Level1CactusPickup>();
+        Level1CactusPickup pickup = root.AddComponent<Level1CactusPickup>();
         return root;
     }
 
     public static GameObject MakeWaterPool(Transform parent, int lane, float z)
     {
-        GameObject root = new GameObject("WaterPool");
+        GameObject root = new GameObject("WaterSpring");
         root.transform.SetParent(parent, false);
         root.transform.position = Level1Ground.LanePosition(lane, z);
 
@@ -139,8 +162,9 @@ public static class Level1Primitives
         Visual(PrimitiveType.Capsule, root.transform, new Vector3(0.55f, 1.15f, 0f), new Vector3(0.45f, 1.25f, 0.45f), AloeLeaf, "LeafR");
         Visual(PrimitiveType.Capsule, root.transform, new Vector3(0f, 1.35f, 0f), new Vector3(0.5f, 1.4f, 0.5f), AloeGreen, "LeafCenter");
         Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.35f, 0f), new Vector3(0.35f, 0.35f, 0.35f), new Color(0.35f, 0.55f, 0.2f), "Base");
+        ScalePlantVisuals(root);
 
-        TallTrigger(root, 2.0f, 1.8f);
+        TallTrigger(root, 2.0f * RunnerVisualScale.PlantBoost, 1.8f * RunnerVisualScale.PlantBoost);
         KinematicBody(root);
         AnchorPickup(root);
         root.AddComponent<Level1AloePickup>();
@@ -235,43 +259,37 @@ public static class Level1Primitives
         return go;
     }
 
-    public static GameObject MakeLogBarrier(Transform parent, int lane, float z)
+    public static GameObject MakeRollingLog(Transform parent, int lane, float z, int laneSpan = 2, float speed = 13f)
     {
-        GameObject root = new GameObject("LogBarrier");
-        root.transform.SetParent(parent, false);
-        root.transform.position = Level1Ground.LanePosition(lane, z);
+        int span = Mathf.Clamp(laneSpan, 2, 3);
+        int leftLane = Mathf.Clamp(lane, 0, LevelLanes.Count - span);
+        int rightLane = leftLane + span - 1;
+        float leftX = LevelLanes.X(leftLane);
+        float rightX = LevelLanes.X(rightLane);
+        float midX = (leftX + rightX) * 0.5f;
+        float width = Mathf.Abs(rightX - leftX) + 2.6f;
 
-        HorizontalLogVisual(root.transform, new Vector3(0f, 0.62f, 0f), JumpLogHalfLength, 0.52f, LogBrown, "JumpLog");
+        GameObject root = new GameObject(span >= 3 ? "RollingLog_3Lane" : "RollingLog_2Lane");
+        root.transform.SetParent(parent, false);
+        root.transform.position = new Vector3(midX, Level1Ground.SurfaceY, z);
+
+        GameObject mesh = Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.9f, 0f), new Vector3(1.8f, width * 0.5f, 1.8f), LogBrown, "Log");
+        mesh.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+        Visual(PrimitiveType.Sphere, root.transform, new Vector3(-width * 0.48f, 0.9f, 0f), new Vector3(1.7f, 1.7f, 1.7f), LogDark, "EndL");
+        Visual(PrimitiveType.Sphere, root.transform, new Vector3(width * 0.48f, 0.9f, 0f), new Vector3(1.7f, 1.7f, 1.7f), LogDark, "EndR");
 
         BoxCollider box = root.AddComponent<BoxCollider>();
         box.isTrigger = true;
-        box.center = new Vector3(0f, 0.72f, 0f);
-        box.size = new Vector3(3.6f, 0.95f, 1.4f);
-
-        Level1Obstacle obstacle = root.AddComponent<Level1Obstacle>();
-        obstacle.Setup(Level1ObstacleKind.Log, LogDamage, true);
+        box.center = RunnerVisualScale.V(new Vector3(0f, 0.95f, 0f));
+        box.size = RunnerVisualScale.V(new Vector3(width, 2.6f, 2.2f));
+        KinematicBody(root);
+        root.AddComponent<Level1RollingLog>().Setup(speed);
         return root;
     }
 
-    public static GameObject MakeRollingLog(Vector3 worldPos, int lane)
+    public static GameObject MakeLogBarrier(Transform parent, int lane, float z)
     {
-        GameObject root = new GameObject("RollingLog");
-        root.transform.position = worldPos;
-
-        float span = RollingLogHalfLength * 2f;
-        HorizontalLogVisual(root.transform, new Vector3(0f, 0.62f, 0f), RollingLogHalfLength, RollingLogRadius, LogDark, "RollingLogMesh");
-
-        BoxCollider box = root.AddComponent<BoxCollider>();
-        box.isTrigger = true;
-        box.center = new Vector3(0f, 0.72f, 0f);
-        box.size = new Vector3(span, 0.95f, 1.5f);
-
-        Rigidbody rb = root.AddComponent<Rigidbody>();
-        rb.isKinematic = true;
-        rb.useGravity = false;
-
-        root.AddComponent<Level1RollingLog>();
-        return root;
+        return MakeRollingLog(parent, lane, z, 2, 13f);
     }
 
     public static GameObject MakeHealthPickup(Transform parent, int lane, float z)
@@ -315,15 +333,17 @@ public static class Level1Primitives
             pillar.transform.SetParent(root.transform, false);
             pillar.transform.localPosition = new Vector3(laneX, 0f, 0f);
 
-            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(0f, 0.55f, 0f), new Vector3(1.1f, 1.1f, 1.1f), SnakeDangerCactus, "Base");
-            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(0f, 1.15f, 0f), new Vector3(0.85f, 0.85f, 0.85f), SnakeDangerCactus, "Mid");
-            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(0.35f, 1.45f, 0f), new Vector3(0.35f, 0.35f, 0.35f), SnakeDangerCactusSpike, "SpikeR");
-            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(-0.35f, 1.45f, 0f), new Vector3(0.35f, 0.35f, 0.35f), SnakeDangerCactusSpike, "SpikeL");
+            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(0f, 0.72f, 0f), new Vector3(1.15f, 1.45f, 1.15f), SnakeDangerCactus, "Base");
+            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(0f, 1.55f, 0f), new Vector3(0.95f, 1.15f, 0.95f), SnakeDangerCactus, "Mid");
+            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(0.38f, 2.05f, 0f), new Vector3(0.38f, 0.38f, 0.38f), SnakeDangerCactusSpike, "SpikeR");
+            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(-0.38f, 2.05f, 0f), new Vector3(0.38f, 0.38f, 0.38f), SnakeDangerCactusSpike, "SpikeL");
+            ScalePlantVisuals(pillar);
+            pillar.transform.localScale *= CactusHeightScale;
 
             BoxCollider laneBox = pillar.AddComponent<BoxCollider>();
             laneBox.isTrigger = true;
-            laneBox.center = new Vector3(0f, 0.85f, 0f);
-            laneBox.size = new Vector3(1.4f, 1.7f, 2.2f);
+            laneBox.center = RunnerVisualScale.PlantV(new Vector3(0f, 1.05f, 0f)) * CactusHeightScale;
+            laneBox.size = RunnerVisualScale.PlantV(new Vector3(1.5f, 2.2f, 2.2f)) * CactusHeightScale;
 
             Level1Obstacle obstacle = pillar.AddComponent<Level1Obstacle>();
             obstacle.Setup(Level1ObstacleKind.Cactus, CactusWallDamage, false);
@@ -399,8 +419,8 @@ public static class Level1Primitives
 
         BoxCollider box = root.AddComponent<BoxCollider>();
         box.isTrigger = true;
-        box.center = new Vector3(0f, 0.82f, 0f);
-        box.size = new Vector3(halfWidth * 2f, 1.15f, 2.4f);
+        box.center = RunnerVisualScale.V(new Vector3(0f, 0.82f, 0f));
+        box.size = RunnerVisualScale.V(new Vector3(halfWidth * 2f, 1.15f, 2.4f));
 
         Level1Obstacle obstacle = root.AddComponent<Level1Obstacle>();
         obstacle.Setup(Level1ObstacleKind.Cactus, CactusWallDamage, false);
@@ -434,6 +454,21 @@ public static class Level1Primitives
         TallTrigger(root, 3.0f, 3.0f);
         Level1Obstacle obstacle = root.AddComponent<Level1Obstacle>();
         obstacle.Setup(Level1ObstacleKind.SandPit, SandPitDamage, false);
+        return root;
+    }
+
+    public static GameObject MakeBlackPit(Transform parent, int lane, float z)
+    {
+        GameObject root = new GameObject("BlackPit");
+        root.transform.SetParent(parent, false);
+        root.transform.position = Level1Ground.LanePosition(lane, z);
+
+        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.08f, 0f), new Vector3(3.5f, 0.10f, 3.5f), BlackPitRim, "Rim");
+        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.14f, 0f), new Vector3(2.8f, 0.12f, 2.8f), BlackPit, "Pit");
+
+        TallTrigger(root, 3.1f, 3.1f);
+        Level1Obstacle obstacle = root.AddComponent<Level1Obstacle>();
+        obstacle.Setup(Level1ObstacleKind.BlackPit, 0f, true);
         return root;
     }
 

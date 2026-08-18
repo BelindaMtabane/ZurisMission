@@ -7,17 +7,17 @@ using UnityEngine;
 public static class RunnerLevelPacing
 {
     public const float TargetPlaytimeSeconds = Level1Pacing.TargetPlaytimeSeconds;
-    public const float Level2TargetPlaytimeSeconds = 270f;
-    public const float Level3TargetPlaytimeSeconds = 330f;
+    public const float Level2TargetPlaytimeSeconds = Level2Config.TargetPlaytimeSeconds;
+    public const float Level3TargetPlaytimeSeconds = 180f;
     public const float RunnerForwardSpeed = Level1Pacing.MainGameForwardSpeed;
     public const float MinSpeed = Level1Pacing.MinSpeed;
     public const float MaxSpeed = Level1Pacing.MaxSpeed;
 
     static readonly Dictionary<string, string> EndMarkerNames = new Dictionary<string, string>
     {
-        { "MainGame", "Ender1" },
-        { "Level2", "Ender2" },
-        { "Level3", "Ender3" },
+        { SceneCatalog.MainGame, "Ender1" },
+        { SceneCatalog.Level2, "Ender2" },
+        { SceneCatalog.Level3, "Ender3" },
     };
 
     public static bool SupportsScene(string sceneName)
@@ -27,7 +27,7 @@ public static class RunnerLevelPacing
 
     public static void Apply(string sceneName)
     {
-        if (sceneName == "MainGame")
+        if (sceneName == SceneCatalog.MainGame)
         {
             Level1Pacing.Apply();
             return;
@@ -52,8 +52,8 @@ public static class RunnerLevelPacing
         float length = Mathf.Max(1f, endZ - startZ);
 
         float playtimeTarget = TargetPlaytimeSeconds;
-        if (sceneName == "Level2") playtimeTarget = Level2TargetPlaytimeSeconds;
-        else if (sceneName == "Level3") playtimeTarget = Level3TargetPlaytimeSeconds;
+        if (sceneName == SceneCatalog.Level2) playtimeTarget = Level2TargetPlaytimeSeconds;
+        else if (sceneName == SceneCatalog.Level3) playtimeTarget = Level3TargetPlaytimeSeconds;
         float pacedSpeed = length / playtimeTarget;
         float targetSpeed = Mathf.Clamp(Mathf.Max(pacedSpeed, RunnerForwardSpeed), MinSpeed, MaxSpeed);
         pc.ConfigureForwardSpeed(targetSpeed);

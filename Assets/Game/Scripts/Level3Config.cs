@@ -48,12 +48,12 @@ public static class Level3Config
     public const int   TreeMaterialLoss       = 10;
 
     // Rolling logs also damage materials (no health damage in Level 3)
-    public const int   LogMaterialLoss        = 10;
+    public const int   LogMaterialLoss        = 5;
 
     // Pickups (defaults — layout may override per pickup)
     public static readonly float[] DropletAmounts = { 10f, 15f, 20f };
     public static readonly float[] HealthAmounts = { 10f, 15f, 20f };
-    public const int DefaultMaterialPickup = 10;
+    public const int DefaultMaterialPickup = 15;
 
     // Spawn distances (world units). Layout director copies Inspector values here on Awake.
     public static float InitialSpawnDistance = 16f;

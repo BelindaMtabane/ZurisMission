@@ -3,14 +3,16 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// After 20% progress, heat drains player water every 6 seconds.
-/// Screen warmth scales with hydration level.
+/// After 25% progress, recurring heat bursts last 3–5 seconds and drain player water by 20/sec.
+/// Cactus and water springs restore body water and bucket.
 /// </summary>
 public class Level1HeatWave : MonoBehaviour
 {
-    [SerializeField] private float heatWaveStartProgress = 0.20f;
-    [SerializeField] private float heatWaveWaterLoss = 5f;
-    [SerializeField] private float heatWaveInterval = 6f;
+    [SerializeField] private float heatWaveStartProgress = Level1Config.HeatWaveStartProgress;
+    [SerializeField] private float waterLossPerSecond = Level1Config.HeatWaterLossPerSecond;
+    [SerializeField] private float betweenBurstCooldown = Level1Config.HeatBurstCooldown;
+
+    static readonly float[] BurstDurations = { 3f, 4f, 5f };
 
     Image overlay;
     Light sun;
@@ -20,8 +22,8 @@ public class Level1HeatWave : MonoBehaviour
 
     bool started;
     bool heatActive;
+    bool burstRunning;
     float pauseUntil;
-    float tickTimer;
     Transform player;
 
     public bool IsPaused => Time.time < pauseUntil;
@@ -61,15 +63,12 @@ public class Level1HeatWave : MonoBehaviour
             if (Level1Progress.Normalized(PlayerZ()) >= heatWaveStartProgress)
             {
                 started = true;
-                heatActive = true;
-                Level1FeedbackUI.Show("HEAT WAVE! Collect cactus for water!", new Color(1f, 0.55f, 0.2f), 2.4f);
-                Debug.Log("[Level1] Heat wave started at 20% progress");
+                Debug.Log("[Level1] Heat wave system started at 25% progress");
             }
 
             yield return null;
         }
 
-        tickTimer = heatWaveInterval;
         while (true)
         {
             if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying)
@@ -80,25 +79,67 @@ public class Level1HeatWave : MonoBehaviour
 
             if (IsPaused)
             {
+                heatActive = false;
                 yield return null;
                 continue;
             }
 
-            tickTimer -= Time.deltaTime;
-            if (tickTimer <= 0f)
+            float burstDuration = BurstDurations[Random.Range(0, BurstDurations.Length)];
+            heatActive = true;
+            burstRunning = true;
+            Level1FeedbackUI.Show("HEAT WAVE! Drink from cactus or springs!", new Color(1f, 0.55f, 0.2f), burstDuration);
+            Debug.Log($"[Level1] Heat burst started for {burstDuration:0}s (-{waterLossPerSecond:0}/sec player water)");
+
+            float elapsed = 0f;
+            while (elapsed < burstDuration)
             {
-                tickTimer = heatWaveInterval;
-                ApplyHeatTick();
+                if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                if (IsPaused)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                float dt = Time.deltaTime;
+                ApplyHeatDrain(dt);
+                elapsed += dt;
+                yield return null;
             }
 
-            yield return null;
+            heatActive = false;
+            burstRunning = false;
+            Debug.Log("[Level1] Heat burst ended");
+
+            float cooldown = betweenBurstCooldown;
+            while (cooldown > 0f)
+            {
+                if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                if (IsPaused)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                cooldown -= Time.deltaTime;
+                yield return null;
+            }
         }
     }
 
-    void ApplyHeatTick()
+    void ApplyHeatDrain(float deltaTime)
     {
         if (hud == null) hud = FindFirstObjectByType<HUDControls>();
-        hud?.ApplyHeatWaveTick(heatWaveWaterLoss);
+        hud?.DrainPlayerWater(waterLossPerSecond * deltaTime);
     }
 
     void LateUpdate()

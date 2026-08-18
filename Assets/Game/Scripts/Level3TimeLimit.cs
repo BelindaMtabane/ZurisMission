@@ -31,7 +31,7 @@ public class Level3TimeLimit : MonoBehaviour
 
     void Start()
     {
-        if (SceneManager.GetActiveScene().name != "Level3") return;
+        if (SceneManager.GetActiveScene().name != SceneCatalog.Level3) return;
         endTime = Time.time + Level3Config.Level3TimeLimitSeconds;
         Remaining = Level3Config.Level3TimeLimitSeconds;
     }
@@ -40,7 +40,7 @@ public class Level3TimeLimit : MonoBehaviour
     {
         if (triggered) return;
         if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
-        if (SceneManager.GetActiveScene().name != "Level3") return;
+        if (SceneManager.GetActiveScene().name != SceneCatalog.Level3) return;
 
         Remaining = Mathf.Max(0f, endTime - Time.time);
         Urgency = 1f - (Remaining / Level3Config.Level3TimeLimitSeconds);

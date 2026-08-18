@@ -7,7 +7,8 @@ public enum Level1ObstacleKind
     Cactus,
     Log,
     DustDevil,
-    Barrier
+    Barrier,
+    BlackPit
 }
 
 /// <summary>
@@ -24,6 +25,7 @@ public class Level1Obstacle : MonoBehaviour
     [SerializeField] private bool jumpable;
 
     bool applied;
+    bool appliedThisPass;
 
     public void Setup(Level1ObstacleKind kind, float damage, bool canJumpOver)
     {
@@ -34,7 +36,6 @@ public class Level1Obstacle : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (applied) return;
         if (!other.CompareTag("Player")) return;
         if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
 
@@ -43,22 +44,59 @@ public class Level1Obstacle : MonoBehaviour
             PlayerController controller = other.GetComponent<PlayerController>();
             if (controller != null && !controller.IsGrounded)
             {
-                HUDControls hud = FindFirstObjectByType<HUDControls>();
-                hud?.ShowActionFeedback("NICE!", new Color(0.35f, 0.95f, 0.45f));
                 return;
             }
         }
 
+        if (obstacleKind == Level1ObstacleKind.Cactus)
+        {
+            if (appliedThisPass) return;
+            appliedThisPass = true;
+
+            HUDControls hudControls = FindFirstObjectByType<HUDControls>();
+            hudControls?.ChangeHealth(-Level1Primitives.CactusHealthDamage, "You ran into a cactus!");
+            Debug.Log($"[Level1] Health -{Level1Primitives.CactusHealthDamage:0} from {obstacleKind}");
+            return;
+        }
+
+        if (obstacleKind == Level1ObstacleKind.BlackPit)
+        {
+            if (appliedThisPass) return;
+            appliedThisPass = true;
+
+            HUDControls hud = FindFirstObjectByType<HUDControls>();
+            hud?.ChangeHealth(-Level1Primitives.BlackPitHealthDamage, "You fell into a black pit!");
+            PlayerController pitPc = other.GetComponent<PlayerController>();
+            pitPc?.ApplySpeedModifier(Level1Primitives.BlackPitSlowSpeed, Level1Primitives.BlackPitSlowDuration);
+            Debug.Log($"[Level1] Health -{Level1Primitives.BlackPitHealthDamage:0} and slowed from BlackPit");
+            return;
+        }
+
+        if (applied) return;
         applied = true;
-        HUDControls hudControls = FindFirstObjectByType<HUDControls>();
-        hudControls?.ChangeBucket(-bucketDamage);
+
+        HUDControls hudControlsBucket = FindFirstObjectByType<HUDControls>();
+        hudControlsBucket?.ChangeBucket(-bucketDamage);
         Debug.Log($"[Level1] Bucket -{bucketDamage:0} from {obstacleKind}");
 
         if (ShouldSlowAndBreakMaterials())
         {
             PlayerController pc = other.GetComponent<PlayerController>();
             pc?.ApplySpeedModifier(SlowSpeed, SlowDuration);
-            hudControls?.BreakMaterials(MaterialBreakAmount);
+            hudControlsBucket?.BreakMaterials(MaterialBreakAmount);
+        }
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        if (obstacleKind == Level1ObstacleKind.Cactus && other.CompareTag("Player"))
+        {
+            appliedThisPass = false;
+        }
+
+        if (obstacleKind == Level1ObstacleKind.BlackPit && other.CompareTag("Player"))
+        {
+            appliedThisPass = false;
         }
     }
 

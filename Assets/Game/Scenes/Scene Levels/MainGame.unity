@@ -1860,7 +1860,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 4.37, z: -10.26}
+  m_LocalPosition: {x: 0, y: 6.12, z: -14.36}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8161,14 +8161,17 @@ MonoBehaviour:
   maxMaterial: 100
   waterIncreaseRate: 50
   villageProgressPercent: 33.5
+  mainGameVillageMaxPercent: 34
   material: {fileID: 874437518}
   villageProgressText: {fileID: 234030179}
   healthText: {fileID: 1662173219}
   bucketWaterText: {fileID: 1844503056}
   playerWaterText: {fileID: 1866933661}
-  healthbar: {fileID: 0}
-  bucketbar: {fileID: 0}
-  playerWaterLevelBar: {fileID: 0}
+  staminaText: {fileID: 0}
+  healthbar: {fileID: 1614830562}
+  bucketbar: {fileID: 945430910}
+  playerWaterLevelBar: {fileID: 1125885372}
+  materialBar: {fileID: 0}
 --- !u!4 &1447030426
 Transform:
   m_ObjectHideFlags: 0
@@ -10535,7 +10538,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: de2f75f6bbeac9d41a0209eb8d11917a, type: 2}
+  - {fileID: 2100000, guid: 04d7e3e54f3b74f4f8155636c2313230, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -11239,7 +11242,6 @@ GameObject:
   - component: {fileID: 1875673034}
   - component: {fileID: 1875673037}
   - component: {fileID: 1875673038}
-  - component: {fileID: 1875673039}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -11383,6 +11385,13 @@ MonoBehaviour:
   groundPrefabTrigger: {fileID: 1792437609}
   groundSurfaceMaterial: {fileID: 2100000, guid: de2f75f6bbeac9d41a0209eb8d11917a, type: 2}
   spawnObjects: {fileID: 1036200613}
+  spawnedTileScaleX: 50.837
+  spawnedTileScaleY: 1
+  spawnedTileScaleZ: 200
+  spawnCheckInterval: 0.25
+  lookAheadDistance: 280
+  destroyStartDelay: 120
+  destroyInterval: 3
 --- !u!114 &1875673038
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11396,24 +11405,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hudControls: {fileID: 1447030425}
---- !u!114 &1875673039
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1875673029}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ca90381dabac22c43be1010ef73bb4b5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerSpeed: 25
-  playerJumpPower: 10
-  playerSpeedBoost: 10
-  playerSlowDown: 3
-  isGrounded: 0
-  rb: {fileID: 1875673034}
 --- !u!1001 &1880546799
 PrefabInstance:
   m_ObjectHideFlags: 0

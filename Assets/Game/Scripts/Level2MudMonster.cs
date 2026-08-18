@@ -109,7 +109,6 @@ public class Level2MudMonster : MonoBehaviour
         }
 
         SpawnMudBall();
-        Level2FeedbackUI.Show("MUD BALL INCOMING!", new Color(0.55f, 0.32f, 0.12f), 1.1f);
     }
 
     void SpawnMudBall()
@@ -194,16 +193,17 @@ public class Level2MudBall : MonoBehaviour
 
         PlayerController controller = player.GetComponent<PlayerController>();
         float laneDelta = Mathf.Abs(player.position.x - LevelLanes.X(laneIndex));
-        if (laneDelta > 2.6f || (controller != null && !controller.IsGrounded && player.position.y > Level2Ground.SurfaceY + 1.4f))
+        if (laneDelta > 3.2f || (controller != null && !controller.IsGrounded && player.position.y > Level2Ground.SurfaceY + 1.4f))
         {
-            Level2FeedbackUI.Show("DODGED!", new Color(0.35f, 0.95f, 0.45f), 0.9f);
             passed = true;
             return;
         }
 
         HUDControls hud = FindFirstObjectByType<HUDControls>();
-        hud?.ChangeHealth(-damage, "A mud ball hit you!");
-        Level2FeedbackUI.Show("MUD BALL!", new Color(0.55f, 0.32f, 0.12f), 1.1f);
+        hud?.ChangeHealth(-Level2Config.MudBallHealthDamage, "A mud ball hit you!");
+        controller?.ApplySpeedModifier(
+            controller.CurrentSpeed * Level2Config.MudBallSlowMultiplier,
+            Level2Config.MudBallSlowDuration);
         passed = true;
         Destroy(gameObject);
     }

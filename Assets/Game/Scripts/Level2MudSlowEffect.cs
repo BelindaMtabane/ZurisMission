@@ -19,6 +19,5 @@ public static class Level2MudSlowEffect
         float mul = multiplier > 0f ? multiplier : Multiplier;
         float seconds = duration > 0f ? duration : Duration;
         controller.ApplyMudSlow(mul, seconds);
-        Level2FeedbackUI.Show("SLOWED BY MUD!", new Color(0.62f, 0.42f, 0.18f), 1.4f);
     }
 }

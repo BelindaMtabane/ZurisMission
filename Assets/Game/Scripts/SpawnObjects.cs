@@ -12,9 +12,7 @@ public class SpawnObjects : MonoBehaviour
 
     public void SpawnGameObjects(GameObject ground)
     {
-        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainGame"
-            || UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Level2"
-            || UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Level3")
+        if (SceneCatalog.IsRunnerScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name))
         {
             return;
         }

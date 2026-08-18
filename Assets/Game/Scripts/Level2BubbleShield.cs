@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Temporary water bubble that blocks Level 2 mud balls.
+/// Temporary bubble shield — blocks mud balls and poison gas.
 /// </summary>
 public class Level2BubbleShield : MonoBehaviour
 {
@@ -34,16 +34,11 @@ public class Level2BubbleShield : MonoBehaviour
     public static bool TryBlockMudBall()
     {
         if (!IsActive) return false;
-
-        Level2FeedbackUI.Show("BUBBLE BLOCKED!", new Color(0.35f, 0.85f, 1f), 1.4f);
-
-        if (Instance.consumeOnBlock)
-        {
-            Instance.End();
-        }
-
+        if (Instance.consumeOnBlock) Instance.End();
         return true;
     }
+
+    public static bool BlocksEnvironmentalHazards => IsActive;
 
     static void EnsureInstance()
     {
@@ -114,7 +109,6 @@ public class Level2BubbleShield : MonoBehaviour
         timer = seconds;
         if (visualRoot != null) visualRoot.SetActive(true);
         if (overlayRoot != null) overlayRoot.SetActive(true);
-        Level2FeedbackUI.Show("BUBBLE SHIELD!", new Color(0.45f, 0.92f, 1f), 1.6f);
     }
 
     void End()

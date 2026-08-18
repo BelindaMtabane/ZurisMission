@@ -46,10 +46,10 @@ public class Lanemanager3 : MonoBehaviour
         
             currentObstacleSet = hardObstacles;
 
-            if (button1 != null) button1.gameObject.SetActive(true);
-            if (button2 != null) button2.gameObject.SetActive(true);
-            if (button3 != null) button3.gameObject.SetActive(true);
-            if (button4 != null) button4.gameObject.SetActive(true);
+            if (button1 != null) button1.gameObject.SetActive(false);
+            if (button2 != null) button2.gameObject.SetActive(false);
+            if (button3 != null) button3.gameObject.SetActive(false);
+            if (button4 != null) button4.gameObject.SetActive(false);
 
             Debug.Log("Level 3 Loaded");
         

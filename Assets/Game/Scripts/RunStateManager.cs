@@ -22,9 +22,11 @@ public class RunStateManager : MonoBehaviour
 
     private Text deathReasonText;
     private string lastDeathReason = "You lost.";
+    private Text victoryTitleText;
+    private Text victoryMessageText;
 
     [Header("Scene Names")]
-    [SerializeField] private string mainMenuScene = "StartScreen";
+    [SerializeField] private string mainMenuScene = SceneCatalog.StartScreen;
     [SerializeField] private string nextScene = "";
 
     public RunState CurrentState { get; private set; } = RunState.Playing;
@@ -71,9 +73,10 @@ public class RunStateManager : MonoBehaviour
         SetState(RunState.Dead);
     }
 
-    public void NotifyVictory()
+    public void NotifyVictory(string title = null, string message = null)
     {
         if (CurrentState != RunState.Playing) return;
+        EnsureVictoryPanel(title, message);
         SetState(RunState.Victory);
     }
 
@@ -139,6 +142,7 @@ public class RunStateManager : MonoBehaviour
 
             case RunState.Victory:
                 Time.timeScale = 0f;
+                EnsureVictoryPanel();
                 SetPanels(false, true, false);
                 OnRunVictory?.Invoke();
                 break;
@@ -248,5 +252,131 @@ public class RunStateManager : MonoBehaviour
         btnLabelRt.offsetMax = Vector2.zero;
 
         deathPanel.SetActive(false);
+    }
+
+    void EnsureVictoryPanel(string title = null, string message = null)
+    {
+        if (victoryPanel != null && victoryTitleText != null)
+        {
+            ApplyVictoryCopy(title, message);
+            return;
+        }
+
+        if (victoryPanel != null && string.IsNullOrEmpty(title) && string.IsNullOrEmpty(message))
+        {
+            return;
+        }
+
+        Canvas canvas = FindFirstObjectByType<Canvas>();
+        if (canvas == null)
+        {
+            GameObject canvasGo = new GameObject("VictoryCanvas");
+            canvas = canvasGo.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 100;
+            canvasGo.AddComponent<CanvasScaler>();
+            canvasGo.AddComponent<GraphicRaycaster>();
+        }
+
+        victoryPanel = new GameObject("VictoryPanel");
+        victoryPanel.transform.SetParent(canvas.transform, false);
+        Image bg = victoryPanel.AddComponent<Image>();
+        bg.color = new Color(0.08f, 0.28f, 0.22f, 0.94f);
+        RectTransform rt = victoryPanel.GetComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+
+        GameObject inner = new GameObject("Inner");
+        inner.transform.SetParent(victoryPanel.transform, false);
+        Image innerImg = inner.AddComponent<Image>();
+        innerImg.color = new Color(0.18f, 0.62f, 0.48f, 0.95f);
+        RectTransform innerRt = inner.GetComponent<RectTransform>();
+        innerRt.anchorMin = new Vector2(0.16f, 0.22f);
+        innerRt.anchorMax = new Vector2(0.84f, 0.78f);
+        innerRt.offsetMin = Vector2.zero;
+        innerRt.offsetMax = Vector2.zero;
+
+        Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        if (font == null)
+        {
+            font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        }
+
+        GameObject titleGo = new GameObject("Title");
+        titleGo.transform.SetParent(inner.transform, false);
+        victoryTitleText = titleGo.AddComponent<Text>();
+        victoryTitleText.font = font;
+        victoryTitleText.alignment = TextAnchor.MiddleCenter;
+        victoryTitleText.color = new Color(0.06f, 0.22f, 0.16f);
+        victoryTitleText.fontSize = 40;
+        victoryTitleText.fontStyle = FontStyle.Bold;
+        RectTransform titleRt = titleGo.GetComponent<RectTransform>();
+        titleRt.anchorMin = new Vector2(0.05f, 0.68f);
+        titleRt.anchorMax = new Vector2(0.95f, 0.96f);
+        titleRt.offsetMin = Vector2.zero;
+        titleRt.offsetMax = Vector2.zero;
+
+        GameObject messageGo = new GameObject("Message");
+        messageGo.transform.SetParent(inner.transform, false);
+        victoryMessageText = messageGo.AddComponent<Text>();
+        victoryMessageText.font = font;
+        victoryMessageText.alignment = TextAnchor.MiddleCenter;
+        victoryMessageText.color = new Color(0.05f, 0.18f, 0.14f);
+        victoryMessageText.fontSize = 22;
+        victoryMessageText.horizontalOverflow = HorizontalWrapMode.Wrap;
+        RectTransform messageRt = messageGo.GetComponent<RectTransform>();
+        messageRt.anchorMin = new Vector2(0.08f, 0.22f);
+        messageRt.anchorMax = new Vector2(0.92f, 0.68f);
+        messageRt.offsetMin = Vector2.zero;
+        messageRt.offsetMax = Vector2.zero;
+
+        GameObject nextGo = new GameObject("NextLevel");
+        nextGo.transform.SetParent(inner.transform, false);
+        Image nextImg = nextGo.AddComponent<Image>();
+        nextImg.color = new Color(0.08f, 0.38f, 0.28f);
+        Button nextBtn = nextGo.AddComponent<Button>();
+        nextBtn.onClick.AddListener(GoToNextScene);
+        RectTransform nextRt = nextGo.GetComponent<RectTransform>();
+        nextRt.anchorMin = new Vector2(0.28f, 0.06f);
+        nextRt.anchorMax = new Vector2(0.72f, 0.18f);
+        nextRt.offsetMin = Vector2.zero;
+        nextRt.offsetMax = Vector2.zero;
+
+        GameObject nextLabel = new GameObject("Label");
+        nextLabel.transform.SetParent(nextGo.transform, false);
+        Text nextText = nextLabel.AddComponent<Text>();
+        nextText.font = font;
+        nextText.text = nextScene == SceneCatalog.Level3 ? "Start Level 3"
+            : nextScene == SceneCatalog.Level2 ? "Start Level 2"
+            : string.IsNullOrEmpty(nextScene) ? "Continue"
+            : "Next Level";
+        nextText.alignment = TextAnchor.MiddleCenter;
+        nextText.color = Color.white;
+        nextText.fontSize = 22;
+        RectTransform nextLabelRt = nextLabel.GetComponent<RectTransform>();
+        nextLabelRt.anchorMin = Vector2.zero;
+        nextLabelRt.anchorMax = Vector2.one;
+        nextLabelRt.offsetMin = Vector2.zero;
+        nextLabelRt.offsetMax = Vector2.zero;
+
+        ApplyVictoryCopy(title, message);
+        victoryPanel.SetActive(false);
+    }
+
+    void ApplyVictoryCopy(string title, string message)
+    {
+        if (victoryTitleText != null)
+        {
+            victoryTitleText.text = string.IsNullOrEmpty(title) ? "YOU WIN" : title;
+        }
+
+        if (victoryMessageText != null)
+        {
+            victoryMessageText.text = string.IsNullOrEmpty(message)
+                ? "You completed the level."
+                : message;
+        }
     }
 }

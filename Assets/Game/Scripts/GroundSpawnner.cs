@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -34,7 +34,7 @@ public class GroundSpawnner : MonoBehaviour
 
     public static bool UsesStreamingTiles(string sceneName)
     {
-        return sceneName == "MainGame" || sceneName == "Level2" || sceneName == "Level3";
+        return SceneCatalog.IsRunnerScene(sceneName);
     }
 
     public void EnsureGroundLinked()
@@ -248,12 +248,24 @@ public class GroundSpawnner : MonoBehaviour
     {
         float playerZ = GetPlayerZ();
         float frontEdge = GetTerrainFrontEdgeZ();
+        float endZ = GetSceneEndZ();
 
         while (frontEdge < playerZ + lookAheadDistance)
         {
+            if (nextSpawnZ > endZ + tileLength * 0.25f) break;
+
             SpawnGround();
             frontEdge = GetTerrainFrontEdgeZ();
         }
+    }
+
+    static float GetSceneEndZ()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        if (sceneName == SceneCatalog.Level2) return Level2Progress.EndZ;
+        if (sceneName == SceneCatalog.Level3) return Level3Progress.EndZ;
+        if (sceneName == SceneCatalog.MainGame) return Level1Progress.EndZ;
+        return float.PositiveInfinity;
     }
 
     float GetTerrainFrontEdgeZ()
@@ -325,19 +337,19 @@ public class GroundSpawnner : MonoBehaviour
         Vector3 scale = new Vector3(spawnedTileScaleX, spawnedTileScaleY, spawnedTileScaleZ);
         tile.transform.localScale = scale;
 
-        if (SceneManager.GetActiveScene().name == "MainGame")
+        if (SceneCatalog.IsLevel1(SceneManager.GetActiveScene().name))
         {
             Level1Ground.ApplyGroundSurface(tile, groundSurfaceMaterial, scale);
             return;
         }
 
-        if (SceneManager.GetActiveScene().name == "Level2")
+        if (SceneCatalog.IsLevel2(SceneManager.GetActiveScene().name))
         {
             Level2Ground.ApplyGroundSurface(tile, groundSurfaceMaterial, scale);
             return;
         }
 
-        if (SceneManager.GetActiveScene().name == "Level3")
+        if (SceneCatalog.IsLevel3(SceneManager.GetActiveScene().name))
         {
             Level3Ground.ApplyGroundSurface(tile, groundSurfaceMaterial, scale);
             return;
@@ -348,7 +360,7 @@ public class GroundSpawnner : MonoBehaviour
 
     static bool UsesLevelStreamingConfig(string sceneName)
     {
-        return sceneName == "Level3";
+        return SceneCatalog.IsLevel2(sceneName) || SceneCatalog.IsLevel3(sceneName);
     }
 
     void ApplyStreamingGroundConfig()
@@ -356,17 +368,24 @@ public class GroundSpawnner : MonoBehaviour
         if (!timerMode && !UsesStreamingTiles(SceneManager.GetActiveScene().name)) return;
 
         string sceneName = SceneManager.GetActiveScene().name;
-        if (sceneName != "Level3") return;
-
-        Level3Ground.ConfigureStreamingTile(ref spawnedTileScaleX, ref spawnedTileScaleY, ref spawnedTileScaleZ, ref spawnX, ref spawnY);
-        tileLength = Level3Ground.TileLength;
-
-        if (seedTile == null)
+        if (SceneCatalog.IsLevel3(sceneName))
         {
-            seedTile = FindSceneGround();
+            Level3Ground.ConfigureStreamingTile(ref spawnedTileScaleX, ref spawnedTileScaleY, ref spawnedTileScaleZ, ref spawnX, ref spawnY);
+            tileLength = Level3Ground.TileLength;
+
+            if (seedTile == null)
+            {
+                seedTile = FindSceneGround();
+            }
+
+            Level3Ground.AlignSeedTile(seedTile, spawnX, spawnY);
         }
 
-        Level3Ground.AlignSeedTile(seedTile, spawnX, spawnY);
+        if (SceneCatalog.IsLevel2(sceneName) || SceneCatalog.IsLevel3(sceneName))
+        {
+            destroyStartDelay = 60f;
+            destroyInterval = 60f;
+        }
     }
 
     float GetConfiguredTileLength()

@@ -5,23 +5,26 @@ using UnityEngine.SceneManagement;
 [DefaultExecutionOrder(-100)]
 public class SceneBootstrapper : MonoBehaviour
 {
-    private const string MainMenuScene = "StartScreen";
-    private static readonly HashSet<string> IgnoredScenes = new HashSet<string> { "StartScreen", "StarterInfor" };
+    private static readonly HashSet<string> IgnoredScenes = new HashSet<string>
+    {
+        SceneCatalog.StartScreen,
+        SceneCatalog.StarterInfor
+    };
 
     private static readonly Dictionary<string, float> VillageProgressMap = new Dictionary<string, float>
     {
-        { "MainGame", 33.5f },
-        { "Level2", 67f },
-        { "Level3", 80f },
-        { "Level3End", 80f }
+        { SceneCatalog.MainGame, 35f },
+        { SceneCatalog.Level2, VillageProgressService.Level2StartPercent },
+        { SceneCatalog.Level3, 80f },
+        { SceneCatalog.Level3End, 80f }
     };
 
     private static readonly Dictionary<string, string> NextSceneMap = new Dictionary<string, string>
     {
-        { "MainGame", "Level2" },
-        { "Level2", "Level3" },
-        { "Level3", "" },
-        { "Level3End", "" }
+        { SceneCatalog.MainGame, SceneCatalog.Level2 },
+        { SceneCatalog.Level2, SceneCatalog.Level3 },
+        { SceneCatalog.Level3, "" },
+        { SceneCatalog.Level3End, "" }
     };
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -51,10 +54,15 @@ public class SceneBootstrapper : MonoBehaviour
 
         RunStateManager runState = EnsureRunStateManager(sceneName);
         PlayerController playerController = EnsurePlayerController();
+        if (RunnerPlayerSetup.IsRunnerScene(sceneName))
+        {
+            RunnerPlayerSetup.Apply(sceneName);
+        }
         EnsureHudControls(sceneName);
         EnsurePlayerHudBase(playerController);
         EnsureGroundSpawner(sceneName);
         EnsureLevelSystems(sceneName);
+        LegacyLaneUi.Hide();
 
         Debug.Log($"[SceneBootstrapper] Phase 2 player ready in '{sceneName}' groundedCheck={playerController != null}.");
     }
@@ -71,7 +79,7 @@ public class SceneBootstrapper : MonoBehaviour
         GameObject victoryPanel = GameObject.Find("VictoryPanel2");
 
         runState.SetupPanels(null, victoryPanel, pausePanel);
-        runState.SetupScenes(MainMenuScene, NextSceneMap.TryGetValue(sceneName, out string nextScene) ? nextScene : "");
+        runState.SetupScenes(SceneCatalog.StartScreen, NextSceneMap.TryGetValue(sceneName, out string nextScene) ? nextScene : "");
 
         return runState;
     }
@@ -130,9 +138,12 @@ public class SceneBootstrapper : MonoBehaviour
             return;
         }
 
-        if (VillageProgressMap.TryGetValue(sceneName, out float value) && sceneName != "MainGame")
+        if (VillageProgressMap.TryGetValue(sceneName, out float value)
+            && !SceneCatalog.UsesObjectiveVillageProgress(sceneName))
         {
-            hud.SetVillageProgress(sceneName == "Level3" ? HUDControls.Level3VillageStartPercent : value);
+            hud.SetVillageProgress(SceneCatalog.IsLevel3(sceneName)
+                ? VillageProgressService.Level3StartPercent
+                : value);
         }
     }
 
@@ -163,7 +174,7 @@ public class SceneBootstrapper : MonoBehaviour
 
     void EnsureLevelSystems(string sceneName)
     {
-        if (sceneName == "MainGame")
+        if (SceneCatalog.IsLevel1(sceneName))
         {
             if (FindFirstObjectByType<Level1LayoutDirector>() == null)
             {
@@ -180,12 +191,12 @@ public class SceneBootstrapper : MonoBehaviour
                 new GameObject("Level1FeedbackUI").AddComponent<Level1FeedbackUI>();
             }
 
-            if (FindFirstObjectByType<Level1RollingLogDirector>() == null)
+            if (FindFirstObjectByType<Level1LowWaterMonitor>() == null)
             {
-                new GameObject("Level1RollingLogDirector").AddComponent<Level1RollingLogDirector>();
+                new GameObject("Level1LowWaterMonitor").AddComponent<Level1LowWaterMonitor>();
             }
         }
-        else if (sceneName == "Level2")
+        else if (SceneCatalog.IsLevel2(sceneName))
         {
             if (FindFirstObjectByType<Level2LayoutDirector>() == null)
             {
@@ -197,7 +208,7 @@ public class SceneBootstrapper : MonoBehaviour
                 new GameObject("Level2FeedbackUI").AddComponent<Level2FeedbackUI>();
             }
         }
-        else if (sceneName == "Level3")
+        else if (SceneCatalog.IsLevel3(sceneName))
         {
             if (FindFirstObjectByType<Level3LayoutDirector>() == null)
             {

@@ -38,7 +38,7 @@ public class PauseMenu : MonoBehaviour
         }
 
         Time.timeScale = 1f;
-        SceneManager.LoadScene("StartScreen");
+        SceneManager.LoadScene(SceneCatalog.StartScreen);
     }
 
     public void Restart()
@@ -56,18 +56,18 @@ public class PauseMenu : MonoBehaviour
     public void HUDInfor()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene("StarterInfor");
+        SceneManager.LoadScene(SceneCatalog.StarterInfor);
     }
 
     public void Level2()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene("Level2");
+        SceneManager.LoadScene(SceneCatalog.Level2);
     }
 
     public void Level3()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene("Level3");
+        SceneManager.LoadScene(SceneCatalog.Level3);
     }
 }

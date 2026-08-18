@@ -37,12 +37,8 @@ public class Level1RollingLogLesson : MonoBehaviour
 
     void SpawnLog()
     {
-        float centerX = 0f;
-        GameObject ground = GameObject.Find("Ground");
-        if (ground != null) centerX = ground.transform.position.x;
-
-        Vector3 pos = new Vector3(centerX, Level1Ground.SurfaceY + 0.35f, transform.position.z + 18f);
-        Level1Primitives.MakeRollingLog(pos, 0);
+        Transform parent = transform.parent != null ? transform.parent : transform;
+        Level1Primitives.MakeRollingLog(parent, 1, transform.position.z + 18f, 2, 13f);
         Debug.Log("[Level1] Tutorial rolling log spawned");
     }
 

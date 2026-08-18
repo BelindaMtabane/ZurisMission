@@ -1,11 +1,13 @@
 using UnityEngine;
 
 /// <summary>
-/// Poison plant: warning, then a visible green gas sphere that damages gradually.
+/// Poison plant: warning, then a visible green gas sphere that grows as the player approaches.
 /// </summary>
 public class Level2PoisonPlant : MonoBehaviour
 {
+    const float ApproachStartDistance = 58f;
     const float TriggerDistance = 42f;
+    const float ApproachScaleBoost = 1.2f;
 
     [SerializeField] private float spawnProgress;
     [SerializeField] private GameObject warningRoot;
@@ -21,7 +23,9 @@ public class Level2PoisonPlant : MonoBehaviour
     float cooldownTimer = 2.2f;
     float tick;
     Vector3 gasBaseScale = Vector3.one;
+    Vector3 gasMaxScale = Vector3.one;
     Vector3 warningBaseScale = Vector3.one;
+    SphereCollider gasCollider;
     Transform player;
 
     public void Setup(float progress, GameObject warning, GameObject gas)
@@ -29,6 +33,7 @@ public class Level2PoisonPlant : MonoBehaviour
         spawnProgress = progress;
         warningRoot = warning;
         gasSphere = gas;
+        gasCollider = GetComponent<SphereCollider>();
 
         if (spawnProgress <= 0.20f)
         {
@@ -58,6 +63,8 @@ public class Level2PoisonPlant : MonoBehaviour
         if (gasSphere != null)
         {
             gasBaseScale = gasSphere.transform.localScale;
+            gasMaxScale = gasBaseScale * ApproachScaleBoost;
+            gasSphere.transform.localScale = gasBaseScale;
             gasSphere.SetActive(false);
         }
     }
@@ -72,27 +79,31 @@ public class Level2PoisonPlant : MonoBehaviour
         switch (phase)
         {
             case Phase.Idle:
+                UpdateApproachGasScale();
                 if (player.position.z > transform.position.z - TriggerDistance)
                 {
                     phase = Phase.Warning;
                     if (warningRoot != null) warningRoot.SetActive(true);
-                    Level2FeedbackUI.Show("POISON GAS WARNING!", new Color(0.35f, 0.92f, 0.28f), warningTimer);
+                    if (gasSphere != null) gasSphere.SetActive(true);
                 }
                 break;
 
             case Phase.Warning:
+                UpdateApproachGasScale();
                 Pulse(warningRoot, warningBaseScale, 8f, 0.16f);
                 warningTimer -= Time.deltaTime;
                 if (warningTimer <= 0f)
                 {
                     if (warningRoot != null) warningRoot.SetActive(false);
                     if (gasSphere != null) gasSphere.SetActive(true);
+                    ApplyGasScale(gasMaxScale);
                     phase = Phase.GasActive;
                 }
                 break;
 
             case Phase.GasActive:
-                Pulse(gasSphere, gasBaseScale, 2.4f, 0.08f);
+                ApplyGasScale(gasMaxScale);
+                Pulse(gasSphere, gasMaxScale, 2.4f, 0.08f);
                 gasTimer -= Time.deltaTime;
                 if (gasTimer <= 0f)
                 {
@@ -115,12 +126,52 @@ public class Level2PoisonPlant : MonoBehaviour
         }
     }
 
+    void UpdateApproachGasScale()
+    {
+        if (gasSphere == null || player == null) return;
+
+        float distanceAhead = transform.position.z - player.position.z;
+        if (distanceAhead <= 0f || distanceAhead > ApproachStartDistance)
+        {
+            if (phase == Phase.Idle)
+            {
+                gasSphere.SetActive(false);
+                gasSphere.transform.localScale = gasBaseScale;
+                ApplyGasScale(gasBaseScale);
+            }
+            return;
+        }
+
+        if (phase == Phase.Idle || phase == Phase.Warning)
+        {
+            gasSphere.SetActive(true);
+        }
+
+        float t = 1f - Mathf.Clamp01(distanceAhead / ApproachStartDistance);
+        Vector3 scale = Vector3.Lerp(gasBaseScale, gasMaxScale, t);
+        ApplyGasScale(scale);
+    }
+
+    void ApplyGasScale(Vector3 scale)
+    {
+        if (gasSphere != null)
+        {
+            gasSphere.transform.localScale = scale;
+        }
+
+        if (gasCollider == null) return;
+
+        float radiusScale = Mathf.Max(scale.x, scale.y, scale.z);
+        gasCollider.radius = Mathf.Max(gasBaseScale.x, gasBaseScale.y, gasBaseScale.z) * 0.5f * (radiusScale / Mathf.Max(gasBaseScale.x, 0.01f));
+    }
+
     void OnTriggerStay(Collider other)
     {
         if (phase != Phase.GasActive) return;
         if (!other.CompareTag("Player")) return;
         if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
         if (gasSphere == null || !gasSphere.activeSelf) return;
+        if (Level2BubbleShield.BlocksEnvironmentalHazards) return;
 
         tick += Time.deltaTime;
         if (tick < 0.45f) return;
@@ -129,7 +180,6 @@ public class Level2PoisonPlant : MonoBehaviour
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         hud?.ChangeHealth(-damagePerTick, "Poison gas hurt you!");
         hud?.ChangePlayerWater(-waterDrainPerTick, "Poison gas drained your water.");
-        Level2FeedbackUI.Show("POISON!", new Color(0.28f, 0.82f, 0.22f), 0.7f);
     }
 
     static void Pulse(GameObject go, Vector3 baseScale, float speed, float amount)

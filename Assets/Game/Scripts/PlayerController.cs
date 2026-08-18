@@ -18,7 +18,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Movement")]
     [SerializeField] private float baseSpeed = 25f;
-    [SerializeField] private float jumpForce = 10f;
+    [SerializeField] private float jumpForce = 15f;
     [SerializeField] private float extraGravity = 0f;
 
     [Header("Ground Detection")]
@@ -27,8 +27,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask groundLayerMask = ~0;
 
     [Header("Accessibility")]
-    [SerializeField] private float coyoteTime = 0.12f;
-    [SerializeField] private float jumpBufferTime = 0.15f;
+    [SerializeField] private float coyoteTime = 0f;
+    [SerializeField] private float jumpBufferTime = 0f;
     [SerializeField] private SlideMode slideMode = SlideMode.Hold;
 
     [Header("Slide")]
@@ -62,6 +62,8 @@ public class PlayerController : MonoBehaviour
 
     private float coyoteCounter;
     private float jumpBufferCounter;
+    private float jumpLockTimer;
+    readonly Collider[] groundHits = new Collider[12];
     private bool isSliding;
     private float slideTimer;
     private Vector3 defaultCapsuleCenter;
@@ -136,6 +138,11 @@ public class PlayerController : MonoBehaviour
         SnapLaneImmediately();
 
         string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (RunnerPlayerSetup.IsRunnerScene(sceneName))
+        {
+            ApplyRunnerMovementFeel();
+        }
+
         if (RunnerLevelPacing.SupportsScene(sceneName))
         {
             RunnerLevelPacing.Apply(sceneName);
@@ -153,6 +160,11 @@ public class PlayerController : MonoBehaviour
         if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
         if (isGrappling) return;
         if (inputLocked) return;
+
+        if (jumpLockTimer > 0f)
+        {
+            jumpLockTimer -= Time.deltaTime;
+        }
 
         CheckGrounded();
         UpdateCoyoteAndBuffer();
@@ -232,6 +244,12 @@ public class PlayerController : MonoBehaviour
 
     void CheckGrounded()
     {
+        if (jumpLockTimer > 0f)
+        {
+            isGrounded = false;
+            return;
+        }
+
         float radius = groundCheckRadius;
         Vector3 origin = transform.position + Vector3.up * 0.2f;
 
@@ -242,20 +260,37 @@ public class PlayerController : MonoBehaviour
             origin = new Vector3(transform.position.x, bottom + radius + 0.08f, transform.position.z);
         }
 
-        isGrounded = Physics.CheckSphere(origin, radius, groundLayerMask, QueryTriggerInteraction.Ignore)
-                     || Physics.SphereCast(
-                         origin,
-                         radius,
-                         Vector3.down,
-                         out _,
-                         groundCheckDistance,
-                         groundLayerMask,
-                         QueryTriggerInteraction.Ignore);
+        isGrounded = HasGroundHit(origin, radius, 0f)
+                     || HasGroundHit(origin, radius, groundCheckDistance);
+    }
 
-        if (isGrounded)
+    bool HasGroundHit(Vector3 origin, float radius, float downDistance)
+    {
+        if (downDistance <= 0.001f)
         {
-            coyoteCounter = coyoteTime;
+            int count = Physics.OverlapSphereNonAlloc(origin, radius, groundHits, groundLayerMask, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < count; i++)
+            {
+                if (IsExternalGround(groundHits[i])) return true;
+            }
+
+            return false;
         }
+
+        if (!Physics.SphereCast(origin, radius, Vector3.down, out RaycastHit hit, downDistance, groundLayerMask, QueryTriggerInteraction.Ignore))
+        {
+            return false;
+        }
+
+        return IsExternalGround(hit.collider);
+    }
+
+    bool IsExternalGround(Collider col)
+    {
+        if (col == null || col.isTrigger) return false;
+        Transform t = col.transform;
+        if (t == transform || t.IsChildOf(transform)) return false;
+        return true;
     }
 
     void UpdateCoyoteAndBuffer()
@@ -300,19 +335,16 @@ public class PlayerController : MonoBehaviour
                            || (kb != null && kb.spaceKey.wasPressedThisFrame)
                            || Input.GetKeyDown(KeyCode.Space);
 
-        if (jumpPressed)
-        {
-            jumpBufferCounter = jumpBufferTime;
-        }
-
-        bool canJump = (isGrounded || coyoteCounter > 0f) && jumpBufferCounter > 0f;
-        if (!canJump) return;
+        if (!jumpPressed) return;
+        if (!isGrounded || jumpLockTimer > 0f) return;
+        if (rb.linearVelocity.y > 0.4f) return;
 
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
         rb.AddForce(Vector3.up * (jumpForce * jumpBoostMultiplier), ForceMode.Impulse);
         isGrounded = false;
         coyoteCounter = 0f;
         jumpBufferCounter = 0f;
+        jumpLockTimer = 0.18f;
         if (jumpStaminaCost > 0f)
         {
             SpendStamina(jumpStaminaCost);
@@ -559,6 +591,23 @@ public class PlayerController : MonoBehaviour
     {
         baseSpeed = Mathf.Max(0.1f, speed);
         RefreshRuntimeSpeed();
+    }
+
+    public void ApplyRunnerMovementFeel()
+    {
+        laneLerpSpeed = 16f;
+        jumpForce = 15f;
+        extraGravity = 16f;
+        coyoteTime = 0f;
+        jumpBufferTime = 0f;
+        LevelLanes.ConfigureForActiveScene();
+        EnsureFourLanes();
+        SnapLaneImmediately();
+    }
+
+    public void ApplyLevel1MovementFeel()
+    {
+        ApplyRunnerMovementFeel();
     }
 
     public void SetInputLocked(bool locked)

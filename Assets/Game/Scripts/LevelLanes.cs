@@ -28,9 +28,9 @@ public static class LevelLanes
     public static void ConfigureForActiveScene()
     {
         string scene = SceneManager.GetActiveScene().name;
-        if (scene == "Level2" || scene == "Level3")
+        if (SceneCatalog.IsRunnerScene(scene))
         {
-            ConfigureCentered(FindGroundCenterX(), Level2LaneSpacing);
+            ConfigureCentered(FindGroundCenterX(), LaneSpacing);
             return;
         }
 

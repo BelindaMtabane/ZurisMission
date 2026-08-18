@@ -14,7 +14,7 @@ public static class Level1Pacing
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Boot()
     {
-        if (SceneManager.GetActiveScene().name != "MainGame") return;
+        if (SceneManager.GetActiveScene().name != SceneCatalog.MainGame) return;
         Apply();
     }
 

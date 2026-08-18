@@ -133,6 +133,48 @@ public class Level2SpeedFruitPickup : MonoBehaviour
     }
 }
 
+public class Level2HealthFruitPickup : MonoBehaviour
+{
+    [SerializeField] private float healthAmount = 15f;
+
+    bool collected;
+
+    public void Setup(float amount)
+    {
+        healthAmount = amount;
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (collected) return;
+        if (!other.CompareTag("Player")) return;
+        if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
+
+        collected = true;
+        FindFirstObjectByType<HUDControls>()?.CollectLevel2Health(healthAmount);
+        gameObject.SetActive(false);
+    }
+}
+
+public class Level2WaterPoolPickup : MonoBehaviour
+{
+    [SerializeField] private float playerWaterAmount = 10f;
+    [SerializeField] private float bucketAmount = 25f;
+
+    bool collected;
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (collected) return;
+        if (!other.CompareTag("Player")) return;
+        if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
+
+        collected = true;
+        FindFirstObjectByType<HUDControls>()?.CollectLevel2WaterPool(playerWaterAmount, bucketAmount);
+        gameObject.SetActive(false);
+    }
+}
+
 public class Level2JumpBoostPickup : MonoBehaviour
 {
     [SerializeField] private float jumpMultiplier = 1.32f;
@@ -149,7 +191,6 @@ public class Level2JumpBoostPickup : MonoBehaviour
         collected = true;
         PlayerController controller = other.GetComponent<PlayerController>();
         controller?.ApplyJumpBoost(jumpMultiplier, duration);
-        Level2FeedbackUI.Show("JUMP BOOST!", new Color(0.62f, 0.45f, 1f), 1.4f);
         gameObject.SetActive(false);
     }
 }
