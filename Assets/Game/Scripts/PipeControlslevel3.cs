@@ -62,12 +62,16 @@ public class PipeControlslevel3 : MonoBehaviour
 
     void UpdateUI()
     {
-        //Update the UI text to display the current water level and agility level
-        material.text = ("Material:" + materialLevel);
-        healthText.text = ("Health:" + health);
-        tank1.text = ("Tank 1: " + tank1Amount + "%");
-        tank2.text = ("Tank 2: " + tank2Amount + "%");
-        tank3.text = ("Tank 3: " + tank3Amount + "%");
+        if (material != null)
+            material.text = ("Material:" + materialLevel);
+        if (healthText != null)
+            healthText.text = ("Health:" + health);
+        if (tank1 != null)
+            tank1.text = ("Tank 1: " + tank1Amount + "%");
+        if (tank2 != null)
+            tank2.text = ("Tank 2: " + tank2Amount + "%");
+        if (tank3 != null)
+            tank3.text = ("Tank 3: " + tank3Amount + "%");
     }
     //all good ++
     public void SpeedControls(float playerMove)
@@ -114,7 +118,8 @@ public class PipeControlslevel3 : MonoBehaviour
     //Create a village progress based on the water system
     void VillageProgress()
     {
-        villageProgressText.text = "Village Progress: " + 90;
+        if (villageProgressText != null)
+            villageProgressText.text = "Village Progress: " + 90;
     }
     //++All good
     public void TankMaterialDEC()

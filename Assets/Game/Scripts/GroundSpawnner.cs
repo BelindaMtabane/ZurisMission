@@ -41,6 +41,7 @@ public class GroundSpawnner : MonoBehaviour
     {
         ResolveSpawnTemplate();
         ResolveGroundMaterial();
+        ApplyStreamingGroundConfig();
         RefreshVisibleGroundTiles();
     }
 
@@ -69,6 +70,8 @@ public class GroundSpawnner : MonoBehaviour
             seedTile = FindSceneGround();
         }
 
+        ApplyStreamingGroundConfig();
+
         if (groundSurfaceMaterial == null && seedTile != null)
         {
             Renderer seedRenderer = seedTile.GetComponent<Renderer>();
@@ -80,11 +83,15 @@ public class GroundSpawnner : MonoBehaviour
 
         if (seedTile != null)
         {
-            CaptureTileDimensionsFromSeed(seedTile);
+            if (!UsesLevelStreamingConfig(SceneManager.GetActiveScene().name))
+            {
+                CaptureTileDimensionsFromSeed(seedTile);
+            }
+
             spawnX = seedTile.transform.position.x;
             spawnY = seedTile.transform.position.y;
             ApplyTileAppearance(seedTile);
-            tileLength = GetTileLength(MeasureTileLength(seedTile));
+            tileLength = GetConfiguredTileLength();
             float seedCenterZ = seedTile.transform.position.z;
             nextSpawnZ = seedCenterZ + tileLength;
             spawnedTiles.Enqueue(seedTile);
@@ -301,7 +308,6 @@ public class GroundSpawnner : MonoBehaviour
         GameObject newGround = Instantiate(spawnTemplate, spawnPosition, spawnTemplate.transform.rotation);
         newGround.name = "Ground_" + Mathf.RoundToInt(nextSpawnZ);
         ApplyTileAppearance(newGround);
-        tileLength = GetTileLength(MeasureTileLength(newGround));
         nextSpawnZ += tileLength;
         spawnedTiles.Enqueue(newGround);
 
@@ -331,7 +337,46 @@ public class GroundSpawnner : MonoBehaviour
             return;
         }
 
+        if (SceneManager.GetActiveScene().name == "Level3")
+        {
+            Level3Ground.ApplyGroundSurface(tile, groundSurfaceMaterial, scale);
+            return;
+        }
+
         ApplySceneGroundMaterial(tile);
+    }
+
+    static bool UsesLevelStreamingConfig(string sceneName)
+    {
+        return sceneName == "Level3";
+    }
+
+    void ApplyStreamingGroundConfig()
+    {
+        if (!timerMode && !UsesStreamingTiles(SceneManager.GetActiveScene().name)) return;
+
+        string sceneName = SceneManager.GetActiveScene().name;
+        if (sceneName != "Level3") return;
+
+        Level3Ground.ConfigureStreamingTile(ref spawnedTileScaleX, ref spawnedTileScaleY, ref spawnedTileScaleZ, ref spawnX, ref spawnY);
+        tileLength = Level3Ground.TileLength;
+
+        if (seedTile == null)
+        {
+            seedTile = FindSceneGround();
+        }
+
+        Level3Ground.AlignSeedTile(seedTile, spawnX, spawnY);
+    }
+
+    float GetConfiguredTileLength()
+    {
+        if (spawnedTileScaleZ > 0.01f)
+        {
+            return spawnedTileScaleZ;
+        }
+
+        return GetTileLength(MeasureTileLength(spawnTemplate != null ? spawnTemplate : seedTile));
     }
 
     void ApplySceneGroundMaterial(GameObject tile)

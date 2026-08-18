@@ -5,9 +5,9 @@ public static class Level3EnemySpeeds
     public static float SnakeSlow = 4f;
     public static float SnakeMedium = 6f;
     public static float SnakeFast = 8f;
-    public static float WarthogSlow = 5f;
-    public static float WarthogMedium = 7f;
-    public static float WarthogFast = 9f;
+    public static float WarthogSlow = 14f;
+    public static float WarthogMedium = 18f;
+    public static float WarthogFast = 22f;
 
     public static float Snake(Level3EnemyPace pace)
     {

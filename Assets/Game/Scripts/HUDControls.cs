@@ -85,6 +85,50 @@ public class HUDControls : MonoBehaviour
         Debug.Log($"[Level1] Materials broken -{amount}");
     }
 
+    public void LoseMaterialPercent(float percent)
+    {
+        if (percent <= 0f || materialLevel <= 0) return;
+        int loss = Mathf.Max(1, Mathf.RoundToInt(maxMaterial * percent));
+        materialLevel = Mathf.Max(0, materialLevel - loss);
+        MarkDirty();
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Level3")
+        {
+            Level3FeedbackUI.Show($"-{loss} MATERIALS", new Color(0.9f, 0.35f, 0.2f), 1.1f);
+        }
+    }
+
+    public void LoseBucketPercent(float percent)
+    {
+        if (percent <= 0f || waterLevel <= 0f) return;
+        float loss = Mathf.Max(1f, maxBucketWater * percent);
+        waterLevel = Mathf.Max(0f, waterLevel - loss);
+        MarkDirty();
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Level3")
+        {
+            Level3FeedbackUI.Show($"-{loss:0} BUCKET WATER", new Color(0.2f, 0.55f, 0.9f), 1.1f);
+        }
+    }
+
+    public const float Level3VillageStartPercent = 65f;
+    public const float Level3VillageGainPercent = 35f;
+
+    public static float Level3VillageFromTanks(int tank1, int tank2, int tank3)
+    {
+        float tankAverage = (tank1 + tank2 + tank3) / 3f;
+        return Mathf.Clamp(Level3VillageStartPercent + tankAverage * (Level3VillageGainPercent / 100f), Level3VillageStartPercent, 100f);
+    }
+
+    public void ApplyLevel3TankProgress(int tank1, int tank2, int tank3)
+    {
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "Level3") return;
+        villageProgressPercent = Level3VillageFromTanks(tank1, tank2, tank3);
+        if (villageProgressText == null) AutoWireUiTextFields();
+        BindLevel3VillageText();
+        uiDirty = true;
+        RefreshAllUi();
+        Level3FeedbackUI.UpdateTanks(tank1, tank2, tank3);
+    }
+
     public void DrainPlayerWater(float amount)
     {
         playerWater = Mathf.Clamp(playerWater - amount, 0f, maxPlayerWater);
@@ -247,12 +291,16 @@ public class HUDControls : MonoBehaviour
             waterLevel = 0f;
         }
         materialLevel = 0;
-        villageProgressPercent = 0f;
+        villageProgressPercent = sceneName == "Level3" ? Level3VillageStartPercent : 0f;
 
         AutoWireUiTextFields();
+        BindLevel3VillageText();
 
         SetMaxValues();
-        RecalculateVillageProgress();
+        if (sceneName == "MainGame")
+        {
+            RecalculateVillageProgress();
+        }
         RefreshAllUi();
     }
 
@@ -493,7 +541,7 @@ public class HUDControls : MonoBehaviour
 
         if (sceneNumber == 4f)
         {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Level3End");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Level3");
         }
     }
 
@@ -508,7 +556,7 @@ public class HUDControls : MonoBehaviour
     {
         waterLevel = Mathf.Min(maxBucketWater, waterLevel + amount);
         MarkDirty();
-        Level3FeedbackUI.Show($"+{amount:0} BUCKET", new Color(0.25f, 0.7f, 1f));
+        Level3FeedbackUI.Show($"+{amount:0} BUCKET WATER", new Color(0.25f, 0.7f, 1f));
     }
 
     public void CollectLevel3Health(float amount = 15f)
@@ -522,14 +570,20 @@ public class HUDControls : MonoBehaviour
     {
         if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Level3")
         {
-            if (Level3PipeRepair.AllTanksRepaired && Level3BossDirector.BossDefeated)
+            if (health <= 0f)
             {
-                RunStateManager.Instance?.NotifyVictory();
-                Debug.Log("[HUDControls] Level3 complete");
+                Lose("Your health reached 0.");
                 return;
             }
 
-            Lose("Repair all three tanks and restore the water system.");
+            if (Level3PipeRepair.AllTanksRepaired)
+            {
+                RunStateManager.Instance?.NotifyVictory();
+                Debug.Log("[HUDControls] Level3 complete — all tanks repaired");
+                return;
+            }
+
+            Lose("Repair all three water tanks to 100% before the end.");
             return;
         }
 
@@ -572,6 +626,15 @@ public class HUDControls : MonoBehaviour
         Debug.Log("[HUDControls] LevelProgress complete=true");
     }
 
+    void BindLevel3VillageText()
+    {
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "Level3") return;
+        GameObject go = GameObject.Find("VILLAGEtext");
+        if (go == null) return;
+        TMP_Text t = go.GetComponent<TMP_Text>();
+        if (t != null) villageProgressText = t;
+    }
+
     void AutoWireUiTextFields()
     {
         // Scene should already have these wired. This is a fallback in case
@@ -592,7 +655,7 @@ public class HUDControls : MonoBehaviour
                 material = t;
             }
             else if (villageProgressText == null &&
-                     (txt.StartsWith("Village Progress") || goName.Contains("Village")))
+                     (txt.StartsWith("Village Progress") || goName.Contains("Village") || goName == "VILLAGEtext"))
             {
                 villageProgressText = t;
             }

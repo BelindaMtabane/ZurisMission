@@ -45,13 +45,16 @@ public class PlayerHUDBase : MonoBehaviour
             || other.GetComponentInParent<Level2MudBall>() != null
             || other.GetComponentInParent<Level3Obstacle>() != null
             || other.GetComponentInParent<Level3MaterialPickup>() != null
-            || other.GetComponentInParent<Level3BucketPickup>() != null
+            || other.GetComponentInParent<Level3WaterDropletPickup>() != null
             || other.GetComponentInParent<Level3HealthPickup>() != null
-            || other.GetComponentInParent<Level3LeafPickup>() != null
+            || other.GetComponentInParent<Level3Snake>() != null
             || other.GetComponentInParent<Level3HorizontalEnemy>() != null
-            || other.GetComponentInParent<Level3AcidRainZone>() != null
+            || other.GetComponentInParent<Level3LightningZone>() != null
             || other.GetComponentInParent<Level3RepairPoint>() != null
-            || other.GetComponentInParent<Level3BossRepairPoint>() != null)
+            || other.GetComponentInParent<Level3BossRepairPoint>() != null
+            || other.GetComponentInParent<Level3AcidRainZone>() != null
+            || other.GetComponentInParent<Level3RollingLog>() != null
+            || other.GetComponentInParent<Level3SpeedFruitPickup>() != null)
         {
             return;
         }

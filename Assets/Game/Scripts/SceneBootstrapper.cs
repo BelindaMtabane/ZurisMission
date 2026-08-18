@@ -111,13 +111,28 @@ public class SceneBootstrapper : MonoBehaviour
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         if (hud == null)
         {
+            GameObject host = GameObject.Find("HUDControls");
+            if (host == null)
+            {
+                host = gameObject;
+            }
+
+            hud = host.GetComponent<HUDControls>();
+            if (hud == null)
+            {
+                hud = host.AddComponent<HUDControls>();
+            }
+        }
+
+        if (hud == null)
+        {
             Debug.LogWarning("[SceneBootstrapper] HUDControls not found.");
             return;
         }
 
         if (VillageProgressMap.TryGetValue(sceneName, out float value) && sceneName != "MainGame")
         {
-            hud.SetVillageProgress(value);
+            hud.SetVillageProgress(sceneName == "Level3" ? HUDControls.Level3VillageStartPercent : value);
         }
     }
 

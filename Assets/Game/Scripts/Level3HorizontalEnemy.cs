@@ -4,8 +4,6 @@ public class Level3HorizontalEnemy : MonoBehaviour
 {
     public enum EnemyKind { Snake, Warthog }
 
-    const float TriggerDistance = 52f;
-
     [SerializeField] EnemyKind kind = EnemyKind.Snake;
     [SerializeField] Level3EnemyPace pace = Level3EnemyPace.Slow;
     [SerializeField] bool movingRight = true;
@@ -16,7 +14,7 @@ public class Level3HorizontalEnemy : MonoBehaviour
     enum Phase { Wait, Warning, Cross, Done }
     Phase phase = Phase.Wait;
     float speed;
-    float warningTimer = 1.6f;
+    float warningTimer = 0.2f;
     bool hit;
     Transform player;
     float leftX;
@@ -29,20 +27,20 @@ public class Level3HorizontalEnemy : MonoBehaviour
         movingRight = goRight;
         warningRoot = warning;
         visualRoot = visual;
-        speed = kind == EnemyKind.Snake ? Level3EnemySpeeds.Snake(pace) : Level3EnemySpeeds.Warthog(pace);
-        healthDamage = kind == EnemyKind.Snake
-            ? (pace == Level3EnemyPace.Fast ? 12f : pace == Level3EnemyPace.Medium ? 9f : 7f)
-            : (pace == Level3EnemyPace.Fast ? 16f : pace == Level3EnemyPace.Medium ? 12f : 10f);
-        warningTimer = pace == Level3EnemyPace.Fast ? 1.2f : pace == Level3EnemyPace.Medium ? 1.6f : 2.1f;
+        speed = Level3EnemySpeeds.Warthog(pace);
+        healthDamage = Level3Config.WarthogHealthDamage;
+        warningTimer = 0.2f;
 
         leftX = LevelLanes.X(0) - 6f;
         rightX = LevelLanes.X(LevelLanes.Count - 1) + 6f;
         Vector3 p = transform.position;
         p.x = movingRight ? leftX : rightX;
         transform.position = p;
-        if (warningRoot != null) warningRoot.SetActive(false);
-        if (visualRoot != null) visualRoot.SetActive(false);
+        if (visualRoot != null) visualRoot.SetActive(true);
+        if (warningRoot != null) warningRoot.SetActive(true);
     }
+
+    float StartAhead => Mathf.Max(120f, Level3Config.VisibleSpawnDistance + 40f);
 
     void Update()
     {
@@ -57,41 +55,30 @@ public class Level3HorizontalEnemy : MonoBehaviour
         switch (phase)
         {
             case Phase.Wait:
-                if (player.position.z > transform.position.z - TriggerDistance)
+                if (player.position.z > transform.position.z - StartAhead)
                 {
                     phase = Phase.Warning;
-                    if (warningRoot != null) warningRoot.SetActive(true);
-                    string label = kind == EnemyKind.Snake ? "SNAKE CROSSING!" : "WARTHOG INCOMING!";
-                    Level3FeedbackUI.Show(label, new Color(1f, 0.55f, 0.15f), warningTimer);
+                    Level3FeedbackUI.Show("WARTHOG CROSSING AHEAD!", new Color(1f, 0.55f, 0.15f), 1.2f);
                 }
                 break;
             case Phase.Warning:
                 PulseWarning();
                 warningTimer -= Time.deltaTime;
-                if (warningTimer <= 0f)
+                CrossStep();
+                if (phase != Phase.Done && warningTimer <= 0f)
                 {
-                    if (warningRoot != null) warningRoot.SetActive(false);
-                    if (visualRoot != null) visualRoot.SetActive(true);
                     phase = Phase.Cross;
                 }
                 break;
             case Phase.Cross:
-                float dir = movingRight ? 1f : -1f;
-                p = transform.position;
-                p.x += dir * speed * Time.deltaTime;
-                transform.position = p;
-                if ((movingRight && p.x > rightX) || (!movingRight && p.x < leftX))
-                {
-                    phase = Phase.Done;
-                    Destroy(gameObject);
-                }
+                CrossStep();
                 break;
         }
     }
 
     void OnTriggerEnter(Collider other)
     {
-        if (hit || phase != Phase.Cross) return;
+        if (hit || phase == Phase.Wait) return;
         if (!other.CompareTag("Player")) return;
         if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
 
@@ -112,8 +99,21 @@ public class Level3HorizontalEnemy : MonoBehaviour
         }
 
         hit = true;
-        FindFirstObjectByType<HUDControls>()?.ChangeHealth(-healthDamage, kind == EnemyKind.Snake ? "A snake bit you!" : "A warthog hit you!");
-        Level3FeedbackUI.Show(kind == EnemyKind.Snake ? "SNAKE!" : "WARTHOG!", new Color(0.9f, 0.25f, 0.15f), 1f);
+        FindFirstObjectByType<HUDControls>()?.ChangeHealth(-healthDamage, "A warthog hit you!");
+        Level3FeedbackUI.Show("WARTHOG!", new Color(0.9f, 0.25f, 0.15f), 1f);
+    }
+
+    void CrossStep()
+    {
+        float dir = movingRight ? 1f : -1f;
+        Vector3 p = transform.position;
+        p.x += dir * speed * Time.deltaTime;
+        transform.position = p;
+        if ((movingRight && p.x > rightX) || (!movingRight && p.x < leftX))
+        {
+            phase = Phase.Done;
+            Destroy(gameObject);
+        }
     }
 
     void PulseWarning()
