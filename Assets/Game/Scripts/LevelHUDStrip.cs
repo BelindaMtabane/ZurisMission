@@ -4,27 +4,22 @@ using TMPro;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Mission-status inventory strip for MainGame (Level 1) and Level2.
+/// Mission-status panel for MainGame (Level 1) and Level2.
 /// Auto-creates itself — no scene setup needed.
 ///
-/// Horizontal strip at the bottom-centre of the screen (same position as
-/// the Level 3 InventoryUI) showing 5 live stat columns:
-///   Health | Water Bucket | Hydration | Materials | Village Progress
-///
-/// The header line shows a mission-specific hint for each level.
+/// Wood-framed panel in the top-right corner, under the level timer,
+/// showing 4 live stats as icon meters instead of flat bars:
+///   Health (leaves) | Water Bucket (droplets) | Hydration (droplets) | Materials (inventory slot)
 /// </summary>
 public class LevelHUDStrip : MonoBehaviour
 {
     public static LevelHUDStrip Instance { get; private set; }
 
-    // ── Auto-create in MainGame and Level2 on every scene load ────────────
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void AutoCreate()
     {
-        // Register for ALL future scene loads so this fires every time,
-        // not just on the first scene of the session.
         SceneManager.sceneLoaded += (scene, _) => TryCreate(scene.name);
-        TryCreate(SceneManager.GetActiveScene().name);   // handle current scene too
+        TryCreate(SceneManager.GetActiveScene().name);
     }
 
     static void TryCreate(string sceneName)
@@ -36,39 +31,61 @@ public class LevelHUDStrip : MonoBehaviour
 
     // ── Live data source ───────────────────────────────────────────────────
     HUDControls _hud;
-    string      _sceneName;
-    Canvas      _canvas;   // stored so we can hide/show the whole strip
+    Canvas      _canvas;
 
-    /// <summary>Hide or show the HUD strip (call when overlays open/close).</summary>
     public void SetVisible(bool v) { if (_canvas) _canvas.gameObject.SetActive(v); }
 
-    // 5 stat columns: Health, Water Bucket, Hydration, Materials, Village %
-    readonly RectTransform[] _fills  = new RectTransform[5];
-    readonly TMP_Text[]      _labels = new TMP_Text[5];
+    // 3 pips per meter row (Health, Water Bucket, Hydration) + Materials text
+    Image[]    _healthPips;
+    Image[]    _bucketPips;
+    Image[]    _hydratPips;
+    TMP_Text   _healthVal, _bucketVal, _hydratVal, _matsVal;
 
-    // ── Colour palette (matches InventoryUI theme) ─────────────────────────
+    // ── Palette ──────────────────────────────────────────────────────────
     static Color C(float r, float g, float b, float a = 1f) => new Color(r, g, b, a);
+    static readonly Color ColGood   = C(0.20f, 0.75f, 0.20f);
+    static readonly Color ColWarn   = C(0.85f, 0.72f, 0.10f);
+    static readonly Color ColBad    = C(0.80f, 0.15f, 0.15f);
+    static readonly Color ColWater  = C(0.20f, 0.55f, 0.95f);
+    static readonly Color ColHydra  = C(0.15f, 0.75f, 0.80f);
+    static readonly Color ColEmpty  = C(0.45f, 0.45f, 0.45f, 0.45f);
+    static readonly Color ColLabel  = C(0.30f, 0.19f, 0.09f);
+    static readonly Color ColHeader = C(1.00f, 0.97f, 0.90f);
 
-    static readonly Color ColPanel   = C(0.06f, 0.10f, 0.06f, 0.45f);
-    static readonly Color ColHeader  = C(0.14f, 0.42f, 0.14f, 0.65f);
-    static readonly Color ColGold    = C(1.00f, 0.82f, 0.20f);
-    static readonly Color ColSubHdr  = C(0.45f, 0.85f, 0.45f);
-    static readonly Color ColBarBg   = C(0.16f, 0.16f, 0.16f, 0.65f);
-    static readonly Color ColRowBg   = C(0.10f, 0.16f, 0.10f, 0.25f);
+    // ── Shared wood-textured UI assets ─────────────────────────────────────
+    static Sprite panel1Sprite;
+    static Sprite Panel1()
+    {
+        if (panel1Sprite == null)
+        {
+            Sprite[] sprites = Resources.LoadAll<Sprite>("UI/PANEL1");
+            panel1Sprite = sprites.Length > 0 ? sprites[0] : null;
+        }
+        return panel1Sprite;
+    }
 
-    // Per-column accent colours
-    static readonly Color ColHealth  = C(0.20f, 0.80f, 0.20f);   // green  → changes on low health
-    static readonly Color ColBucket  = C(0.30f, 0.60f, 1.00f);   // water blue
-    static readonly Color ColHydrat  = C(0.20f, 0.90f, 0.90f);   // cyan
-    static readonly Color ColMats    = C(0.85f, 0.60f, 0.20f);   // amber
-    static readonly Color ColVillage = C(1.00f, 0.82f, 0.20f);   // gold
+    static Sprite leafSprite, dropletSprite;
+    static Sprite Leaf()    { if (leafSprite == null)    leafSprite    = Resources.Load<Sprite>("UI/leaf_icon"); return leafSprite; }
+    static Sprite Droplet() { if (dropletSprite == null) dropletSprite = Resources.Load<Sprite>("UI/droplet_icon"); return dropletSprite; }
+
+    static readonly System.Collections.Generic.Dictionary<string, Sprite> uiKitCache = new();
+    static Sprite UiKitSprite(string spriteName)
+    {
+        if (uiKitCache.TryGetValue(spriteName, out Sprite cached) && cached != null) return cached;
+        Sprite[] sprites = Resources.LoadAll<Sprite>("UI/UIKitSheet");
+        foreach (var s in sprites)
+        {
+            if (s.name == spriteName) { uiKitCache[spriteName] = s; return s; }
+        }
+        return null;
+    }
+    static Sprite SackSprite() => UiKitSprite("UIKit_31");
 
     // ══════════════════════════════════════════════════════════════════════
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance  = this;
-        _sceneName = SceneManager.GetActiveScene().name;
+        Instance = this;
         BuildUI();
     }
 
@@ -79,49 +96,48 @@ public class LevelHUDStrip : MonoBehaviour
     {
         if (_hud == null) { _hud = FindFirstObjectByType<HUDControls>(); return; }
 
-        float health  = _hud.Health;
-        float bucket  = _hud.BucketWater;
-        float hydrat  = _hud.PlayerWater;
-        float mats    = _hud.MaterialLevel;
-        float village = _hud.VillageProgressPercent;
+        float health = _hud.Health;
+        float bucket = _hud.BucketWater;
+        float hydrat = _hud.PlayerWater;
+        float mats   = _hud.MaterialLevel;
 
-        float[] vals = { health, bucket, hydrat, mats, village };
+        SetPips(_healthPips, health, ThresholdColor(health));
+        SetPips(_bucketPips, bucket, ColWater);
+        SetPips(_hydratPips, hydrat, ThresholdColor(hydrat, ColHydra));
 
-        for (int i = 0; i < 5; i++)
+        _healthVal.text = $"{health:F0}/100";
+        _bucketVal.text = $"{bucket:F0}/100";
+        _hydratVal.text = $"{hydrat:F0}/100";
+        _matsVal.text   = $"{mats}/100";
+    }
+
+    static Color ThresholdColor(float value, Color goodColor = default)
+    {
+        if (goodColor == default) goodColor = ColGood;
+        if (value >= 60) return goodColor;
+        if (value >= 30) return ColWarn;
+        return ColBad;
+    }
+
+    static void SetPips(Image[] pips, float value, Color filledColor)
+    {
+        int lit = Mathf.Clamp(Mathf.CeilToInt(value / 100f * pips.Length), 0, pips.Length);
+        if (value <= 0f) lit = 0;
+        for (int i = 0; i < pips.Length; i++)
         {
-            _fills[i].anchorMax = new Vector2(Mathf.Clamp01(vals[i] / 100f), 1f);
+            pips[i].color = i < lit ? filledColor : ColEmpty;
         }
-
-        // ── Health bar: green → yellow → red ──────────────────────────────
-        var hImg = _fills[0].GetComponent<Image>();
-        if      (health >= 60) hImg.color = ColHealth;
-        else if (health >= 30) hImg.color = C(0.85f, 0.72f, 0.10f);
-        else                   hImg.color = C(0.80f, 0.15f, 0.15f);
-
-        // ── Hydration bar: cyan → yellow → red ────────────────────────────
-        var dImg = _fills[2].GetComponent<Image>();
-        if      (hydrat >= 60) dImg.color = ColHydrat;
-        else if (hydrat >= 30) dImg.color = C(0.85f, 0.72f, 0.10f);
-        else                   dImg.color = C(0.80f, 0.15f, 0.15f);
-
-        // ── Stat value text ────────────────────────────────────────────────
-        _labels[0].text = $"{health:F0} / 100";
-        _labels[1].text = $"{bucket:F0} / 100";
-        _labels[2].text = $"{hydrat:F0} / 100";
-        _labels[3].text = $"{mats} / 100";
-        _labels[4].text = $"{village:F0}%";
     }
 
     // ══════════════════════════════════════════════════════════════════════
-    // UI CONSTRUCTION
+    // UI CONSTRUCTION — wood-framed panel, top-right, under the level timer
     // ══════════════════════════════════════════════════════════════════════
     void BuildUI()
     {
-        // ── Canvas ─────────────────────────────────────────────────────────
         var cvGO = new GameObject("LvlHUD_Canvas");
         cvGO.transform.SetParent(transform);
         var cv = cvGO.AddComponent<Canvas>();
-        _canvas         = cv;                           // store for SetVisible()
+        _canvas         = cv;
         cv.renderMode   = RenderMode.ScreenSpaceOverlay;
         cv.sortingOrder = 140;
         var cs = cvGO.AddComponent<CanvasScaler>();
@@ -130,79 +146,116 @@ public class LevelHUDStrip : MonoBehaviour
         cs.matchWidthOrHeight  = 0.5f;
         cvGO.AddComponent<GraphicRaycaster>();
 
-        // ── Horizontal strip (same footprint as Level 3 InventoryUI) ───────
-        var strip = Img(cvGO, "LvlStrip", ColPanel, V(0.22f, 0.02f), V(0.82f, 0.19f));
+        // ── Panel: top-right, directly under the level timer badge ─────────
+        var panelGO = new GameObject("LvlStrip");
+        panelGO.transform.SetParent(cvGO.transform, false);
+        var panelImg = panelGO.AddComponent<Image>();
+        Sprite p1 = Panel1();
+        if (p1 != null) { panelImg.sprite = p1; panelImg.type = Image.Type.Sliced; panelImg.color = Color.white; }
+        else panelImg.color = new Color(0.30f, 0.20f, 0.12f, 0.96f);
+        var panelRt = panelGO.GetComponent<RectTransform>();
+        panelRt.anchorMin = V(0.700f, 0.335f);
+        panelRt.anchorMax = V(0.985f, 0.860f);
+        panelRt.offsetMin = panelRt.offsetMax = Vector2.zero;
+        var strip = panelGO;
 
-        // Header bar
-        Img(strip, "StripHdr", ColHeader, V(0f, 0.87f), V(1f, 1f));
-        Txt(strip, "StripTitle", "MISSION STATUS", 16, FontStyles.Bold, ColGold,
-            V(0f, 0.87f), V(1f, 1f));
+        Txt(strip, "StripTitle", "STATUS", 26, FontStyles.Bold, ColHeader,
+            V(0.05f, 0.900f), V(0.95f, 0.990f));
 
-        // Level-specific mission hint beneath header
-        string hint = _sceneName == "MainGame"
-            ? "Collect water for the village — stay hydrated and avoid hazards!"
-            : "Navigate the river, open floodgates and irrigate the farmlands!";
-        Txt(strip, "MissionHint", hint, 10, FontStyles.Italic, ColSubHdr,
-            V(0.01f, 0.72f), V(0.99f, 0.86f));
+        // ── 4 stat rows ──────────────────────────────────────────────────
+        _healthVal = BuildPipRow(strip, "Health",    V(0.689f, 0.899f), Leaf(),    3, out _healthPips);
+        _bucketVal = BuildPipRow(strip, "Water",     V(0.466f, 0.676f), Droplet(), 3, out _bucketPips);
+        _hydratVal = BuildPipRow(strip, "Hydration", V(0.243f, 0.453f), Droplet(), 3, out _hydratPips);
+        _matsVal   = BuildInventoryRow(strip, "Materials", V(0.02f, 0.230f));
+    }
 
-        // ── 5 stat columns ─────────────────────────────────────────────────
-        // Span the full strip width (panel-relative 0→1) in 5 equal columns.
-        float   colW   = 0.185f;
-        float[] colX   = { 0.010f, 0.202f, 0.394f, 0.586f, 0.778f };
-        Color[] clrs   = { ColHealth, ColBucket, ColHydrat, ColMats, ColVillage };
+    // A labeled row of N icon "pips" plus a numeric value on the right.
+    TMP_Text BuildPipRow(GameObject parent, string label, Vector2 yBand, Sprite iconSprite, int pipCount, out Image[] pips)
+    {
+        var row = new GameObject($"Row_{label}");
+        row.transform.SetParent(parent.transform, false);
+        var rt = row.AddComponent<RectTransform>();
+        rt.anchorMin = V(0.04f, yBand.x);
+        rt.anchorMax = V(0.96f, yBand.y);
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
 
-        // Column headers differ per level to match the mission context
-        string[] lvl1Names = { "Health",       "Water Bucket", "Hydration",    "Materials",  "Village %" };
-        string[] lvl2Names = { "Health",       "Water Level",  "Hydration",    "Materials",  "Village %" };
-        string[] colNames  = _sceneName == "MainGame" ? lvl1Names : lvl2Names;
+        Txt(row, "Lbl", label, 22, FontStyles.Bold, ColLabel,
+            V(0f, 0.55f), V(0.60f, 1f)).alignment = TextAlignmentOptions.Left;
 
-        for (int i = 0; i < 5; i++)
+        var valTxt = Txt(row, "Val", "--/100", 20, FontStyles.Bold, ColLabel,
+            V(0.55f, 0.55f), V(1f, 1f));
+        valTxt.alignment = TextAlignmentOptions.Right;
+
+        // Slot background behind the pips, matching the Materials inventory chip.
+        var slot = new GameObject("Slot");
+        slot.transform.SetParent(row.transform, false);
+        var slotImg = slot.AddComponent<Image>();
+        slotImg.color = new Color(0.12f, 0.08f, 0.04f, 0.40f);
+        var slotRt = slot.GetComponent<RectTransform>();
+        slotRt.anchorMin = V(0f, 0.02f);
+        slotRt.anchorMax = V(1f, 0.52f);
+        slotRt.offsetMin = slotRt.offsetMax = Vector2.zero;
+
+        pips = new Image[pipCount];
+        float pipW = 0.9f / pipCount;
+        for (int i = 0; i < pipCount; i++)
         {
-            float x0 = colX[i], x1 = x0 + colW;
-
-            // Column background tint
-            Img(strip, $"ColBg{i}", ColRowBg, V(x0, 0.01f), V(x1, 0.71f));
-
-            // Stat name
-            var lbl = Txt(strip, $"ColLbl{i}", colNames[i], 11, FontStyles.Normal,
-                          clrs[i], V(x0 + 0.004f, 0.50f), V(x1 - 0.004f, 0.70f));
-            lbl.alignment = TextAlignmentOptions.Center;
-
-            // Bar background
-            var barBg = Img(strip, $"BarBg{i}", ColBarBg,
-                            V(x0 + 0.006f, 0.24f), V(x1 - 0.006f, 0.48f));
-
-            // Bar fill (anchor-driven)
-            var fGO = new GameObject($"BarFill{i}");
-            fGO.transform.SetParent(barBg.transform, false);
-            fGO.AddComponent<Image>().color = clrs[i];
-            _fills[i] = fGO.GetComponent<RectTransform>();
-            _fills[i].anchorMin = V(0, 0);
-            _fills[i].anchorMax = V(1, 1);   // updated every frame in Update()
-            _fills[i].offsetMin = _fills[i].offsetMax = Vector2.zero;
-
-            // Value label (e.g. "85 / 100" or "42%")
-            _labels[i] = Txt(strip, $"ValLbl{i}", "---", 11, FontStyles.Bold,
-                              Color.white,
-                              V(x0 + 0.004f, 0.03f), V(x1 - 0.004f, 0.22f));
-            _labels[i].alignment = TextAlignmentOptions.Center;
+            var go = new GameObject($"Pip{i}");
+            go.transform.SetParent(slot.transform, false);
+            var img = go.AddComponent<Image>();
+            img.sprite = iconSprite;
+            img.preserveAspect = true;
+            var prt = go.GetComponent<RectTransform>();
+            float x0 = i * pipW;
+            prt.anchorMin = V(x0 + 0.02f, 0.10f);
+            prt.anchorMax = V(x0 + pipW * 0.82f, 0.90f);
+            prt.offsetMin = prt.offsetMax = Vector2.zero;
+            pips[i] = img;
         }
+        return valTxt;
+    }
+
+    // Materials shown as a single inventory slot (sack icon) + count.
+    TMP_Text BuildInventoryRow(GameObject parent, string label, Vector2 yBand)
+    {
+        var row = new GameObject($"Row_{label}");
+        row.transform.SetParent(parent.transform, false);
+        var rt = row.AddComponent<RectTransform>();
+        rt.anchorMin = V(0.04f, yBand.x);
+        rt.anchorMax = V(0.96f, yBand.y);
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
+
+        Txt(row, "Lbl", label, 22, FontStyles.Bold, ColLabel,
+            V(0f, 0.55f), V(1f, 1f)).alignment = TextAlignmentOptions.Left;
+
+        // Inventory slot chip behind the sack icon
+        var slot = new GameObject("Slot");
+        slot.transform.SetParent(row.transform, false);
+        var slotImg = slot.AddComponent<Image>();
+        slotImg.color = new Color(0.12f, 0.08f, 0.04f, 0.55f);
+        var slotRt = slot.GetComponent<RectTransform>();
+        slotRt.anchorMin = V(0f, 0.02f);
+        slotRt.anchorMax = V(0.32f, 0.52f);
+        slotRt.offsetMin = slotRt.offsetMax = Vector2.zero;
+
+        var icon = new GameObject("Sack");
+        icon.transform.SetParent(slot.transform, false);
+        var iconImg = icon.AddComponent<Image>();
+        iconImg.sprite = SackSprite();
+        iconImg.preserveAspect = true;
+        var iconRt = icon.GetComponent<RectTransform>();
+        iconRt.anchorMin = V(0.12f, 0.12f);
+        iconRt.anchorMax = V(0.88f, 0.88f);
+        iconRt.offsetMin = iconRt.offsetMax = Vector2.zero;
+
+        var valTxt = Txt(row, "Val", "0/100", 22, FontStyles.Bold, ColLabel,
+            V(0.38f, 0.02f), V(1f, 0.52f));
+        valTxt.alignment = TextAlignmentOptions.Left;
+        return valTxt;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────
     static Vector2 V(float x, float y) => new Vector2(x, y);
-
-    static GameObject Img(GameObject parent, string name, Color col,
-                           Vector2 aMin, Vector2 aMax)
-    {
-        var go = new GameObject(name);
-        go.transform.SetParent(parent.transform, false);
-        go.AddComponent<Image>().color = col;
-        var rt = go.GetComponent<RectTransform>();
-        rt.anchorMin = aMin; rt.anchorMax = aMax;
-        rt.offsetMin = rt.offsetMax = Vector2.zero;
-        return go;
-    }
 
     static TMP_Text Txt(GameObject parent, string name, string text,
                          float size, FontStyles style, Color col,

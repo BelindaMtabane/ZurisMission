@@ -10,7 +10,9 @@ public static class LegacyLaneUi
     static readonly string[] LaneButtonNames =
     {
         "Button1", "Button2", "Button3", "Button4",
-        "Button (2)", "Button (4)"
+        "Button (2)", "Button (4)",
+        // Old top-left stat boxes — superseded by LevelHUDStrip's status panel.
+        "WaterBAR", "HealthBAR", "MaterialBAR (1)", "BucketBar"
     };
 
     public static void Hide()

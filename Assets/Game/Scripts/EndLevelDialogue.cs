@@ -107,6 +107,7 @@ public class EndLevelDialogue : MonoBehaviour
 
         // Hide every HUD layer so only this overlay is visible
         LevelHUDStrip.Instance?.SetVisible(false);
+        LevelTimerUI.Instance?.SetVisible(false);
         InventoryUI.Instance?.SetVisible(false);
         GameInfoUI.Instance?.SetVisible(false);
         // Hide scene Canvas HUD siblings (Material bar, Pause button, etc.)
