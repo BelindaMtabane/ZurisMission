@@ -17,7 +17,6 @@ public class Level1HeatWave : MonoBehaviour
     Image overlay;
     Light sun;
     Color sunOriginal = Color.white;
-    ParticleSystem heatParticles;
     HUDControls hud;
 
     bool started;
@@ -45,7 +44,6 @@ public class Level1HeatWave : MonoBehaviour
         hud = FindFirstObjectByType<HUDControls>();
         CreateOverlay();
         CacheSun();
-        CreateHeatParticles();
         StartCoroutine(HeatLoop());
     }
 
@@ -145,16 +143,11 @@ public class Level1HeatWave : MonoBehaviour
 
         if (IsPaused)
         {
-            if (heatParticles != null && heatParticles.isPlaying) heatParticles.Stop();
             if (sun != null) sun.color = sunOriginal;
         }
         else if (heatActive)
         {
             SetHeatVisual(true);
-            if (heatParticles != null && player != null)
-            {
-                heatParticles.transform.position = player.position + Vector3.up * 2f;
-            }
         }
 
         UpdateOverlayColor();
@@ -206,12 +199,6 @@ public class Level1HeatWave : MonoBehaviour
 
     void SetHeatVisual(bool on)
     {
-        if (heatParticles != null)
-        {
-            if (on && !IsPaused) heatParticles.Play();
-            else heatParticles.Stop();
-        }
-
         if (sun != null)
         {
             sun.color = on && !IsPaused ? new Color(1f, 0.62f, 0.32f) : sunOriginal;
@@ -239,26 +226,6 @@ public class Level1HeatWave : MonoBehaviour
     {
         sun = FindFirstObjectByType<Light>();
         if (sun != null) sunOriginal = sun.color;
-    }
-
-    void CreateHeatParticles()
-    {
-        GameObject go = new GameObject("HeatWaveParticles");
-        go.transform.SetParent(transform, false);
-        heatParticles = go.AddComponent<ParticleSystem>();
-        var main = heatParticles.main;
-        main.startColor = new Color(1f, 0.5f, 0.12f, 0.45f);
-        main.startSize = 1.2f;
-        main.startLifetime = 1.4f;
-        main.startSpeed = 0.5f;
-        main.simulationSpace = ParticleSystemSimulationSpace.World;
-        main.maxParticles = 30;
-        var emission = heatParticles.emission;
-        emission.rateOverTime = 10f;
-        var shape = heatParticles.shape;
-        shape.shapeType = ParticleSystemShapeType.Hemisphere;
-        shape.radius = 3.5f;
-        heatParticles.Stop();
     }
 
     void CachePlayer()
