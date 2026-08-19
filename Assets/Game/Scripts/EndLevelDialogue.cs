@@ -38,6 +38,37 @@ public class EndLevelDialogue : MonoBehaviour
     string _nextScene = "";
     bool   _showing   = false;
 
+    // ── Shared wood-textured UI assets (same sheet as the end-screen panels) ─
+    static Sprite panel1Sprite;
+    static Sprite Panel1()
+    {
+        if (panel1Sprite == null)
+        {
+            Sprite[] sprites = Resources.LoadAll<Sprite>("UI/PANEL1");
+            panel1Sprite = sprites.Length > 0 ? sprites[0] : null;
+        }
+        return panel1Sprite;
+    }
+
+    static Sprite continueBtnSprite;
+    static Sprite ContinueButtonSprite()
+    {
+        if (continueBtnSprite == null)
+        {
+            Sprite[] sprites = Resources.LoadAll<Sprite>("UI/UIKitSheet");
+            foreach (var s in sprites)
+            {
+                if (s.name == "UIKit_04") { continueBtnSprite = s; break; }
+            }
+        }
+        return continueBtnSprite;
+    }
+
+    // Dark-brown palette for text sitting on the parchment panel.
+    static readonly Color ColDarkText  = new Color(0.28f, 0.17f, 0.08f);
+    static readonly Color ColDarkTitle = new Color(0.55f, 0.10f, 0.05f);
+    static readonly Color ColDivider   = new Color(0.55f, 0.42f, 0.24f);
+
     // ── Live stat sources ──────────────────────────────────────────────────
     HUDControls        _hud;
     PipeControlslevel3 _pipe;
@@ -192,76 +223,108 @@ public class EndLevelDialogue : MonoBehaviour
         Img(_canvasGO, "Overlay", new Color(0, 0, 0, 0.72f),
             V(0, 0), V(1, 1));
 
-        // ── Main dialogue panel ─────────────────────────────────────────────
-        var panel = Img(_canvasGO, "Panel",
-                        new Color(0.06f, 0.12f, 0.06f, 0.97f),
-                        V(0.12f, 0.03f), V(0.88f, 0.97f));
+        // ── Main dialogue panel (wood-framed parchment, 9-sliced) ───────────
+        var panelGO = Img(_canvasGO, "Panel", Color.white, V(0.12f, 0.03f), V(0.88f, 0.97f));
+        var panelImg = panelGO.GetComponent<Image>();
+        Sprite panelSprite = Panel1();
+        if (panelSprite != null) { panelImg.sprite = panelSprite; panelImg.type = Image.Type.Sliced; }
+        else panelImg.color = new Color(0.30f, 0.20f, 0.12f, 0.97f);
+        var panel = panelGO;
 
-        // ── Green header bar ────────────────────────────────────────────────
-        Img(panel, "TopBar", new Color(0.15f, 0.50f, 0.15f, 1f),
+        // ── Header bar (warm wood tone) ──────────────────────────────────────
+        Img(panel, "TopBar", new Color(0.42f, 0.27f, 0.12f, 1f),
             V(0, 0.93f), V(1, 1f));
 
         // ── Title ───────────────────────────────────────────────────────────
         _titleText = Txt(panel, "Title", "", 52, FontStyles.Bold,
-                         new Color(1f, 0.92f, 0.20f),
+                         ColDarkTitle,
                          V(0.03f, 0.85f), V(0.97f, 0.93f));
 
         // ── Divider ─────────────────────────────────────────────────────────
-        Img(panel, "Div1", new Color(0.28f, 0.58f, 0.28f, 1f),
+        Img(panel, "Div1", ColDivider,
             V(0.03f, 0.838f), V(0.97f, 0.843f));
 
         // ── Stats header ────────────────────────────────────────────────────
         Txt(panel, "StatsLbl", "—  MISSION STATS  —", 24, FontStyles.Bold,
-            new Color(0.45f, 0.85f, 0.45f, 1f),
+            ColDarkTitle,
             V(0.03f, 0.795f), V(0.97f, 0.838f));
 
         // ── Stats body ──────────────────────────────────────────────────────
         _statsText = Txt(panel, "StatsBody", "", 24, FontStyles.Normal,
-                         Color.white, V(0.06f, 0.68f), V(0.97f, 0.795f));
+                         ColDarkText, V(0.06f, 0.68f), V(0.97f, 0.795f));
         _statsText.alignment = TextAlignmentOptions.Left;
 
         // ── Divider ─────────────────────────────────────────────────────────
-        Img(panel, "Div2", new Color(0.28f, 0.58f, 0.28f, 1f),
+        Img(panel, "Div2", ColDivider,
             V(0.03f, 0.668f), V(0.97f, 0.673f));
 
         // ── Congratulations text ────────────────────────────────────────────
         _congratsText = Txt(panel, "Congrats", "", 22, FontStyles.Italic,
-                            new Color(1f, 1f, 0.82f, 1f),
+                            ColDarkText,
                             V(0.04f, 0.50f), V(0.96f, 0.668f));
 
         // ── Divider ─────────────────────────────────────────────────────────
-        Img(panel, "Div3", new Color(0.28f, 0.58f, 0.28f, 1f),
+        Img(panel, "Div3", ColDivider,
             V(0.03f, 0.488f), V(0.97f, 0.493f));
 
         // ── Next mission header ─────────────────────────────────────────────
         Txt(panel, "NextLbl", "—  NEXT MISSION  —", 24, FontStyles.Bold,
-            new Color(0.35f, 0.78f, 1f, 1f),
+            ColDarkTitle,
             V(0.03f, 0.448f), V(0.97f, 0.488f));
 
         // ── Next mission body ───────────────────────────────────────────────
         _nextInfoText = Txt(panel, "NextBody", "", 21, FontStyles.Normal,
-                            new Color(0.83f, 0.94f, 1f, 1f),
+                            ColDarkText,
                             V(0.04f, 0.26f), V(0.96f, 0.448f));
         _nextInfoText.alignment = TextAlignmentOptions.Left;
 
-        // ── Continue button ─────────────────────────────────────────────────
-        var btnGO = Img(panel, "ContinueBtn",
-                        new Color(0.13f, 0.48f, 0.13f, 1f),
-                        V(0.28f, 0.07f), V(0.72f, 0.20f));
+        // ── Continue button (wood-bordered art sprite, label baked in) ──────
+        var btnGO = new GameObject("ContinueBtn");
+        btnGO.transform.SetParent(panel.transform, false);
+        var btnImg = btnGO.AddComponent<Image>();
+        var btnRt = btnGO.GetComponent<RectTransform>();
+        btnRt.anchorMin = V(0.28f, 0.07f); btnRt.anchorMax = V(0.72f, 0.20f);
+        btnRt.offsetMin = btnRt.offsetMax = Vector2.zero;
 
         _continueBtn = btnGO.AddComponent<Button>();
-        _continueBtn.targetGraphic = btnGO.GetComponent<Image>();
+        _continueBtn.targetGraphic = btnImg;
 
-        var cols = _continueBtn.colors;
-        cols.normalColor      = new Color(0.13f, 0.48f, 0.13f, 1f);
-        cols.highlightedColor = new Color(0.20f, 0.68f, 0.20f, 1f);
-        cols.pressedColor     = new Color(0.07f, 0.28f, 0.07f, 1f);
-        _continueBtn.colors   = cols;
+        Sprite contSprite = ContinueButtonSprite();
+        if (contSprite != null)
+        {
+            btnImg.sprite = contSprite;
+            btnImg.color  = Color.white;
 
-        var btnTxt = Txt(btnGO, "BtnLabel", "CONTINUE  >>", 32,
-                         FontStyles.Bold, Color.white,
-                         V(0, 0), V(1, 1));
-        btnTxt.alignment = TextAlignmentOptions.Center;
+            Canvas.ForceUpdateCanvases();
+            float boxW = btnRt.rect.width, boxH = btnRt.rect.height;
+            float targetAspect = contSprite.rect.width / contSprite.rect.height;
+            float fitW, fitH;
+            if (targetAspect > boxW / boxH) { fitW = boxW; fitH = boxW / targetAspect; }
+            else { fitH = boxH; fitW = boxH * targetAspect; }
+            float dx = (boxW - fitW) * 0.5f, dy = (boxH - fitH) * 0.5f;
+            btnRt.offsetMin = new Vector2(dx, dy);
+            btnRt.offsetMax = new Vector2(-dx, -dy);
+
+            var cols = _continueBtn.colors;
+            cols.normalColor      = Color.white;
+            cols.highlightedColor = Color.Lerp(Color.white, Color.yellow, 0.2f);
+            cols.pressedColor     = Color.Lerp(Color.white, Color.gray, 0.3f);
+            _continueBtn.colors   = cols;
+        }
+        else
+        {
+            btnImg.color = new Color(0.13f, 0.48f, 0.13f, 1f);
+            var cols = _continueBtn.colors;
+            cols.normalColor      = new Color(0.13f, 0.48f, 0.13f, 1f);
+            cols.highlightedColor = new Color(0.20f, 0.68f, 0.20f, 1f);
+            cols.pressedColor     = new Color(0.07f, 0.28f, 0.07f, 1f);
+            _continueBtn.colors   = cols;
+
+            var btnTxt = Txt(btnGO, "BtnLabel", "CONTINUE  >>", 32,
+                             FontStyles.Bold, Color.white,
+                             V(0, 0), V(1, 1));
+            btnTxt.alignment = TextAlignmentOptions.Center;
+        }
 
         _continueBtn.onClick.AddListener(OnContinue);
 
