@@ -55,6 +55,8 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody rb;
     private CapsuleCollider capsule;
+    private Animator bodyAnimator;
+    private const string RunAnimState = "locom_f_jogging_30f";
     private int currentLane;
     private bool isGrounded;
     private float currentSpeed;
@@ -108,6 +110,7 @@ public class PlayerController : MonoBehaviour
             defaultCapsuleCenter = capsule.center;
             defaultCapsuleHeight = capsule.height;
         }
+        bodyAnimator = GetComponentInChildren<Animator>();
     }
 
     void OnEnable()
@@ -155,6 +158,11 @@ public class PlayerController : MonoBehaviour
         if (seedTempTargetsIfMissing)
         {
             SeedTemporaryGrappleTargets();
+        }
+
+        if (bodyAnimator != null)
+        {
+            bodyAnimator.Play(RunAnimState, 0, 0f);
         }
 
         Debug.Log($"[PlayerController] Ready lanes={lanePositions.Length} speed={currentSpeed}");
