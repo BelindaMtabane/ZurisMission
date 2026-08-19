@@ -3,88 +3,128 @@ using UnityEngine;
 public class PlayerHUDBase : MonoBehaviour
 {
     public HUDControls hudControls;
-    PlayerMovement playerMovement;
+
+    void Start()
+    {
+        if (hudControls == null)
+        {
+            hudControls = FindFirstObjectByType<HUDControls>();
+        }
+    }
 
     private void OnTriggerEnter(Collider other)
     {
+        if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
+
         if (hudControls == null)
+        {
             hudControls = FindFirstObjectByType<HUDControls>();
+        }
+
         if (hudControls == null) return;
+
+        if (other.GetComponentInParent<BushlandHazard>() != null
+            || other.GetComponentInParent<SnakePassHazard>() != null
+            || other.GetComponentInParent<Level1Obstacle>() != null
+            || other.GetComponentInParent<Level1CactusPickup>() != null
+            || other.GetComponentInParent<Level1StatPickup>() != null
+            || other.GetComponentInParent<Level1WaterPoolPickup>() != null
+            || other.GetComponentInParent<Level1MaterialPickup>() != null
+            || other.GetComponentInParent<Level1SuperFruitPickup>() != null
+            || other.GetComponentInParent<Level1AloePickup>() != null
+            || other.GetComponentInParent<Level1Snake>() != null
+            || other.GetComponentInParent<Level2Obstacle>() != null
+            || other.GetComponentInParent<Level2WaterDropletPickup>() != null
+            || other.GetComponentInParent<Level2BaobabPickup>() != null
+            || other.GetComponentInParent<Level2MaterialPickup>() != null
+            || other.GetComponentInParent<Level2BubbleShieldPickup>() != null
+            || other.GetComponentInParent<Level2SpeedFruitPickup>() != null
+            || other.GetComponentInParent<Level2JumpBoostPickup>() != null
+            || other.GetComponentInParent<Level2HealthFruitPickup>() != null
+            || other.GetComponentInParent<Level2WaterPoolPickup>() != null
+            || other.GetComponentInParent<Level2PoisonPlant>() != null
+            || other.GetComponentInParent<Level2MudMonster>() != null
+            || other.GetComponentInParent<Level2MudBall>() != null
+            || other.GetComponentInParent<Level2RollingLog>() != null
+            || other.GetComponentInParent<Level2Warthog>() != null
+            || other.GetComponentInParent<Level3Obstacle>() != null
+            || other.GetComponentInParent<Level3MaterialPickup>() != null
+            || other.GetComponentInParent<Level3WaterDropletPickup>() != null
+            || other.GetComponentInParent<Level3HealthPickup>() != null
+            || other.GetComponentInParent<Level3Snake>() != null
+            || other.GetComponentInParent<Level3HorizontalEnemy>() != null
+            || other.GetComponentInParent<Level3LightningZone>() != null
+            || other.GetComponentInParent<Level3RepairPoint>() != null
+            || other.GetComponentInParent<Level3BossRepairPoint>() != null
+            || other.GetComponentInParent<Level3AcidRainZone>() != null
+            || other.GetComponentInParent<Level3RollingLog>() != null
+            || other.GetComponentInParent<Level3SpeedFruitPickup>() != null)
+        {
+            return;
+        }
 
         if (other.CompareTag("DamWaterBUCK"))
         {
-            hudControls.WaterIncreaseManager();        // Post() fires inside
-            hudControls.VillageProgressIncrease();
-            Debug.Log("Player water level increased!");
+            hudControls.WaterIncreaseManager();
+            Debug.Log("Bucket water increased.");
         }
         if (other.CompareTag("WaterDROP"))
         {
-            hudControls.PlayerWaterINC();              // Post() fires inside
-            hudControls.VillageProgressIncrease();
-            Debug.Log("Player water level increased!");
+            hudControls.DrinkBottle();
+            Debug.Log("Water bottle +10 player water.");
         }
         if (other.CompareTag("Heat&Disease"))
         {
-            hudControls.PlayerWaterDEC();              // Post() fires inside
-            hudControls.VillageProgressDecrease();
-            Debug.Log("Player water system level decreased!");
+            hudControls.PlayerWaterDEC();
+            Debug.Log("Player water decreased.");
         }
         if (other.CompareTag("SpeedBoast"))
         {
-            hudControls.SpeedControls(40f);            // Post() fires inside
+            hudControls.SpeedControls(40f);
             Debug.Log("Player speed boosted!");
         }
         if (other.CompareTag("SlowDown"))
         {
-            hudControls.SpeedControls(15f);            // Post() fires inside
+            hudControls.SpeedControls(15f);
             Debug.Log("Player slowed down!");
         }
-        if (other.CompareTag("AnimalAttack"))
+        //other.CompareTag("AnimalAttack")
+        if (other.CompareTag("AnimalAttack") || other.CompareTag("Obstacle"))
         {
-            hudControls.HealthDecreaseManager();       // Post() fires inside
-            hudControls.VillageProgressDecrease();
-            GameInfoUI.Post("Zuri was attacked by an animal!", GameInfoUI.MsgType.Obstacle);
-            Debug.Log("Player health decreased by animal!");
-        }
-        if (other.CompareTag("Obstacle"))
-        {
-            hudControls.HealthDecreaseManager();       // Post() fires inside
-            hudControls.VillageProgressDecrease();
-            GameInfoUI.Post("Zuri hit an obstacle and lost health!", GameInfoUI.MsgType.Obstacle);
-            Debug.Log("Player health decreased by obstacle!");
+            string n = other.name.ToLowerInvariant();
+            if (n.Contains("cactus"))
+            {
+                hudControls.ChangeBucket(10f);
+                Debug.Log("Cactus: bucket +10");
+            }
+            else
+            {
+                hudControls.HealthDecreaseManager();
+                Debug.Log("Player health decreased by animal or obstacle!");
+            }
         }
         if (other.CompareTag("Materials"))
         {
-            hudControls.SystemBuild();                 // Post() fires inside
+            hudControls.SystemBuild();
             Debug.Log("Player material increased!");
         }
-        if (other.CompareTag("FruitPickup"))
+        if (other.CompareTag("FruitPickup") || other.CompareTag("Herbs"))
         {
-            hudControls.HealthIncreaseManager();       // Post() fires inside
-            GameInfoUI.Post("Zuri picked up fruit and feels better!", GameInfoUI.MsgType.Pickup);
-            Debug.Log("Player health increased!");
-        }
-        if (other.CompareTag("Herbs"))
-        {
-            hudControls.HealthIncreaseManager();       // Post() fires inside
-            GameInfoUI.Post("Zuri collected herbs and restored health!", GameInfoUI.MsgType.Pickup);
+            hudControls.HealthIncreaseManager();
             Debug.Log("Player health increased!");
         }
         if (other.CompareTag("EndLevel1"))
         {
-            hudControls.LevelProgress();               // Post() fires inside
-            if (EndLevelDialogue.Instance != null)
-                EndLevelDialogue.Instance.ShowForLevel(1);
-            else
-                hudControls.SceneChange(2f);           // fallback
+            hudControls.LevelProgress();
         }
         if (other.CompareTag("EndLevel2"))
         {
-            hudControls.LevelProgress();               // Post() fires inside
-            if (EndLevelDialogue.Instance != null)
-                EndLevelDialogue.Instance.ShowForLevel(2);
-            else
-                hudControls.SceneChange(4f);           // fallback
+            hudControls.LevelProgress();
+        }
+        if (other.CompareTag("EndLvl3End"))
+        {
+            hudControls.LevelProgress();
         }
     }
+        
 }
