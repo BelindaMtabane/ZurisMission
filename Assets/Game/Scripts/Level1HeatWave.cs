@@ -22,7 +22,6 @@ public class Level1HeatWave : MonoBehaviour
 
     bool started;
     bool heatActive;
-    bool burstRunning;
     float pauseUntil;
     Transform player;
 
@@ -86,7 +85,6 @@ public class Level1HeatWave : MonoBehaviour
 
             float burstDuration = BurstDurations[Random.Range(0, BurstDurations.Length)];
             heatActive = true;
-            burstRunning = true;
             Level1FeedbackUI.Show("HEAT WAVE! Drink from cactus or springs!", new Color(1f, 0.55f, 0.2f), burstDuration);
             Debug.Log($"[Level1] Heat burst started for {burstDuration:0}s (-{waterLossPerSecond:0}/sec player water)");
 
@@ -112,7 +110,6 @@ public class Level1HeatWave : MonoBehaviour
             }
 
             heatActive = false;
-            burstRunning = false;
             Debug.Log("[Level1] Heat burst ended");
 
             float cooldown = betweenBurstCooldown;

@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class PitObstacle : MonoBehaviour
 {
+    [SerializeField] private float pitDamage = 5f;
+
     private bool damageDone = false;
 
     void Awake()
@@ -34,6 +36,6 @@ public class PitObstacle : MonoBehaviour
         damageDone = true;
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         if (hud != null)
-            hud.PitDamage();
+            hud.ChangeHealth(-pitDamage, "You fell into a pit!");
     }
 }

@@ -144,7 +144,7 @@ public class GameInfoUI : MonoBehaviour
         tmp.fontSize           = 13f;
         tmp.alignment          = TextAlignmentOptions.TopLeft;
         tmp.overflowMode       = TextOverflowModes.Truncate;
-        tmp.enableWordWrapping = true;
+        tmp.textWrappingMode   = TextWrappingModes.Normal;
 
         RectTransform tRT = textGO.GetComponent<RectTransform>();
         tRT.anchorMin = Vector2.zero;

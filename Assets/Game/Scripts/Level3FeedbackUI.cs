@@ -234,7 +234,7 @@ public class Level3FeedbackUI : MonoBehaviour
         tankHudText.alignment = TextAlignmentOptions.MidlineRight;
         tankHudText.raycastTarget = false;
         tankHudText.richText = true;
-        tankHudText.enableWordWrapping = false;
+        tankHudText.textWrappingMode = TextWrappingModes.NoWrap;
         tankHudText.text = "<color=#FFFFFF>Tank 1: 0% / 100%</color>\n<color=#FFFFFF>Tank 2: 0% / 100%</color>\n<color=#FFFFFF>Tank 3: 0% / 100%</color>";
     }
 

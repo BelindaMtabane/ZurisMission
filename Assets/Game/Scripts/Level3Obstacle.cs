@@ -11,7 +11,6 @@ public class Level3Obstacle : MonoBehaviour
 {
     [SerializeField] Level3ObstacleKind kind = Level3ObstacleKind.Rock;
     [SerializeField] bool jumpable;
-    [SerializeField] float rockDamage = 6f;
     bool applied;
 
     public void Setup(Level3ObstacleKind obstacleKind, bool canJumpOver)

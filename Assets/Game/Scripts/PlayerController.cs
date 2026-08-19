@@ -152,6 +152,11 @@ public class PlayerController : MonoBehaviour
             currentSpeed = baseSpeed;
         }
 
+        if (seedTempTargetsIfMissing)
+        {
+            SeedTemporaryGrappleTargets();
+        }
+
         Debug.Log($"[PlayerController] Ready lanes={lanePositions.Length} speed={currentSpeed}");
     }
 
@@ -262,6 +267,11 @@ public class PlayerController : MonoBehaviour
 
         isGrounded = HasGroundHit(origin, radius, 0f)
                      || HasGroundHit(origin, radius, groundCheckDistance);
+
+        if (isGrounded)
+        {
+            coyoteCounter = coyoteTime;
+        }
     }
 
     bool HasGroundHit(Vector3 origin, float radius, float downDistance)
@@ -335,8 +345,14 @@ public class PlayerController : MonoBehaviour
                            || (kb != null && kb.spaceKey.wasPressedThisFrame)
                            || Input.GetKeyDown(KeyCode.Space);
 
-        if (!jumpPressed) return;
-        if (!isGrounded || jumpLockTimer > 0f) return;
+        if (jumpPressed)
+        {
+            jumpBufferCounter = jumpBufferTime;
+        }
+
+        bool wantsJump = jumpPressed || jumpBufferCounter > 0f;
+        bool canJump = (isGrounded || coyoteCounter > 0f) && jumpLockTimer <= 0f;
+        if (!wantsJump || !canJump) return;
         if (rb.linearVelocity.y > 0.4f) return;
 
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
