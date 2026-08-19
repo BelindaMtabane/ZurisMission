@@ -80,10 +80,10 @@ public class LevelHUDStrip : MonoBehaviour
         if (_hud == null) { _hud = FindFirstObjectByType<HUDControls>(); return; }
 
         float health  = _hud.Health;
-        float bucket  = _hud.WaterBucket;
-        float hydrat  = _hud.WaterLevel;
-        float mats    = _hud.materialLevel;
-        float village = _hud.VillageLevel;
+        float bucket  = _hud.BucketWater;
+        float hydrat  = _hud.PlayerWater;
+        float mats    = _hud.MaterialLevel;
+        float village = _hud.VillageProgressPercent;
 
         float[] vals = { health, bucket, hydrat, mats, village };
 

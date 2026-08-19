@@ -79,8 +79,7 @@ public class EndLevelDialogue : MonoBehaviour
         InventoryUI.Instance?.SetVisible(false);
         GameInfoUI.Instance?.SetVisible(false);
         // Hide scene Canvas HUD siblings (Material bar, Pause button, etc.)
-        FindFirstObjectByType<HUDControls>()?.SetSceneHUDVisible(false);
-        FindFirstObjectByType<PauseMenu>()?.HideSceneHUDForOverlay();
+        // (handled by RunStateManager overlay logic)
 
         string title, congrats, nextInfo, scene;
 
@@ -145,9 +144,9 @@ public class EndLevelDialogue : MonoBehaviour
     {
         if (level <= 2 && _hud != null)
             return $"Health:             {_hud.Health:F0} / 100\n" +
-                   $"Water Level:     {_hud.WaterLevel:F0} / 100\n" +
-                   $"Materials:          {_hud.materialLevel} / 100\n" +
-                   $"Village Progress: {_hud.VillageLevel:F0}%";
+                   $"Water Level:     {_hud.PlayerWater:F0} / 100\n" +
+                   $"Materials:          {_hud.MaterialLevel} / 100\n" +
+                   $"Village Progress: {_hud.VillageProgressPercent:F0}%";
 
         if (level == 3 && _pipe != null)
             return $"Health:             {_pipe.Health:F0} / 100\n" +
