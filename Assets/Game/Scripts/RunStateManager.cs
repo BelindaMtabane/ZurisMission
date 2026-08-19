@@ -224,11 +224,11 @@ public class RunStateManager : MonoBehaviour
         innerRt.offsetMin = Vector2.zero;
         innerRt.offsetMax = Vector2.zero;
 
-        EndTxt(inner, "Title", "YOU LOST", 34, FontStyles.Bold, ColLoseTitle,
+        EndTxt(inner, "Title", "YOU LOST", 44, FontStyles.Bold, ColLoseTitle,
                new Vector2(0.05f, 0.70f), new Vector2(0.95f, 0.90f));
 
-        deathReasonText = EndTxt(inner, "Reason", lastDeathReason, 18, FontStyles.Normal, ColLoseText,
-               new Vector2(0.08f, 0.42f), new Vector2(0.92f, 0.66f));
+        deathReasonText = EndTxt(inner, "Reason", lastDeathReason, 28, FontStyles.Bold, ColLoseText,
+               new Vector2(0.06f, 0.40f), new Vector2(0.94f, 0.68f));
 
         var btn = EndButton(inner, "Restart", "RESTART", ColBtnRetry,
                              new Vector2(0.22f, 0.10f), new Vector2(0.78f, 0.28f), RestartButtonSprite());
@@ -272,11 +272,11 @@ public class RunStateManager : MonoBehaviour
         innerRt.offsetMin = Vector2.zero;
         innerRt.offsetMax = Vector2.zero;
 
-        victoryTitleText = EndTxt(inner, "Title", "YOU WIN", 34, FontStyles.Bold, ColGoldTitle,
+        victoryTitleText = EndTxt(inner, "Title", "YOU WIN", 44, FontStyles.Bold, ColGoldTitle,
                new Vector2(0.05f, 0.74f), new Vector2(0.95f, 0.92f));
 
-        victoryMessageText = EndTxt(inner, "Message", "You completed the level.", 18, FontStyles.Normal, ColCream,
-               new Vector2(0.08f, 0.46f), new Vector2(0.92f, 0.70f));
+        victoryMessageText = EndTxt(inner, "Message", "You completed the level.", 26, FontStyles.Bold, ColCream,
+               new Vector2(0.06f, 0.44f), new Vector2(0.94f, 0.72f));
 
         string nextLabel = nextScene == SceneCatalog.Level3 ? "START LEVEL 3"
             : nextScene == SceneCatalog.Level2 ? "START LEVEL 2"
@@ -309,13 +309,16 @@ public class RunStateManager : MonoBehaviour
     // ── Shared end-screen helpers ────────────────────────────────────────
     Canvas MakeEndScreenCanvas(string name)
     {
-        Canvas canvas = FindFirstObjectByType<Canvas>();
-        if (canvas != null) return canvas;
-
+        // Always create a dedicated canvas rather than reusing "any" canvas
+        // found in the scene — reusing was order-dependent (which canvas
+        // FindFirstObjectByType happened to return first) and would let
+        // other HUD canvases render on top of the scrim/panel depending on
+        // creation order. sortingOrder 200 matches EndLevelDialogue so end
+        // screens always sit above the gameplay HUD (sortingOrder 140).
         GameObject canvasGo = new GameObject(name);
-        canvas = canvasGo.AddComponent<Canvas>();
+        Canvas canvas = canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 100;
+        canvas.sortingOrder = 200;
         canvasGo.AddComponent<CanvasScaler>();
         canvasGo.AddComponent<GraphicRaycaster>();
         return canvas;
