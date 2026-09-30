@@ -41,7 +41,7 @@ public static class SceneCatalog
     {
         if (currentScene == MainGame) return Level2;
         if (currentScene == Level2) return Level3;
-        if (currentScene == Level3 || currentScene == Level3End) return "";
+        if (currentScene == Level3 || currentScene == Level3End) return StartScreen;
         return "";
     }
 }

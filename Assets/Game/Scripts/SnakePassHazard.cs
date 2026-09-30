@@ -39,6 +39,7 @@ public class SnakePassHazard : MonoBehaviour
     {
         if (hit || !other.CompareTag("Player")) return;
         hit = true;
+        ObstacleGuideHUD.NotifyHit("snake");
 
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         hud?.ChangeHealth(-5f, "A snake bite dropped your health to 0.");

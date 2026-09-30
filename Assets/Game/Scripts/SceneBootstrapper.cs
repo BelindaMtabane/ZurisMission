@@ -19,14 +19,6 @@ public class SceneBootstrapper : MonoBehaviour
         { SceneCatalog.Level3End, 80f }
     };
 
-    private static readonly Dictionary<string, string> NextSceneMap = new Dictionary<string, string>
-    {
-        { SceneCatalog.MainGame, SceneCatalog.Level2 },
-        { SceneCatalog.Level2, SceneCatalog.Level3 },
-        { SceneCatalog.Level3, "" },
-        { SceneCatalog.Level3End, "" }
-    };
-
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void RegisterForSceneLoads()
     {
@@ -62,7 +54,9 @@ public class SceneBootstrapper : MonoBehaviour
         EnsurePlayerHudBase(playerController);
         EnsureGroundSpawner(sceneName);
         EnsureLevelSystems(sceneName);
+        ObstacleGuideHUD.EnsureForScene(sceneName);
         LegacyLaneUi.Hide();
+        HudLayout.Apply();
 
         Debug.Log($"[SceneBootstrapper] Phase 2 player ready in '{sceneName}' groundedCheck={playerController != null}.");
     }
@@ -79,7 +73,7 @@ public class SceneBootstrapper : MonoBehaviour
         GameObject victoryPanel = GameObject.Find("VictoryPanel2");
 
         runState.SetupPanels(null, victoryPanel, pausePanel);
-        runState.SetupScenes(SceneCatalog.StartScreen, NextSceneMap.TryGetValue(sceneName, out string nextScene) ? nextScene : "");
+        runState.SetupScenes(SceneCatalog.StartScreen, SceneCatalog.GetNextScene(sceneName));
 
         return runState;
     }
