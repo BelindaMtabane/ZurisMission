@@ -81,3 +81,6 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets.meta
 /[Pp]ackages/io.realvirtual.mcp/
 /[Pp]ackages/io.realvirtual.mcp.meta
+
+# Editor screenshot captures
+.screenshots/
