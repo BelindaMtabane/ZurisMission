@@ -289,14 +289,6 @@
       },
       "url": "https://packages.unity.com"
     },
-    "io.realvirtual.mcp": {
-      "version": "file:io.realvirtual.mcp",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.unity.nuget.newtonsoft-json": "3.2.1"
-      }
-    },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
       "depth": 0,

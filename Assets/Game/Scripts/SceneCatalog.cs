@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public static class SceneCatalog
 {
+    public const string Tutorial = "Tutorial";
     public const string StartScreen = "StartScreen";
     public const string MainGame = "MainGame";
     public const string Level2 = "Level2";

@@ -58,6 +58,13 @@ public class PauseMenu : MonoBehaviour
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneCatalog.StarterInfor);
     }
+    public void Tutorial()
+{
+    Time.timeScale = 1f;
+    SceneManager.LoadScene(SceneCatalog.Tutorial);
+}
+
+    
 
     public void Level2()
     {

@@ -719,17 +719,22 @@ public static class NaturePackVisuals
     }
 
     static void StripColliders(GameObject go)
+{
+    if (go == null)
+        return;
+
+    Collider[] colliders = go.GetComponentsInChildren<Collider>(true);
+
+    foreach (Collider col in colliders)
     {
-        Collider[] cols = go.GetComponentsInChildren<Collider>(true);
-        for (int i = 0; i < cols.Length; i++)
-        {
-            if (cols[i] == null) continue;
-            if (cols[i] is MeshCollider mesh)
-                mesh.convex = false;
-            cols[i].enabled = false;
-            Object.Destroy(cols[i]);
-        }
+        if (col == null)
+            continue;
+
+        // Remove scenery colliders completely.
+        // This prevents concave MeshCollider trigger errors.
+        Object.DestroyImmediate(col);
     }
+}
 
     static void FitHeight(Transform t, float targetHeight)
     {

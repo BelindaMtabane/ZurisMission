@@ -271,12 +271,10 @@ public class PauseGameMenu : MonoBehaviour
     }
 
     void OpenTutorial()
-    {
-        card.SetActive(false);
-        settingsPanel.SetActive(false);
-        creditsPanel.SetActive(false);
-        tutorialPanel.SetActive(true);
-    }
+{
+    Time.timeScale = 1f;
+    SceneManager.LoadScene(SceneCatalog.Tutorial);
+}
 
     void OnResume()
     {
