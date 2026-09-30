@@ -159,7 +159,9 @@ public class Level2MudMonster : MonoBehaviour
         fx.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
 
         mudSplash = fx.AddComponent<ParticleSystem>();
+        mudSplash.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         var main = mudSplash.main;
+        main.playOnAwake = false;
         main.loop = false;
         main.duration = 1.8f;
         main.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.75f);

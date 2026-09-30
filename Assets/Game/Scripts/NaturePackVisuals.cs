@@ -668,17 +668,34 @@ public static class NaturePackVisuals
         return true;
     }
 
+    static Transform inactiveSpawnRoot;
+
+    static Transform InactiveSpawnRoot()
+    {
+        if (inactiveSpawnRoot != null) return inactiveSpawnRoot;
+
+        var holder = new GameObject("NaturePackInactiveSpawn");
+        holder.SetActive(false);
+        holder.hideFlags = HideFlags.HideAndDontSave;
+        Object.DontDestroyOnLoad(holder);
+        inactiveSpawnRoot = holder.transform;
+        return inactiveSpawnRoot;
+    }
+
     static GameObject Spawn(Transform parent, string prefabName, Vector3 localPos, bool applyPlantTint = true)
     {
         GameObject prefab = LoadPrefab(prefabName);
         if (prefab == null) return null;
 
-        GameObject go = Object.Instantiate(prefab, parent, false);
+        // Spawn inactive so MeshCollider.OnEnable does not cook a convex hull
+        // (Bush_02 and similar props exceed Unity's 256-polygon convex limit).
+        GameObject go = Object.Instantiate(prefab, InactiveSpawnRoot(), false);
         go.name = prefabName;
+        StripColliders(go);
+        go.transform.SetParent(parent, false);
         go.transform.localPosition = localPos;
         go.transform.localRotation = Quaternion.identity;
         go.transform.localScale = Vector3.one;
-        StripColliders(go);
         EnsureUrpMaterials(go);
         if (applyPlantTint)
             RunnerFoliageProfile.ApplyPlantTint(go);
@@ -707,6 +724,8 @@ public static class NaturePackVisuals
         for (int i = 0; i < cols.Length; i++)
         {
             if (cols[i] == null) continue;
+            if (cols[i] is MeshCollider mesh)
+                mesh.convex = false;
             cols[i].enabled = false;
             Object.Destroy(cols[i]);
         }

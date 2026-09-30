@@ -53,6 +53,7 @@ public class HudLayout : MonoBehaviour
         LayoutMissionPanel(FindRect("MissionPanel"));
         LayoutVillageProgressPanel(FindRect("VillageProcessplanel"));
         LayoutTutorialBanner();
+        LayoutPauseButton(FindSceneCanvas());
         Canvas.ForceUpdateCanvases();
     }
 
@@ -85,21 +86,84 @@ public class HudLayout : MonoBehaviour
             new Vector2(4f, -24f),
             Vector3.one);
 
-        RectTransform pause = FindRect("Pause");
-        PinCorner(
-            pause,
-            new Vector2(0f, 1f),
-            new Vector2(0.5f, 0.5f),
-            new Vector2(108f, -40f),
-            new Vector3(0.52f, 1.9f, 1f));
-        RaiseSorting(pause, 210);
         EnsureSoundToggle(canvas);
+        LayoutPauseButton(canvas);
 
         AdventureUI.SkinSceneCanvas(canvas);
         HudTextStyle.ApplyRunnerSceneHud();
         LayoutMissionPanel(FindRect("MissionPanel"));
         LayoutVillageProgressPanel(FindRect("VillageProcessplanel"));
         LayoutTutorialBanner();
+        LayoutPauseButton(canvas);
+    }
+
+    /// <summary>
+    /// Square pause icon. Uniform size so the sprite is not stretched, and no label.
+    /// </summary>
+    public static void LayoutPauseButton(Canvas canvas)
+    {
+        RectTransform pause = FindRect("Pause");
+        if (pause == null && canvas != null)
+            pause = CreatePauseButton(canvas);
+        if (pause == null) return;
+
+        const float size = 92f;
+        pause.localScale = Vector3.one;
+        pause.localRotation = Quaternion.identity;
+        pause.anchorMin = new Vector2(0f, 1f);
+        pause.anchorMax = new Vector2(0f, 1f);
+        pause.pivot = new Vector2(0.5f, 0.5f);
+        pause.anchoredPosition = new Vector2(58f, -58f);
+        pause.sizeDelta = new Vector2(size, size);
+
+        Image img = pause.GetComponent<Image>();
+        if (img != null)
+        {
+            if (AdventureUI.IconPause != null)
+                img.sprite = AdventureUI.IconPause;
+            img.type = Image.Type.Simple;
+            img.preserveAspect = true;
+            img.color = Color.white;
+        }
+
+        for (int i = 0; i < pause.childCount; i++)
+        {
+            Transform child = pause.GetChild(i);
+            if (child.GetComponent<TMP_Text>() != null)
+                child.gameObject.SetActive(false);
+        }
+
+        RaiseSorting(pause, 210);
+        pause.SetAsLastSibling();
+    }
+
+    static RectTransform CreatePauseButton(Canvas canvas)
+    {
+        GameObject go = new GameObject("Pause", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        go.transform.SetParent(canvas.transform, false);
+        go.layer = 5;
+
+        Image img = go.GetComponent<Image>();
+        img.sprite = AdventureUI.IconPause;
+        img.type = Image.Type.Simple;
+        img.preserveAspect = true;
+        img.color = Color.white;
+
+        Button btn = go.GetComponent<Button>();
+        btn.targetGraphic = img;
+        btn.onClick.AddListener(OnPauseClicked);
+        return go.GetComponent<RectTransform>();
+    }
+
+    static void OnPauseClicked()
+    {
+        if (RunStateManager.Instance != null)
+        {
+            RunStateManager.Instance.Pause();
+            return;
+        }
+
+        FindFirstObjectByType<PauseMenu>()?.Pause();
     }
 
     static void EnsureSoundToggle(Canvas canvas)

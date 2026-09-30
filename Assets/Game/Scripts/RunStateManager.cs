@@ -195,12 +195,14 @@ public class RunStateManager : MonoBehaviour
             case RunState.WaitingToStart:
                 Time.timeScale = 1f;
                 SetPanels(false, false, false);
+                PauseGameMenu.Hide();
                 if (startPrompt != null) startPrompt.SetActive(true);
                 break;
 
             case RunState.Playing:
                 Time.timeScale = 1f;
                 SetPanels(false, false, false);
+                PauseGameMenu.Hide();
                 if (startPrompt != null) startPrompt.SetActive(false);
                 OnRunStarted?.Invoke();
                 break;
@@ -208,16 +210,19 @@ public class RunStateManager : MonoBehaviour
             case RunState.Finishing:
                 Time.timeScale = 1f;
                 SetPanels(false, false, false);
+                PauseGameMenu.Hide();
                 if (startPrompt != null) startPrompt.SetActive(false);
                 break;
 
             case RunState.Paused:
                 Time.timeScale = 0f;
-                SetPanels(false, false, true);
+                SetPanels(false, false, false);
+                PauseGameMenu.Show();
                 break;
 
             case RunState.Dead:
                 Time.timeScale = 0f;
+                PauseGameMenu.Hide();
                 EnsureLosePanel();
                 if (deathReasonText != null)
                 {
@@ -233,6 +238,7 @@ public class RunStateManager : MonoBehaviour
                 // EnsureVictoryPanel() again with no args here would stomp
                 // that copy back to the generic "YOU WIN" defaults.
                 Time.timeScale = 0f;
+                PauseGameMenu.Hide();
                 SetPanels(false, true, false);
                 OnRunVictory?.Invoke();
                 break;
