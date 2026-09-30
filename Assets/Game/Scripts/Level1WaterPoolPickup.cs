@@ -11,6 +11,8 @@ public class Level1WaterPoolPickup : MonoBehaviour
 
     float cooldown;
 
+    void Start() => GameAudio.AttachSpringLoop(gameObject);
+
     void OnTriggerStay(Collider other)
     {
         if (!other.CompareTag("Player")) return;
@@ -28,6 +30,7 @@ public class Level1WaterPoolPickup : MonoBehaviour
         }
 
         hud.CollectWaterPool(bucketAmount, playerWaterAmount);
+        GameAudio.PlayWaterSplash();
         Level1FeedbackUI.Show(
             $"+{playerWaterAmount:0} WATER  +{bucketAmount:0} BUCKET",
             new Color(0.2f, 0.72f, 1f),

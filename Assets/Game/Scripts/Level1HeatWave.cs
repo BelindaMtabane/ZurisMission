@@ -15,6 +15,8 @@ public class Level1HeatWave : MonoBehaviour
     static readonly float[] BurstDurations = { 3f, 4f, 5f };
 
     Image overlay;
+    RawImage heatFogA;
+    RawImage heatFogB;
     Light sun;
     Color sunOriginal = Color.white;
     HUDControls hud;
@@ -22,6 +24,7 @@ public class Level1HeatWave : MonoBehaviour
     bool started;
     bool heatActive;
     float pauseUntil;
+    float fogAlpha;
     Transform player;
 
     public bool IsPaused => Time.time < pauseUntil;
@@ -83,6 +86,7 @@ public class Level1HeatWave : MonoBehaviour
 
             float burstDuration = BurstDurations[Random.Range(0, BurstDurations.Length)];
             heatActive = true;
+            ObstacleGuideHUD.NotifyHit("heat_wave");
             Level1FeedbackUI.Show("HEAT WAVE! Drink from cactus or springs!", new Color(1f, 0.55f, 0.2f), burstDuration);
             Debug.Log($"[Level1] Heat burst started for {burstDuration:0}s (-{waterLossPerSecond:0}/sec player water)");
 
@@ -151,6 +155,7 @@ public class Level1HeatWave : MonoBehaviour
         }
 
         UpdateOverlayColor();
+        UpdateHeatFog();
     }
 
     static float GetWaterHeatAlpha(float waterPercent)
@@ -175,7 +180,8 @@ public class Level1HeatWave : MonoBehaviour
         if (overlay == null) return;
         if (!heatActive)
         {
-            overlay.color = new Color(1f, 1f, 1f, 0f);
+            fogAlpha = 0f;
+            overlay.color = Color.clear;
             return;
         }
 
@@ -187,14 +193,8 @@ public class Level1HeatWave : MonoBehaviour
             waterPercent = (hud.PlayerWater / hud.MaxPlayerWater) * 100f;
         }
 
-        float alpha = GetWaterHeatAlpha(waterPercent);
-        Color tint = waterPercent <= 20f
-            ? new Color(0.95f, 0.12f, 0.08f, alpha)
-            : waterPercent <= 60f
-                ? new Color(0.92f, 0.22f, 0.10f, alpha)
-                : new Color(0.90f, 0.35f, 0.14f, alpha);
-
-        overlay.color = tint;
+        fogAlpha = Mathf.Max(0.22f, GetWaterHeatAlpha(waterPercent));
+        overlay.color = new Color(0.92f, 0.18f, 0.05f, fogAlpha * 0.5f);
     }
 
     void SetHeatVisual(bool on)
@@ -212,14 +212,71 @@ public class Level1HeatWave : MonoBehaviour
 
         GameObject go = new GameObject("Level1HeatWaveOverlay");
         go.transform.SetParent(canvas.transform, false);
+        go.transform.SetAsFirstSibling();
         overlay = go.AddComponent<Image>();
-        overlay.color = new Color(0.92f, 0.12f, 0.08f, 0f);
+        overlay.color = new Color(0.92f, 0.18f, 0.05f, 0f);
         overlay.raycastTarget = false;
         RectTransform rt = go.GetComponent<RectTransform>();
         rt.anchorMin = Vector2.zero;
         rt.anchorMax = Vector2.one;
         rt.offsetMin = Vector2.zero;
         rt.offsetMax = Vector2.zero;
+
+        Texture2D fogTexture = BuildFogTexture();
+        heatFogA = CreateFogLayer(go.transform, "OrangeHeatFog", fogTexture);
+        heatFogB = CreateFogLayer(go.transform, "RedHeatFog", fogTexture);
+    }
+
+    static RawImage CreateFogLayer(Transform parent, string name, Texture texture)
+    {
+        GameObject layer = new GameObject(name);
+        layer.transform.SetParent(parent, false);
+        RawImage image = layer.AddComponent<RawImage>();
+        image.texture = texture;
+        image.raycastTarget = false;
+        image.color = new Color(1f, 1f, 1f, 0f);
+        RectTransform rt = layer.GetComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+        return image;
+    }
+
+    static Texture2D BuildFogTexture()
+    {
+        const int size = 96;
+        Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        texture.name = "HeatFogNoise";
+        texture.wrapMode = TextureWrapMode.Repeat;
+        texture.filterMode = FilterMode.Bilinear;
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float nx = x / (float)size;
+                float ny = y / (float)size;
+                float large = Mathf.PerlinNoise(nx * 3.1f + 4.2f, ny * 3.1f + 8.7f);
+                float detail = Mathf.PerlinNoise(nx * 8.4f + 1.6f, ny * 8.4f + 3.3f);
+                float alpha = Mathf.SmoothStep(0.28f, 0.82f, large * 0.72f + detail * 0.28f);
+                texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha * 0.82f));
+            }
+        }
+
+        texture.Apply(false, true);
+        return texture;
+    }
+
+    void UpdateHeatFog()
+    {
+        if (heatFogA == null || heatFogB == null) return;
+
+        float alpha = heatActive && !IsPaused ? fogAlpha : 0f;
+        heatFogA.color = new Color(1f, 0.40f, 0.08f, alpha * 0.62f);
+        heatFogB.color = new Color(0.95f, 0.12f, 0.04f, alpha * 0.34f);
+        heatFogA.uvRect = new Rect(Time.time * 0.015f, Time.time * 0.008f, 1.45f, 1.1f);
+        heatFogB.uvRect = new Rect(-Time.time * 0.010f, Time.time * 0.005f, 1.2f, 1.35f);
     }
 
     void CacheSun()

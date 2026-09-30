@@ -18,9 +18,7 @@ public class Level1Ambience : MonoBehaviour
 
     static void TryCreate(string sceneName)
     {
-        if (sceneName != "MainGame") return;
-        if (FindFirstObjectByType<Level1Ambience>() != null) return;
-        new GameObject("Level1Ambience").AddComponent<Level1Ambience>();
+        // GameAudio now plays the imported "game sound" / "third level sound" tracks.
     }
 
     void Awake()

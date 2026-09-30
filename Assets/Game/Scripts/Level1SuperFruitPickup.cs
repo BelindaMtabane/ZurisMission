@@ -16,6 +16,7 @@ public class Level1SuperFruitPickup : MonoBehaviour
         collected = true;
         PlayerController controller = other.GetComponent<PlayerController>();
         controller?.ApplySpeedModifier(boostSpeed, boostSeconds);
+        GameAudio.PlayPickup();
 
         Debug.Log("[Level1] Super fruit collected — speed boost 2s");
         gameObject.SetActive(false);

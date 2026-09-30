@@ -52,6 +52,7 @@ public class Level1Obstacle : MonoBehaviour
         {
             if (appliedThisPass) return;
             appliedThisPass = true;
+            NotifyInventory();
 
             HUDControls hudControls = FindFirstObjectByType<HUDControls>();
             hudControls?.ChangeHealth(-Level1Primitives.CactusHealthDamage, "You ran into a cactus!");
@@ -63,6 +64,7 @@ public class Level1Obstacle : MonoBehaviour
         {
             if (appliedThisPass) return;
             appliedThisPass = true;
+            NotifyInventory();
 
             HUDControls hud = FindFirstObjectByType<HUDControls>();
             hud?.ChangeHealth(-Level1Primitives.BlackPitHealthDamage, "You fell into a black pit!");
@@ -74,6 +76,7 @@ public class Level1Obstacle : MonoBehaviour
 
         if (applied) return;
         applied = true;
+        NotifyInventory();
 
         HUDControls hudControlsBucket = FindFirstObjectByType<HUDControls>();
         hudControlsBucket?.ChangeBucket(-bucketDamage);
@@ -105,5 +108,21 @@ public class Level1Obstacle : MonoBehaviour
         return obstacleKind == Level1ObstacleKind.SandPit
             || obstacleKind == Level1ObstacleKind.Rock
             || obstacleKind == Level1ObstacleKind.Log;
+    }
+
+    void NotifyInventory()
+    {
+        switch (obstacleKind)
+        {
+            case Level1ObstacleKind.SandPit:
+                ObstacleGuideHUD.NotifyHit("sand_pit");
+                break;
+            case Level1ObstacleKind.Log:
+                ObstacleGuideHUD.NotifyHit("log");
+                break;
+            case Level1ObstacleKind.DustDevil:
+                ObstacleGuideHUD.NotifyHit("heat_wave");
+                break;
+        }
     }
 }

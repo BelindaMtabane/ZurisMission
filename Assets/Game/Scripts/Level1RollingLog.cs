@@ -16,10 +16,17 @@ public class Level1RollingLog : MonoBehaviour
 
     enum Phase { Wait, Roll }
     Phase phase = Phase.Wait;
+    Transform rollPivot;
 
     public void Setup(float rollSpeed)
     {
         speed = rollSpeed;
+    }
+
+    void Awake()
+    {
+        rollPivot = transform.Find("LogRollVisual");
+        if (rollPivot == null) rollPivot = transform;
     }
 
     void Update()
@@ -33,13 +40,13 @@ public class Level1RollingLog : MonoBehaviour
             if (player.position.z > transform.position.z - StartAhead)
             {
                 phase = Phase.Roll;
-                Level1FeedbackUI.Show("ROLLING LOG — JUMP!", new Color(0.72f, 0.48f, 0.22f), 1.2f);
+                Level1FeedbackUI.Show("ROLLING LOG! JUMP!", new Color(0.72f, 0.48f, 0.22f), 1.2f);
             }
             return;
         }
 
         transform.position += Vector3.back * (speed * Time.deltaTime);
-        transform.Rotate(Vector3.right, speed * 22f * Time.deltaTime, Space.Self);
+        rollPivot.Rotate(Vector3.right, speed * 22f * Time.deltaTime, Space.Self);
 
         if (transform.position.z < player.position.z - DespawnBehind)
         {
@@ -72,6 +79,7 @@ public class Level1RollingLog : MonoBehaviour
         if (collisionApplied) return;
         collisionApplied = true;
 
+        ObstacleGuideHUD.NotifyHit("log");
         hud?.ChangeHealth(-Level1Primitives.LogHealthDamage, "A rolling log hit you!");
     }
 

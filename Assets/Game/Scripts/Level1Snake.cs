@@ -238,7 +238,7 @@ public class Level1Snake : MonoBehaviour
         if (approachPopupShown) return;
         approachPopupShown = true;
         Level1FeedbackUI.Show(
-            $"SNAKE APPROACHING! Lane {LevelLanes.DisplayNumber(laneIndex)} — use A or D!",
+            $"SNAKE APPROACHING! Lane {LevelLanes.DisplayNumber(laneIndex)}! Use A or D!",
             new Color(1f, 0.45f, 0.2f),
             2.2f);
     }
@@ -266,7 +266,7 @@ public class Level1Snake : MonoBehaviour
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         hud?.DrainPlayerWater(WaterDamage);
         Level1FeedbackUI.Show(
-            $"-{WaterDamage:0} WATER (snake bite!)",
+            $"LOST {WaterDamage:0} WATER (snake bite!)",
             new Color(0.85f, 0.35f, 0.15f),
             1.4f);
         Debug.Log($"[Level1] Snake hit — water -{WaterDamage:0}");

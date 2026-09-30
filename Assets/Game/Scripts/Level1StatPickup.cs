@@ -39,6 +39,8 @@ public class Level1StatPickup : MonoBehaviour
             }
         }
 
+        GameAudio.PlayPickup();
+
         Collider[] cols = GetComponentsInChildren<Collider>(true);
         for (int i = 0; i < cols.Length; i++)
         {

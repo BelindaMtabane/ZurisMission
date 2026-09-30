@@ -15,6 +15,7 @@ public class Level1AloePickup : MonoBehaviour
         collected = true;
         Level1HeatWave heat = FindFirstObjectByType<Level1HeatWave>();
         heat?.PauseHeatWave(pauseSeconds);
+        GameAudio.PlayPickup();
 
         Debug.Log("[Level1] Aloe collected — heat wave paused 10s");
         gameObject.SetActive(false);

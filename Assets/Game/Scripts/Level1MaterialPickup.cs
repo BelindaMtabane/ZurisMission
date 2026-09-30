@@ -4,7 +4,8 @@ public enum Level1MaterialKind
 {
     Hammer,
     Brick,
-    CementBag
+    CementBag,
+    SandBag
 }
 
 public class Level1MaterialPickup : MonoBehaviour
@@ -29,6 +30,7 @@ public class Level1MaterialPickup : MonoBehaviour
         collected = true;
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         hud?.CollectMaterialPickup(amount);
+        GameAudio.PlayPickup();
 
         Debug.Log($"[Level1] {kind} collected +{amount}");
         gameObject.SetActive(false);

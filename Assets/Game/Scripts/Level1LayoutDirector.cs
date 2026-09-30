@@ -141,6 +141,7 @@ public class Level1LayoutDirector : MonoBehaviour
             GameObject go = all[i];
             if (go == null) continue;
             if (player != null && go.transform.IsChildOf(player)) continue;
+            if (go.layer == 5 || go.GetComponent<ObstacleGuideHUD>() != null) continue;
 
             string n = go.name;
             if (n.StartsWith("Pick") || n.StartsWith("obstacle") || n.StartsWith("Obstacle"))
@@ -149,15 +150,21 @@ public class Level1LayoutDirector : MonoBehaviour
                 continue;
             }
 
-            if (n.StartsWith("Cactus_"))
+            if (n.StartsWith("Cactus_") || n.StartsWith("Rock_") || n.StartsWith("Rock_A") || n.StartsWith("Cliff")
+                || n == "Rock" || n.StartsWith("BoulderWall") || n == "RoadsideBoulderWall"
+                || n.StartsWith("House_House") || n.StartsWith("House_"))
             {
                 Collider[] cols = go.GetComponentsInChildren<Collider>(true);
                 for (int c = 0; c < cols.Length; c++)
                 {
-                    if (cols[c] != null) cols[c].enabled = false;
+                    if (cols[c] == null || cols[c].isTrigger) continue;
+                    Object.Destroy(cols[c]);
                 }
             }
         }
+
+        NaturePackVisuals.ClearRunnerSceneryColliders();
+        NaturePackVisuals.DeactivatePathBlockingRocks();
 
         DisableBehaviours<HeatWaveDirector>();
         DisableBehaviours<SnakePassDirector>();
@@ -197,18 +204,19 @@ public class Level1LayoutDirector : MonoBehaviour
         Level1LayoutPlacement.Reset();
 
         Transform root = new GameObject(RootName).transform;
+        BuildDesertSideLand(root);
         int materialIndex = 0;
 
         // ── LEARN (0–22%): one object per lane slot ──
         MaterialTool(root, 0, 0.03f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
         CactusWater(root, 3, 0.06f);
         MaterialTool(root, 2, 0.08f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        Rock(root, 3, 0.10f);
+        Sand(root, 3, 0.10f);
         MaterialTool(root, 1, 0.125f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
         CactusWater(root, 0, 0.14f);
         Sand(root, 2, 0.16f);
         MaterialTool(root, 3, 0.175f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        Rock(root, 1, 0.20f);
+        Sand(root, 1, 0.20f);
         Health(root, 2, 0.21f);
         CactusWater(root, 0, 0.225f);
         MaterialTool(root, 1, 0.075f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
@@ -222,7 +230,7 @@ public class Level1LayoutDirector : MonoBehaviour
         Sand(root, 2, 0.365f);
         Snake(root, 1, 0.395f);
         CactusWater(root, 2, 0.415f);
-        Rock(root, 0, 0.435f);
+        Sand(root, 0, 0.435f);
         MaterialTool(root, 3, 0.455f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
         Snake(root, 3, 0.475f);
         CactusWall(root, new[] { true, false, true, false }, 0.495f);
@@ -236,7 +244,8 @@ public class Level1LayoutDirector : MonoBehaviour
         RollingLog(root, 2, 0.610f, 2, 13f);
         CactusWater(root, 1, 0.640f);
         MaterialTool(root, 0, 0.665f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
-        RockClusterLanes(root, new[] { 0, 3 }, 0.690f);
+        Sand(root, 0, 0.690f);
+        Sand(root, 3, 0.695f);
         Snake(root, 2, 0.715f);
         CactusWater(root, 3, 0.740f);
         Sand(root, 1, 0.760f);
@@ -251,7 +260,7 @@ public class Level1LayoutDirector : MonoBehaviour
         Snake(root, 1, 0.830f);
         RollingLog(root, 3, 0.855f, 2, 14f);
         CactusWater(root, 0, 0.880f);
-        Rock(root, 2, 0.905f);
+        Sand(root, 2, 0.905f);
         Snake(root, 3, 0.930f);
         MaterialTool(root, 1, 0.805f, MaterialCycle[materialIndex++ % MaterialCycle.Length]);
 
@@ -264,6 +273,72 @@ public class Level1LayoutDirector : MonoBehaviour
 
         PlaceWaterPools(root);
         EnsureFinishTrigger();
+        NaturePackVisuals.ScatterRoadside(root, Level1Progress.StartZ + 20f, Level1Progress.EndZ - 20f, Level1Ground.SurfaceY, 62);
+        NaturePackVisuals.ScatterSideTreesAndGrass(
+            root,
+            Level1Progress.StartZ + 25f,
+            Level1Progress.EndZ - 25f,
+            Level1Ground.SurfaceY,
+            32,
+            115);
+        NaturePackVisuals.FillRoadsideShoulderGaps(
+            root,
+            Level1Progress.StartZ + 18f,
+            Level1Progress.EndZ - 18f,
+            Level1Ground.SurfaceY);
+        RoadsideBoulderScatter.ScatterBoulderWalls(
+            root,
+            Level1Progress.StartZ + 15f,
+            Level1Progress.EndZ - 15f,
+            Level1Ground.SurfaceY);
+        MapleTreeSideScatter.FillRoadsideGaps(
+            root,
+            Level1Progress.StartZ + 22f,
+            Level1Progress.EndZ - 22f,
+            Level1Ground.SurfaceY,
+            20);
+        VillageSideHouses.Scatter(root, Level1Progress.StartZ + 35f, Level1Progress.EndZ - 130f, Level1Ground.SurfaceY, 26);
+        NaturePackVisuals.MovePathRocksFarOut();
+        RoadsideOverlapResolver.Resolve();
+        VillageFinishCourtyard.Build(root, Level1Progress.EndZ, Level1Ground.SurfaceY);
+        NaturePackVisuals.ClearRunnerSceneryColliders();
+        RoadsideBoulderScatter.EnsureVisualOnly();
+    }
+
+    static void BuildDesertSideLand(Transform parent)
+    {
+        float centerZ = (Level1Progress.StartZ + Level1Progress.EndZ) * 0.5f;
+        float length = Level1Progress.EndZ - Level1Progress.StartZ + 8f;
+        float pathCenter = LevelLanes.PathCenterX;
+        const float roadHalfWidth = 25.2f;
+        const float outerExtent = 140f;
+        float sideWidth = outerExtent - roadHalfWidth;
+        float sideOffset = roadHalfWidth + sideWidth * 0.5f;
+        Color desert = new Color(0.76f, 0.61f, 0.39f);
+
+        BuildDesertStrip(parent, "DesertLand_Left",
+            new Vector3(pathCenter - sideOffset, Level1Ground.SurfaceY - 0.5f, centerZ),
+            new Vector3(sideWidth, 1f, length), desert);
+        BuildDesertStrip(parent, "DesertLand_Right",
+            new Vector3(pathCenter + sideOffset, Level1Ground.SurfaceY - 0.5f, centerZ),
+            new Vector3(sideWidth, 1f, length), desert);
+    }
+
+    static void BuildDesertStrip(Transform parent, string name, Vector3 position, Vector3 scale, Color color)
+    {
+        GameObject strip = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        strip.name = name;
+        strip.transform.SetParent(parent, false);
+        strip.transform.position = position;
+        strip.transform.localScale = scale;
+        Collider col = strip.GetComponent<Collider>();
+        if (col != null) col.enabled = false;
+        Renderer rend = strip.GetComponent<Renderer>();
+        if (rend == null) return;
+        Material material = rend.material;
+        if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
+        if (material.HasProperty("_Color")) material.SetColor("_Color", color);
+        material.color = color;
     }
 
     static void EnsureFinishTrigger()

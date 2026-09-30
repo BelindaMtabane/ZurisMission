@@ -39,7 +39,7 @@ public class Level1LowWaterMonitor : MonoBehaviour
         if (!warnedLow && water <= lowThreshold)
         {
             warnedLow = true;
-            Level1FeedbackUI.Show("Water getting low — drink from cactus!", new Color(0.35f, 0.75f, 1f), 2f);
+            Level1FeedbackUI.Show("Water getting low! Drink from cactus!", new Color(0.35f, 0.75f, 1f), 2f);
         }
 
         if (water > lowThreshold + 8f) warnedLow = false;

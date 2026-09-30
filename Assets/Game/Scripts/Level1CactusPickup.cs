@@ -28,9 +28,11 @@ public class Level1CactusPickup : MonoBehaviour
         }
 
         hud.CollectCactusWater(playerWaterAmount, bucketWaterAmount);
+        GameAudio.PlayWaterSplash();
+        GetComponent<CactusHydrationFx>()?.PlayHydrationSplash();
         Level1FeedbackUI.Show(
             $"+{playerWaterAmount:0} WATER  +{bucketWaterAmount:0} BUCKET",
-            new Color(0.25f, 0.82f, 1f),
+            new Color(0.35f, 0.92f, 0.48f),
             1.1f);
         cooldown = collectInterval;
     }

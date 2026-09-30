@@ -46,7 +46,7 @@ public static class Level1Primitives
     public const float LogHealthDamage = 5f;
     public const int LogJumpMaterialLoss = 5;
     public const float JumpLogHalfLength = 1.85f;
-    const float CactusHeightScale = 1.38f;
+    const float CactusHeightScale = 1.30f;
     public const float RollingLogHalfLength = 24f;
     public const float RollingLogRadius = 0.58f;
 
@@ -106,16 +106,20 @@ public static class Level1Primitives
         root.transform.SetParent(parent, false);
         root.transform.position = Level1Ground.LanePosition(lane, z);
 
-        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.98f, 0f), new Vector3(0.72f, 0.98f, 0.72f), Cactus, "Stem");
-        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0.48f, 1.38f, 0f), new Vector3(0.36f, 0.58f, 0.36f), CactusAccent, "ArmR");
-        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(-0.48f, 1.38f, 0f), new Vector3(0.36f, 0.58f, 0.36f), CactusAccent, "ArmL");
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(0f, 1.88f, 0f), new Vector3(0.58f, 0.44f, 0.58f), Cactus, "Top");
-        ScalePlantVisuals(root);
-        root.transform.localScale *= CactusHeightScale;
+        if (!NaturePackVisuals.AttachCactus(root.transform, 4.1f * CactusHeightScale))
+        {
+            Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.98f, 0f), new Vector3(0.72f, 0.98f, 0.72f), Cactus, "Stem");
+            Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0.48f, 1.38f, 0f), new Vector3(0.36f, 0.58f, 0.36f), CactusAccent, "ArmR");
+            Visual(PrimitiveType.Cylinder, root.transform, new Vector3(-0.48f, 1.38f, 0f), new Vector3(0.36f, 0.58f, 0.36f), CactusAccent, "ArmL");
+            Visual(PrimitiveType.Sphere, root.transform, new Vector3(0f, 1.88f, 0f), new Vector3(0.58f, 0.44f, 0.58f), Cactus, "Top");
+            ScalePlantVisuals(root);
+            root.transform.localScale *= CactusHeightScale;
+        }
 
         TallTrigger(root, 2.0f * RunnerVisualScale.PlantBoost * CactusHeightScale, 1.4f * RunnerVisualScale.PlantBoost);
         KinematicBody(root);
-        Level1CactusPickup pickup = root.AddComponent<Level1CactusPickup>();
+        root.AddComponent<Level1CactusPickup>();
+        root.AddComponent<CactusHydrationFx>();
         return root;
     }
 
@@ -125,11 +129,9 @@ public static class Level1Primitives
         root.transform.SetParent(parent, false);
         root.transform.position = Level1Ground.LanePosition(lane, z);
 
-        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.1f, 0f), new Vector3(3.4f, 0.1f, 3.4f), WaterPoolDeep, "PoolBase");
-        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.22f, 0f), new Vector3(2.8f, 0.08f, 2.8f), WaterPool, "PoolSurface");
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(0.6f, 0.35f, 0.4f), new Vector3(0.5f, 0.12f, 0.5f), Color.white, "Ripple");
+        AquisWaterVisuals.BuildLevel1SpringVisuals(root.transform, WaterPool, WaterPoolDeep);
 
-        TallTrigger(root, 3.0f, 3.0f);
+        TallTrigger(root, 4.8f, 4.2f);
         KinematicBody(root);
         AnchorPickup(root);
         root.AddComponent<Level1WaterPoolPickup>();
@@ -189,9 +191,38 @@ public static class Level1Primitives
         }
         else
         {
-            Visual(PrimitiveType.Cube, root.transform, new Vector3(0f, 0.85f, 0f), new Vector3(1.1f, 1.1f, 0.65f), CementBag, "Bag");
-            Visual(PrimitiveType.Cube, root.transform, new Vector3(0f, 1.55f, 0f), new Vector3(0.95f, 0.25f, 0.55f), CementBag * 0.85f, "BagTop");
+            Vector3[] bagPositions =
+            {
+                new Vector3(-0.62f, 0.62f, 0f),
+                new Vector3(0.62f, 0.62f, 0f),
+                new Vector3(0f, 1.32f, 0.06f)
+            };
+            for (int i = 0; i < bagPositions.Length; i++)
+            {
+                GameObject bag = Visual(
+                    PrimitiveType.Capsule,
+                    root.transform,
+                    bagPositions[i],
+                    new Vector3(0.66f, 0.92f, 0.56f),
+                    i == 2 ? CementBag * 0.90f : CementBag,
+                    $"CementBag_{i + 1}");
+                bag.transform.localRotation = Quaternion.Euler(0f, i % 2 == 0 ? -6f : 7f, 90f);
+
+                GameObject band = Visual(
+                    PrimitiveType.Cube,
+                    root.transform,
+                    bagPositions[i] + new Vector3(0f, 0.02f, 0f),
+                    new Vector3(0.12f, 0.72f, 0.60f),
+                    new Color(0.48f, 0.44f, 0.36f),
+                    $"CementBand_{i + 1}");
+                band.transform.localRotation = bag.transform.localRotation;
+            }
         }
+
+        if (kind == Level1MaterialKind.Hammer || kind == Level1MaterialKind.Brick)
+            root.transform.localScale = Vector3.one * 1.35f;
+        else if (kind == Level1MaterialKind.CementBag)
+            root.transform.localScale = Vector3.one * 1.20f;
 
         TallTrigger(root, 1.8f, 1.6f);
         KinematicBody(root);
@@ -273,10 +304,19 @@ public static class Level1Primitives
         root.transform.SetParent(parent, false);
         root.transform.position = new Vector3(midX, Level1Ground.SurfaceY, z);
 
-        GameObject mesh = Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.9f, 0f), new Vector3(1.8f, width * 0.5f, 1.8f), LogBrown, "Log");
-        mesh.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(-width * 0.48f, 0.9f, 0f), new Vector3(1.7f, 1.7f, 1.7f), LogDark, "EndL");
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(width * 0.48f, 0.9f, 0f), new Vector3(1.7f, 1.7f, 1.7f), LogDark, "EndR");
+        Transform rollPivot = NaturePackVisuals.CreateLogRollPivot(root.transform);
+        if (!NaturePackVisuals.AttachLogAcross(rollPivot, 0f, width))
+        {
+            GameObject mesh = Visual(PrimitiveType.Cylinder, rollPivot, new Vector3(0f, 0.9f, 0f), new Vector3(1.8f, width * 0.5f, 1.8f), LogBrown, "Log");
+            mesh.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            Visual(PrimitiveType.Sphere, rollPivot, new Vector3(-width * 0.48f, 0.9f, 0f), new Vector3(1.7f, 1.7f, 1.7f), LogDark, "EndL");
+            Visual(PrimitiveType.Sphere, rollPivot, new Vector3(width * 0.48f, 0.9f, 0f), new Vector3(1.7f, 1.7f, 1.7f), LogDark, "EndR");
+            NaturePackVisuals.AlignRollingLogPivot(rollPivot);
+        }
+        else
+        {
+            NaturePackVisuals.AlignRollingLogPivot(rollPivot);
+        }
 
         BoxCollider box = root.AddComponent<BoxCollider>();
         box.isTrigger = true;
@@ -333,12 +373,15 @@ public static class Level1Primitives
             pillar.transform.SetParent(root.transform, false);
             pillar.transform.localPosition = new Vector3(laneX, 0f, 0f);
 
-            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(0f, 0.72f, 0f), new Vector3(1.15f, 1.45f, 1.15f), SnakeDangerCactus, "Base");
-            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(0f, 1.55f, 0f), new Vector3(0.95f, 1.15f, 0.95f), SnakeDangerCactus, "Mid");
-            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(0.38f, 2.05f, 0f), new Vector3(0.38f, 0.38f, 0.38f), SnakeDangerCactusSpike, "SpikeR");
-            Visual(PrimitiveType.Cube, pillar.transform, new Vector3(-0.38f, 2.05f, 0f), new Vector3(0.38f, 0.38f, 0.38f), SnakeDangerCactusSpike, "SpikeL");
-            ScalePlantVisuals(pillar);
-            pillar.transform.localScale *= CactusHeightScale;
+            if (!NaturePackVisuals.AttachCactus(pillar.transform, 3.6f * CactusHeightScale))
+            {
+                Visual(PrimitiveType.Cube, pillar.transform, new Vector3(0f, 0.72f, 0f), new Vector3(1.15f, 1.45f, 1.15f), SnakeDangerCactus, "Base");
+                Visual(PrimitiveType.Cube, pillar.transform, new Vector3(0f, 1.55f, 0f), new Vector3(0.95f, 1.15f, 0.95f), SnakeDangerCactus, "Mid");
+                Visual(PrimitiveType.Cube, pillar.transform, new Vector3(0.38f, 2.05f, 0f), new Vector3(0.38f, 0.38f, 0.38f), SnakeDangerCactusSpike, "SpikeR");
+                Visual(PrimitiveType.Cube, pillar.transform, new Vector3(-0.38f, 2.05f, 0f), new Vector3(0.38f, 0.38f, 0.38f), SnakeDangerCactusSpike, "SpikeL");
+                ScalePlantVisuals(pillar);
+                pillar.transform.localScale *= CactusHeightScale;
+            }
 
             BoxCollider laneBox = pillar.AddComponent<BoxCollider>();
             laneBox.isTrigger = true;
@@ -368,8 +411,11 @@ public static class Level1Primitives
         for (int i = 0; i < lanes.Length; i++)
         {
             float laneX = LevelLanes.X(lanes[i]);
-            Visual(PrimitiveType.Cube, root.transform, new Vector3(laneX, 0.55f, 0f), new Vector3(1.6f, 1.1f, 1.4f), Rock, $"Boulder_{i}");
-            Visual(PrimitiveType.Sphere, root.transform, new Vector3(laneX + 0.5f, 0.35f, 0.35f), new Vector3(0.9f, 0.7f, 0.9f), Rock, $"Chunk_{i}");
+            if (!NaturePackVisuals.AttachRock(root.transform, 1.5f, new Vector3(laneX, 0f, 0f)))
+            {
+                Visual(PrimitiveType.Cube, root.transform, new Vector3(laneX, 0.55f, 0f), new Vector3(1.6f, 1.1f, 1.4f), Rock, $"Boulder_{i}");
+                Visual(PrimitiveType.Sphere, root.transform, new Vector3(laneX + 0.5f, 0.35f, 0.35f), new Vector3(0.9f, 0.7f, 0.9f), Rock, $"Chunk_{i}");
+            }
         }
 
         TallTrigger(root, 3.6f, 2.2f);
@@ -408,13 +454,28 @@ public static class Level1Primitives
         float halfWidth = (maxX - minX) * 0.5f;
         root.transform.position = new Vector3(mid, Level1Ground.SurfaceY, z);
 
-        HorizontalCactusVisual(root.transform, new Vector3(0f, 0.72f, 0f), halfWidth, Cactus, "CactusBar");
-        int armCount = Mathf.Max(4, lanes.Length * 2);
-        for (int i = 0; i < armCount; i++)
+        int cactusCount = Mathf.Max(3, lanes.Length + 1);
+        bool packed = false;
+        for (int i = 0; i < cactusCount; i++)
         {
-            float t = armCount == 1 ? 0.5f : i / (armCount - 1f);
-            float localX = Mathf.Lerp(-halfWidth * 0.9f, halfWidth * 0.9f, t);
-            Visual(PrimitiveType.Sphere, root.transform, new Vector3(localX, 1.08f, 0f), new Vector3(0.48f, 0.36f, 0.48f), CactusAccent, $"Top_{i}");
+            float t = cactusCount == 1 ? 0.5f : i / (cactusCount - 1f);
+            float localX = Mathf.Lerp(-halfWidth * 0.85f, halfWidth * 0.85f, t);
+            GameObject holder = new GameObject($"PackCactus_{i}");
+            holder.transform.SetParent(root.transform, false);
+            holder.transform.localPosition = new Vector3(localX, 0f, 0f);
+            packed |= NaturePackVisuals.AttachCactus(holder.transform, 2.0f * CactusHeightScale);
+        }
+
+        if (!packed)
+        {
+            HorizontalCactusVisual(root.transform, new Vector3(0f, 0.72f, 0f), halfWidth, Cactus, "CactusBar");
+            int armCount = Mathf.Max(4, lanes.Length * 2);
+            for (int i = 0; i < armCount; i++)
+            {
+                float t = armCount == 1 ? 0.5f : i / (armCount - 1f);
+                float localX = Mathf.Lerp(-halfWidth * 0.9f, halfWidth * 0.9f, t);
+                Visual(PrimitiveType.Sphere, root.transform, new Vector3(localX, 1.08f, 0f), new Vector3(0.48f, 0.36f, 0.48f), CactusAccent, $"Top_{i}");
+            }
         }
 
         BoxCollider box = root.AddComponent<BoxCollider>();
@@ -433,9 +494,12 @@ public static class Level1Primitives
         root.transform.SetParent(parent, false);
         root.transform.position = Level1Ground.LanePosition(lane, z);
 
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(0f, 0.7f, 0f), new Vector3(1.8f, 1.2f, 1.6f), Rock, "Boulder");
-        Visual(PrimitiveType.Cube, root.transform, new Vector3(0.7f, 0.45f, 0.35f), new Vector3(1.0f, 0.8f, 1.0f), Rock, "ChunkA");
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(-0.65f, 0.35f, -0.3f), new Vector3(0.9f, 0.7f, 0.9f), Rock, "ChunkB");
+        if (!NaturePackVisuals.AttachRock(root.transform, 1.6f))
+        {
+            Visual(PrimitiveType.Sphere, root.transform, new Vector3(0f, 0.7f, 0f), new Vector3(1.8f, 1.2f, 1.6f), Rock, "Boulder");
+            Visual(PrimitiveType.Cube, root.transform, new Vector3(0.7f, 0.45f, 0.35f), new Vector3(1.0f, 0.8f, 1.0f), Rock, "ChunkA");
+            Visual(PrimitiveType.Sphere, root.transform, new Vector3(-0.65f, 0.35f, -0.3f), new Vector3(0.9f, 0.7f, 0.9f), Rock, "ChunkB");
+        }
 
         TallTrigger(root, 2.4f, 2.0f);
         Level1Obstacle obstacle = root.AddComponent<Level1Obstacle>();
@@ -445,15 +509,45 @@ public static class Level1Primitives
 
     public static GameObject MakeSandPit(Transform parent, int lane, float z)
     {
-        GameObject root = new GameObject("SandPit");
+        GameObject root = new GameObject("Material_SandBags");
         root.transform.SetParent(parent, false);
         root.transform.position = Level1Ground.LanePosition(lane, z);
 
-        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.12f, 0f), new Vector3(3.2f, 0.12f, 3.2f), Sand, "Pit");
+        Color bagColor = new Color(0.76f, 0.63f, 0.39f);
+        Color seamColor = new Color(0.45f, 0.32f, 0.17f);
+        Vector3[] positions =
+        {
+            new Vector3(-1.1f, 0.58f, -0.48f),
+            new Vector3(1.1f, 0.58f, -0.48f),
+            new Vector3(-0.65f, 1.25f, 0.42f),
+            new Vector3(0.75f, 1.25f, 0.42f)
+        };
 
-        TallTrigger(root, 3.0f, 3.0f);
-        Level1Obstacle obstacle = root.AddComponent<Level1Obstacle>();
-        obstacle.Setup(Level1ObstacleKind.SandPit, SandPitDamage, false);
+        for (int i = 0; i < positions.Length; i++)
+        {
+            GameObject bag = Visual(
+                PrimitiveType.Capsule,
+                root.transform,
+                positions[i],
+                new Vector3(0.82f, 1.15f, 0.68f),
+                i < 2 ? bagColor : bagColor * 0.92f,
+                $"SandBag_{i + 1}");
+            bag.transform.localRotation = Quaternion.Euler(0f, i % 2 == 0 ? -5f : 7f, 90f);
+            Visual(
+                PrimitiveType.Cube,
+                root.transform,
+                positions[i] + new Vector3(0f, 0.03f, 0f),
+                new Vector3(0.12f, 0.88f, 0.72f),
+                seamColor,
+                $"BagTie_{i + 1}").transform.localRotation = bag.transform.localRotation;
+        }
+
+        root.transform.localScale = Vector3.one * 1.25f;
+        TallTrigger(root, 5.2f, 3.2f);
+        KinematicBody(root);
+        AnchorPickup(root);
+        Level1MaterialPickup pickup = root.AddComponent<Level1MaterialPickup>();
+        pickup.Setup(Level1MaterialKind.SandBag, 15);
         return root;
     }
 
@@ -513,14 +607,26 @@ public static class Level1Primitives
         root.transform.position = Level1Ground.LanePosition(lane, z);
 
         float[] rowZ = { -2.8f, -1.4f, 0f, 1.4f, 2.8f, 4.2f, 5.6f };
+        bool packed = false;
         for (int i = 0; i < rowZ.Length; i++)
         {
-            float localZ = rowZ[i];
-            Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.75f, localZ), new Vector3(0.55f, 0.75f, 0.55f), Cactus, $"Stem_{i}");
-            Visual(PrimitiveType.Sphere, root.transform, new Vector3(0.45f, 1.05f, localZ), new Vector3(0.45f, 0.35f, 0.35f), CactusAccent, $"Arm_{i}");
-            if (i % 2 == 0)
+            GameObject holder = new GameObject($"PackCactus_{i}");
+            holder.transform.SetParent(root.transform, false);
+            holder.transform.localPosition = new Vector3(0f, 0f, rowZ[i]);
+            packed |= NaturePackVisuals.AttachCactus(holder.transform, 1.75f * CactusHeightScale);
+        }
+
+        if (!packed)
+        {
+            for (int i = 0; i < rowZ.Length; i++)
             {
-                Visual(PrimitiveType.Sphere, root.transform, new Vector3(-0.4f, 0.95f, localZ + 0.15f), new Vector3(0.38f, 0.32f, 0.32f), Cactus, $"Knob_{i}");
+                float localZ = rowZ[i];
+                Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.75f, localZ), new Vector3(0.55f, 0.75f, 0.55f), Cactus, $"Stem_{i}");
+                Visual(PrimitiveType.Sphere, root.transform, new Vector3(0.45f, 1.05f, localZ), new Vector3(0.45f, 0.35f, 0.35f), CactusAccent, $"Arm_{i}");
+                if (i % 2 == 0)
+                {
+                    Visual(PrimitiveType.Sphere, root.transform, new Vector3(-0.4f, 0.95f, localZ + 0.15f), new Vector3(0.38f, 0.32f, 0.32f), Cactus, $"Knob_{i}");
+                }
             }
         }
 
