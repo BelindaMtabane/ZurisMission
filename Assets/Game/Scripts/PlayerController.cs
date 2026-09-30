@@ -12,9 +12,11 @@ public class PlayerController : MonoBehaviour
     }
 
     [Header("Lane Settings")]
-    [SerializeField] private float[] lanePositions = { -6f, -2f, 2f, 6f };
+    [SerializeField] private float[] lanePositions = { -8.25f, -2.75f, 2.75f, 8.25f };
     [SerializeField] private float laneLerpSpeed = 12f;
     [SerializeField] private int startingLane = 2;
+    [SerializeField] private bool freeLateralMovement = true;
+    [SerializeField] private float lateralMoveSpeed = 17f;
 
     [Header("Movement")]
     [SerializeField] private float baseSpeed = 25f;
@@ -56,8 +58,13 @@ public class PlayerController : MonoBehaviour
     private Rigidbody rb;
     private CapsuleCollider capsule;
     private Animator bodyAnimator;
-    private const string RunAnimState = "locom_f_jogging_30f";
+    private const string RunAnimState = "RunningCarrying";
+    private const string IdleAnimState = "idleCarrying";
+    private const string WalkAnimState = "WalkingCarrying";
+    private const string TenderAnimState = "Tender Placement";
+    private bool showingStartIdle;
     private int currentLane;
+    private float lateralInput;
     private bool isGrounded;
     private float currentSpeed;
     private Coroutine speedModRoutine;
@@ -83,6 +90,7 @@ public class PlayerController : MonoBehaviour
     private readonly System.Collections.Generic.List<InputAction> localActions = new System.Collections.Generic.List<InputAction>();
 
     private bool inputLocked;
+    private bool playingFinishSequence;
     private float speedFruitMultiplier = 1f;
     private float speedFruitTimer;
     private float mudSlowMultiplier = 1f;
@@ -104,6 +112,8 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.constraints = RigidbodyConstraints.FreezeRotation;
         rb.useGravity = true;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         capsule = GetComponent<CapsuleCollider>();
         if (capsule != null)
         {
@@ -111,6 +121,8 @@ public class PlayerController : MonoBehaviour
             defaultCapsuleHeight = capsule.height;
         }
         bodyAnimator = GetComponentInChildren<Animator>();
+        ConfigureCharacterAnimator();
+        ConfigureCharacterMaterials();
     }
 
     void OnEnable()
@@ -144,6 +156,7 @@ public class PlayerController : MonoBehaviour
         if (RunnerPlayerSetup.IsRunnerScene(sceneName))
         {
             ApplyRunnerMovementFeel();
+            SnapToGroundSurface();
         }
 
         if (RunnerLevelPacing.SupportsScene(sceneName))
@@ -162,7 +175,11 @@ public class PlayerController : MonoBehaviour
 
         if (bodyAnimator != null)
         {
-            bodyAnimator.Play(RunAnimState, 0, 0f);
+            bool waiting = RunStateManager.Instance == null
+                           || RunStateManager.Instance.CurrentState == RunStateManager.RunState.WaitingToStart;
+            bodyAnimator.Play(waiting ? IdleAnimState : RunAnimState, 0, 0f);
+            bodyAnimator.Update(0f);
+            showingStartIdle = waiting;
         }
 
         Debug.Log($"[PlayerController] Ready lanes={lanePositions.Length} speed={currentSpeed}");
@@ -170,7 +187,22 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (playingFinishSequence) return;
+        if (IsWaitingToStart())
+        {
+            HoldOnGroundWhileWaiting();
+            return;
+        }
+
         if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
+
+        RestorePlayGravity();
+
+        if (showingStartIdle && bodyAnimator != null)
+        {
+            bodyAnimator.CrossFadeInFixedTime(RunAnimState, 0.16f, 0, 0f);
+            showingStartIdle = false;
+        }
         if (isGrappling) return;
         if (inputLocked) return;
 
@@ -189,11 +221,114 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (playingFinishSequence) return;
+        if (IsWaitingToStart())
+        {
+            HoldOnGroundWhileWaiting();
+            return;
+        }
+
         if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
+
+        RestorePlayGravity();
         if (isGrappling) return;
 
         ApplyExtraGravity();
         MovePlayer();
+        RescueIfFallenThrough();
+    }
+
+    bool IsWaitingToStart()
+    {
+        return RunStateManager.Instance != null
+               && RunStateManager.Instance.CurrentState == RunStateManager.RunState.WaitingToStart;
+    }
+
+    void ConfigureCharacterAnimator()
+    {
+        if (bodyAnimator == null) return;
+
+        bodyAnimator.applyRootMotion = false;
+        // Animate every rendered frame; the interpolated Rigidbody smooths the player root.
+        bodyAnimator.updateMode = AnimatorUpdateMode.Normal;
+        bodyAnimator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+        // Mecanim Foot IK collapses this imported Mixamo leg rig. Avatar retargeting
+        // already supplies the correct foot pose, so do not apply a second correction.
+        bodyAnimator.stabilizeFeet = false;
+        bodyAnimator.speed = 0.82f;
+    }
+
+    void ConfigureCharacterMaterials()
+    {
+        if (bodyAnimator == null) return;
+
+        Shader urpLit = Shader.Find("Universal Render Pipeline/Lit");
+        SkinnedMeshRenderer[] renderers =
+            bodyAnimator.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+
+        for (int r = 0; r < renderers.Length; r++)
+        {
+            SkinnedMeshRenderer skinned = renderers[r];
+            Material[] materials = skinned.materials;
+
+            for (int m = 0; m < materials.Length; m++)
+            {
+                Material mat = materials[m];
+                if (mat == null) continue;
+
+                Texture albedo = mat.HasProperty("_BaseMap") ? mat.GetTexture("_BaseMap")
+                    : mat.HasProperty("_MainTex") ? mat.GetTexture("_MainTex")
+                    : null;
+
+                if (urpLit != null && mat.shader != urpLit)
+                {
+                    Color previousColor = mat.HasProperty("_BaseColor") ? mat.GetColor("_BaseColor")
+                        : mat.HasProperty("_Color") ? mat.GetColor("_Color")
+                        : Color.white;
+                    mat.shader = urpLit;
+                    if (mat.HasProperty("_BaseMap") && albedo != null)
+                        mat.SetTexture("_BaseMap", albedo);
+                    if (mat.HasProperty("_BaseColor"))
+                        mat.SetColor("_BaseColor", previousColor);
+                }
+
+                if (albedo == null && mat.HasProperty("_BaseColor"))
+                    mat.SetColor("_BaseColor", ZuriFallbackColor(skinned.name, mat.name));
+
+                if (mat.HasProperty("_Smoothness"))
+                    mat.SetFloat("_Smoothness", 0.2f);
+            }
+
+            skinned.materials = materials;
+            skinned.updateWhenOffscreen = true;
+        }
+    }
+
+    public void RefreshCharacterAnimator()
+    {
+        bodyAnimator = GetComponentInChildren<Animator>();
+        ConfigureCharacterAnimator();
+        ConfigureCharacterMaterials();
+        if (bodyAnimator != null)
+        {
+            bool waiting = RunStateManager.Instance != null
+                           && RunStateManager.Instance.CurrentState == RunStateManager.RunState.WaitingToStart;
+            bodyAnimator.Play(waiting ? IdleAnimState : RunAnimState, 0, 0f);
+            bodyAnimator.Update(0f);
+            showingStartIdle = waiting;
+        }
+    }
+
+    static Color ZuriFallbackColor(string rendererName, string materialName)
+    {
+        string key = ((rendererName ?? "") + " " + (materialName ?? "")).ToLowerInvariant();
+        if (key.Contains("hair")) return new Color(0.12f, 0.045f, 0.025f);
+        if (key.Contains("body") || key.Contains("skin")) return new Color(0.42f, 0.18f, 0.10f);
+        if (key.Contains("cloth")) return new Color(0.78f, 0.24f, 0.62f);
+        if (key.Contains("sneaker") || key.Contains("shoe")) return new Color(0.12f, 0.30f, 0.85f);
+        if (key.Contains("sock")) return new Color(0.95f, 0.95f, 0.98f);
+        if (key.Contains("lash") || key.Contains("eye")) return new Color(0.04f, 0.025f, 0.02f);
+        return Color.white;
     }
 
     void BindActions()
@@ -327,6 +462,18 @@ public class PlayerController : MonoBehaviour
     void HandleLaneInput()
     {
         Keyboard kb = Keyboard.current;
+        bool leftHeld = IsHeld(laneLeftAction)
+                        || (kb != null && (kb.aKey.isPressed || kb.leftArrowKey.isPressed))
+                        || Input.GetKey(KeyCode.A)
+                        || Input.GetKey(KeyCode.LeftArrow);
+        bool rightHeld = IsHeld(laneRightAction)
+                         || (kb != null && (kb.dKey.isPressed || kb.rightArrowKey.isPressed))
+                         || Input.GetKey(KeyCode.D)
+                         || Input.GetKey(KeyCode.RightArrow);
+        lateralInput = (rightHeld ? 1f : 0f) - (leftHeld ? 1f : 0f);
+
+        if (freeLateralMovement) return;
+
         bool left = WasPressed(laneLeftAction)
                     || (kb != null && (kb.aKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame))
                     || Input.GetKeyDown(KeyCode.A)
@@ -551,12 +698,57 @@ public class PlayerController : MonoBehaviour
         currentLane = Mathf.Clamp(currentLane + direction, 0, lanePositions.Length - 1);
     }
 
+    public void SnapToGroundSurface()
+    {
+        if (rb == null) rb = GetComponent<Rigidbody>();
+        if (capsule == null) capsule = GetComponent<CapsuleCollider>();
+
+        Vector3 p = rb != null ? rb.position : transform.position;
+        p.y = RunnerPlayerSetup.StandingRootY(transform);
+        if (rb != null)
+        {
+            rb.position = p;
+            Vector3 v = rb.linearVelocity;
+            rb.linearVelocity = new Vector3(v.x, Mathf.Max(0f, v.y), v.z);
+        }
+        else
+        {
+            transform.position = p;
+        }
+    }
+
+    void HoldOnGroundWhileWaiting()
+    {
+        if (rb == null) return;
+        rb.useGravity = false;
+        SnapToGroundSurface();
+        rb.linearVelocity = Vector3.zero;
+    }
+
+    void RestorePlayGravity()
+    {
+        if (rb != null && !isGrappling) rb.useGravity = true;
+    }
+
+    void RescueIfFallenThrough()
+    {
+        if (rb == null) return;
+        float surfaceY = RunnerPlayerSetup.SurfaceYForActiveScene();
+        float bottom = capsule != null ? capsule.bounds.min.y : rb.position.y;
+        if (bottom >= surfaceY - 0.45f) return;
+
+        SnapToGroundSurface();
+        Vector3 v = rb.linearVelocity;
+        if (v.y < 0f) rb.linearVelocity = new Vector3(v.x, 0f, v.z);
+    }
+
     void SnapLaneImmediately()
     {
         if (lanePositions == null || lanePositions.Length == 0) return;
         Vector3 p = rb.position;
-        p.x = lanePositions[currentLane];
+        p.x = freeLateralMovement ? LevelLanes.PathCenterX : lanePositions[currentLane];
         rb.position = p;
+        currentLane = NearestLaneIndex(p.x);
     }
 
     void SnapToNearestLane()
@@ -582,7 +774,17 @@ public class PlayerController : MonoBehaviour
 
     float GetNearestLaneX(float x)
     {
+        if (freeLateralMovement) return ClampToPath(x);
         return lanePositions[NearestLaneIndex(x)];
+    }
+
+    float ClampToPath(float x)
+    {
+        if (lanePositions == null || lanePositions.Length == 0) return x;
+        float playerInset = capsule != null ? Mathf.Max(0.5f, capsule.radius) : 0.75f;
+        float minX = lanePositions[0] - LevelLanes.LaneHalfWidth + playerInset;
+        float maxX = lanePositions[lanePositions.Length - 1] + LevelLanes.LaneHalfWidth - playerInset;
+        return Mathf.Clamp(x, minX, maxX);
     }
 
     void ApplyExtraGravity()
@@ -593,8 +795,17 @@ public class PlayerController : MonoBehaviour
 
     void MovePlayer()
     {
-        float targetX = lanePositions[currentLane];
-        float nextX = Mathf.Lerp(rb.position.x, targetX, laneLerpSpeed * Time.fixedDeltaTime);
+        float nextX;
+        if (freeLateralMovement)
+        {
+            nextX = ClampToPath(rb.position.x + lateralInput * lateralMoveSpeed * Time.fixedDeltaTime);
+            currentLane = NearestLaneIndex(nextX);
+        }
+        else
+        {
+            float targetX = lanePositions[currentLane];
+            nextX = Mathf.Lerp(rb.position.x, targetX, laneLerpSpeed * Time.fixedDeltaTime);
+        }
         float nextZ = rb.position.z + (currentSpeed * Time.fixedDeltaTime);
         float yVel = rb.linearVelocity.y;
         rb.MovePosition(new Vector3(nextX, rb.position.y, nextZ));
@@ -637,6 +848,92 @@ public class PlayerController : MonoBehaviour
     public void SetInputLocked(bool locked)
     {
         inputLocked = locked;
+        if (locked) lateralInput = 0f;
+    }
+
+    public IEnumerator PlayFinishSequence()
+    {
+        playingFinishSequence = true;
+        showingStartIdle = false;
+        SetInputLocked(true);
+        EndSlide();
+        isGrappling = false;
+        rb.useGravity = true;
+        rb.linearVelocity = Vector3.zero;
+
+        PlayFinishAnim(WalkAnimState, "WalkingCarrying", 1f);
+
+        const float walkDuration = 1.15f;
+        const float walkSpeed = 2.6f;
+        float elapsed = 0f;
+        while (elapsed < walkDuration)
+        {
+            float dt = Time.deltaTime;
+            Vector3 position = rb.position;
+            position.z += walkSpeed * dt;
+            rb.position = position;
+            elapsed += dt;
+            yield return null;
+        }
+
+        rb.linearVelocity = Vector3.zero;
+        PlayFinishAnim(TenderAnimState, "TenderPlacement", 1f);
+        yield return WaitForAnim(TenderAnimState, 9.5f);
+        HoldFinishPose();
+        yield return new WaitForSeconds(0.35f);
+    }
+
+    void PlayFinishAnim(string stateName, string triggerName, float speed)
+    {
+        if (bodyAnimator == null) return;
+
+        bodyAnimator.speed = speed;
+        bodyAnimator.ResetTrigger("RunningCarrying");
+        bodyAnimator.ResetTrigger("TenderPlacement");
+        bodyAnimator.ResetTrigger("IdleCarrying");
+        bodyAnimator.ResetTrigger("WalkingCarrying");
+        if (!string.IsNullOrEmpty(triggerName))
+            bodyAnimator.SetTrigger(triggerName);
+        bodyAnimator.Play(stateName, 0, 0f);
+        bodyAnimator.Update(0f);
+    }
+
+    IEnumerator WaitForAnim(string stateName, float fallbackSeconds)
+    {
+        if (bodyAnimator == null)
+        {
+            yield return new WaitForSeconds(fallbackSeconds);
+            yield break;
+        }
+
+        float entered = 0f;
+        while (entered < 0.6f && !bodyAnimator.GetCurrentAnimatorStateInfo(0).IsName(stateName))
+        {
+            entered += Time.deltaTime;
+            yield return null;
+        }
+
+        float clipLength = fallbackSeconds;
+        AnimatorClipInfo[] clips = bodyAnimator.GetCurrentAnimatorClipInfo(0);
+        if (clips != null && clips.Length > 0 && clips[0].clip != null)
+            clipLength = clips[0].clip.length;
+
+        float maxWait = (clipLength / Mathf.Max(0.05f, bodyAnimator.speed)) + 0.4f;
+        float waited = 0f;
+        while (waited < maxWait)
+        {
+            AnimatorStateInfo info = bodyAnimator.GetCurrentAnimatorStateInfo(0);
+            if (info.IsName(stateName) && info.normalizedTime >= 0.98f)
+                yield break;
+            waited += Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    void HoldFinishPose()
+    {
+        if (bodyAnimator == null) return;
+        bodyAnimator.speed = 0f;
     }
 
     public void ApplySpeedFruit(float multiplier, float duration)
