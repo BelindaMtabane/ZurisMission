@@ -36,6 +36,7 @@ public class Level3MaterialPickup : MonoBehaviour
         if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
         collected = true;
         FindFirstObjectByType<HUDControls>()?.CollectLevel3Material(kind, amount);
+        GameAudio.PlayPickup();
         gameObject.SetActive(false);
     }
 }
@@ -57,6 +58,7 @@ public class Level3WaterDropletPickup : MonoBehaviour
         collected = true;
         // Water droplets act like health pickups in Level 3.
         FindFirstObjectByType<HUDControls>()?.CollectLevel3Health(amount);
+        GameAudio.PlayPickup();
         gameObject.SetActive(false);
     }
 }
@@ -77,6 +79,7 @@ public class Level3HealthPickup : MonoBehaviour
         if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
         collected = true;
         FindFirstObjectByType<HUDControls>()?.CollectLevel3Health(amount);
+        GameAudio.PlayPickup();
         gameObject.SetActive(false);
     }
 }
@@ -134,7 +137,8 @@ public class Level3SpeedFruitPickup : MonoBehaviour
         PlayerController controller = other.GetComponent<PlayerController>();
         controller?.ApplySpeedModifier(boostSpeed, boostSeconds);
 
-        Level3FeedbackUI.Show("SUPER FRUIT — SPEED BOOST!", new Color(0.2f, 0.95f, 0.25f), 1.2f);
+        Level3FeedbackUI.Show("SUPER FRUIT! SPEED BOOST!", new Color(0.2f, 0.95f, 0.25f), 1.2f);
+        GameAudio.PlayPickup();
         gameObject.SetActive(false);
     }
 }

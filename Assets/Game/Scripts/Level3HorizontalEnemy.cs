@@ -100,6 +100,8 @@ public class Level3HorizontalEnemy : MonoBehaviour
         }
 
         hit = true;
+        ObstacleGuideHUD.NotifyHit("warthog");
+        GameAudio.PlayWarthog();
         FindFirstObjectByType<HUDControls>()?.ChangeHealth(-healthDamage, "A warthog charged into you!");
         Level3FeedbackUI.Show("WARTHOG CHARGE!", new Color(0.9f, 0.25f, 0.15f), 1f);
     }

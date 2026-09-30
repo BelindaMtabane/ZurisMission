@@ -161,7 +161,7 @@ public class Level3LayoutDirector : MonoBehaviour
         {
             Transform child = layoutRoot.GetChild(i);
             if (child == null) continue;
-            if (child.name.Contains("Tank") || child.name.Contains("Boss")) continue;
+            if (child.name.Contains("Tank") || child.name.Contains("Boss") || child.name.Contains("Village")) continue;
             if (child.position.z < cutoff) Destroy(child.gameObject);
         }
     }
@@ -252,6 +252,15 @@ public class Level3LayoutDirector : MonoBehaviour
         FillAliveWorld(layoutRoot, openingEnd);
         PlaceTankDisplays(layoutRoot, repair);
 
+        // Roadside scenery is streamed per ground tile by RunnerEnvironmentStreamer.
+        VillageSideHouses.Scatter(
+            layoutRoot,
+            Level3Progress.StartZ + 40f,
+            Level3Progress.EndZ - 90f,
+            Level3Ground.SurfaceY,
+            64);
+        VillageFinishCourtyard.Build(layoutRoot, Level3Progress.EndZ, Level3Ground.SurfaceY);
+
         Level3BossDirector boss = new GameObject("Level3Boss").AddComponent<Level3BossDirector>();
         boss.transform.SetParent(layoutRoot, false);
         boss.Setup(layoutRoot, 0.955f);
@@ -274,6 +283,7 @@ public class Level3LayoutDirector : MonoBehaviour
         DropletAt(root, 1, z + 4f);
         z += gap + 4f;
         MudAt(root, 2, z);
+        MonsterAt(root, 0, z + 10f);
         DropletAt(root, 1, z + 4f);
         MatAt(root, 3, z + 6f);
         SnakeAt(root, z + 22f, 0.02f);
@@ -308,6 +318,8 @@ public class Level3LayoutDirector : MonoBehaviour
             else if (p < 0.95f)
             {
                 FillPickupBeat(root, beat, lane, z);
+                if (i % 7 == 2)
+                    MonsterAt(root, lane, z + 8f);
                 if (z >= nextHazardZ)
                 {
                     // Intensity escalates with both world progress and urgency
@@ -368,7 +380,7 @@ public class Level3LayoutDirector : MonoBehaviour
                 HealthAt(root, 2, z + 2f);
                 if (Random.value < 0.55f) MudAt(root, 3, z + 6f);
                 break;
-            case 3: MatAt(root, 1, z); RockAt(root, 2, z); MudAt(root, 0, z + 5f); break;
+            case 3: MatAt(root, 1, z); RockAt(root, 2, z); MudAt(root, 0, z + 5f); MonsterAt(root, (lane + 2) % 4, z + 11f); break;
             case 4: DropletAt(root, 2, z); if (Random.value < 0.5f) MudAt(root, 1, z + 4f); break;
             default:
                 DropletAt(root, (lane + 1) % 4, z);
@@ -424,6 +436,7 @@ public class Level3LayoutDirector : MonoBehaviour
                     TreeAt(root, lane % 4, z + 5f);
                     TreeAt(root, (lane + 2) % 4, z + 11f);
                     MudAt(root, (lane + 1) % 4, z + 16f);
+                    MonsterAt(root, (lane + 3) % 4, z + 22f);
                     break;
                 case 4:
                     AcidClusterAt(root, z, p);
@@ -472,6 +485,7 @@ public class Level3LayoutDirector : MonoBehaviour
                     TreeAt(root, (lane + 3) % 4, z + 4f);
                     MudAt(root, lane, z + 9f);
                     TreeAt(root, (lane + 1) % 4, z + 14f);
+                    MonsterAt(root, (lane + 2) % 4, z + 20f);
                     break;
                 case 3:
                     WarthogAt(root, z, pace, true);
@@ -532,6 +546,7 @@ public class Level3LayoutDirector : MonoBehaviour
                     TreeAt(root, (lane + 2) % 4, z + 3f);
                     TreeAt(root, (lane + 3) % 4, z + 11f);
                     MudAt(root, (lane + 1) % 4, z + 16f);
+                    MonsterAt(root, lane, z + 22f);
                     break;
             }
             return;
@@ -589,7 +604,7 @@ public class Level3LayoutDirector : MonoBehaviour
         switch (fallback)
         {
             case 0: LightningClusterAt(root, z, p); DropletAt(root, (lane + 2) % 4, z); break;
-            case 1: MudAt(root, lane, z); MatAt(root, (lane + 1) % 4, z); MudAt(root, (lane + 2) % 4, z + 6f); break;
+            case 1: MudAt(root, lane, z); MonsterAt(root, (lane + 1) % 4, z + 6f); break;
             case 2: AcidClusterAt(root, z, p); HealthAt(root, (lane + 2) % 4, z + 6f); break;
             case 3: LogAt(root, lane % 3, z, p); DropletAt(root, (lane + 3) % 4, z); break;
             case 4:
@@ -597,7 +612,7 @@ public class Level3LayoutDirector : MonoBehaviour
                 else TreeAt(root, lane, z);
                 HealthAt(root, (lane + 2) % 4, z);
                 break;
-            default: MudAt(root, lane, z); MudAt(root, (lane + 1) % 4, z + 5f); LightningClusterAt(root, z + 10f, p); break;
+            default: MudAt(root, lane, z); MonsterAt(root, (lane + 1) % 4, z + 6f); LightningClusterAt(root, z + 12f, p); break;
         }
     }
 
@@ -786,6 +801,20 @@ public class Level3LayoutDirector : MonoBehaviour
         Level3Primitives.MakeTree(root, randomLane, safeZ);
         director?.ReserveLane(randomLane, safeZ);
     }
+    static void MonsterAt(Transform root, int lane, float z)
+    {
+        Level3LayoutDirector director = FindFirstObjectByType<Level3LayoutDirector>();
+        int randomLane = director != null
+            ? director.FindFreeLane(lane, z, Level3Config.MinimumHazardSpacing)
+            : Random.Range(0, LevelLanes.Count);
+        float safeZ = director != null
+            ? director.FindFreeZ(randomLane, z, Level3Config.MinimumHazardSpacing)
+            : z;
+        float progress = Level3Progress.Normalized(safeZ);
+        Level2Primitives.MakeMudMonster(root, randomLane, safeZ, progress);
+        director?.ReserveLane(randomLane, safeZ);
+    }
+
     static void MudAt(Transform root, int lane, float z)
     {
         Level3LayoutDirector director = FindFirstObjectByType<Level3LayoutDirector>();
@@ -841,12 +870,7 @@ public class Level3LayoutDirector : MonoBehaviour
 
     void LogAt(Transform root, int lane, float z, float p)
     {
-        int span = p >= 0.5f ? 3 : 2;
-        int startLane = FindFreeSpanStart(Random.Range(0, LevelLanes.Count - span + 1), span, z, Level3Config.MinimumHazardSpacing);
-        z = FindFreeZ(startLane, z, Level3Config.MinimumHazardSpacing);
-        Level3Primitives.MakeRollingLog(root, startLane, z, span);
-        for (int i = 0; i < span; i++) ReserveLane(startLane + i, z);
-        LogSpawn(span >= 3 ? "RollingLog3" : "RollingLog2", startLane, z);
+        // Rolling logs are not used in Level 3.
     }
 
     void SpeedFruitAt(Transform root, int lane, float z)

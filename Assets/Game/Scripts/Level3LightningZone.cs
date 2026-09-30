@@ -21,6 +21,8 @@ public class Level3LightningZone : MonoBehaviour
     int countdown;
     bool damaged;
     Transform player;
+    Renderer[] boltRenderers;
+    Light boltLight;
 
     bool ShouldShowCountdown()
     {
@@ -34,7 +36,12 @@ public class Level3LightningZone : MonoBehaviour
         laneIndex = Mathf.Clamp(lane, 0, LevelLanes.Count - 1);
         warningRoot = warning;
         boltRoot = bolt;
-        if (boltRoot != null) boltRoot.SetActive(false);
+        if (boltRoot != null)
+        {
+            boltRenderers = boltRoot.GetComponentsInChildren<Renderer>(true);
+            boltLight = boltRoot.GetComponentInChildren<Light>(true);
+            boltRoot.SetActive(false);
+        }
     }
 
     void Update()
@@ -55,7 +62,7 @@ public class Level3LightningZone : MonoBehaviour
                     if (showCountdown)
                     {
                         Level3FeedbackUI.Show(
-                            $"LIGHTNING STRIKE IN LANE {LevelLanes.DisplayNumber(laneIndex)} — {Level3Config.LightningWarningSeconds:0} SECONDS!",
+                            $"LIGHTNING STRIKE IN LANE {LevelLanes.DisplayNumber(laneIndex)}! {Level3Config.LightningWarningSeconds:0} SECONDS!",
                             new Color(1f, 0.92f, 0.25f),
                             Level3Config.LightningWarningSeconds + 1f);
                     }
@@ -83,12 +90,7 @@ public class Level3LightningZone : MonoBehaviour
                     }
                     else
                     {
-                        phase = Phase.Strike;
-                        timer = 3f;   // bolt stays visible for 3 seconds
-                        if (warningRoot != null) warningRoot.SetActive(false);
-                        if (boltRoot != null) boltRoot.SetActive(true);
-                        Level3FeedbackUI.Show("STRIKE!", new Color(1f, 1f, 0.5f), 0.8f);
-                        TryDamagePlayer();
+                        BeginStrike();
                     }
                 }
                 break;
@@ -99,12 +101,7 @@ public class Level3LightningZone : MonoBehaviour
                     countdown--;
                     if (countdown <= 0)
                     {
-                        phase = Phase.Strike;
-                        timer = 3f;   // bolt stays visible for 3 seconds
-                        if (warningRoot != null) warningRoot.SetActive(false);
-                        if (boltRoot != null) boltRoot.SetActive(true);
-                        Level3FeedbackUI.Show("STRIKE!", new Color(1f, 1f, 0.5f), 0.8f);
-                        TryDamagePlayer();
+                        BeginStrike();
                     }
                     else
                     {
@@ -114,6 +111,7 @@ public class Level3LightningZone : MonoBehaviour
                 break;
             case Phase.Strike:
                 timer -= Time.deltaTime;
+                AnimateStrike();
                 TryDamagePlayer();
                 if (timer <= 0f)
                 {
@@ -122,6 +120,30 @@ public class Level3LightningZone : MonoBehaviour
                 }
                 break;
         }
+    }
+
+    void BeginStrike()
+    {
+        phase = Phase.Strike;
+        timer = 3f;
+        if (warningRoot != null) warningRoot.SetActive(false);
+        if (boltRoot != null) boltRoot.SetActive(true);
+        GameAudio.PlayThunder();
+        Level3PipeRepair.NotifyLightningMaintenance();
+        TryDamagePlayer();
+    }
+
+    void AnimateStrike()
+    {
+        bool flashOn = Mathf.Sin(Time.time * 43f) + Mathf.Sin(Time.time * 19f) > -0.35f;
+        if (boltRenderers != null)
+        {
+            for (int i = 0; i < boltRenderers.Length; i++)
+                if (boltRenderers[i] != null) boltRenderers[i].enabled = flashOn;
+        }
+
+        if (boltLight != null)
+            boltLight.intensity = flashOn ? 4.5f + Mathf.Abs(Mathf.Sin(Time.time * 31f)) * 3.5f : 0.15f;
     }
 
     void ShowCountdown()
@@ -144,6 +166,7 @@ public class Level3LightningZone : MonoBehaviour
         // No "jumped clear" immunity: contact always damages.
 
         damaged = true;
+        ObstacleGuideHUD.NotifyHit("lightning");
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         hud?.ChangeHealth(-Level3Config.LightningHealthDamage, "Lightning struck you!");
         Level3FeedbackUI.Show("LIGHTNING STRUCK!", new Color(1f, 0.95f, 0.35f), 1.1f);
@@ -165,6 +188,7 @@ public class Level3LightningZone : MonoBehaviour
         if (playerLane != laneIndex) return;
 
         damaged = true;
+        ObstacleGuideHUD.NotifyHit("lightning");
         FindFirstObjectByType<HUDControls>()?.ChangeHealth(-Level3Config.LightningHealthDamage, "Lightning struck you!");
         Level3FeedbackUI.Show("LIGHTNING STRUCK!", new Color(1f, 0.95f, 0.35f), 1.1f);
     }

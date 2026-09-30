@@ -126,10 +126,11 @@ public class Level3LeafProtection : MonoBehaviour
         rt.sizeDelta = new Vector2(240f, 36f);
         timerText = overlayRoot.AddComponent<TextMeshProUGUI>();
         if (TMP_Settings.defaultFontAsset != null) timerText.font = TMP_Settings.defaultFontAsset;
-        timerText.fontSize = 22f;
+        timerText.fontSize = 26f;
         timerText.fontStyle = FontStyles.Bold;
         timerText.alignment = TextAlignmentOptions.Center;
-        timerText.color = new Color(0.45f, 0.95f, 0.4f);
+        timerText.color = HudTextStyle.Body;
+        HudTextStyle.ApplyOutline(timerText);
         timerText.raycastTarget = false;
     }
 

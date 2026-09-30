@@ -35,6 +35,8 @@ public class Level3Obstacle : MonoBehaviour
         {
             if (applied) return;
             applied = true;
+            ObstacleGuideHUD.NotifyHit("mud");
+            GameAudio.PlayMud();
             FindFirstObjectByType<HUDControls>()?.BreakMaterials(Level3Config.MudMaterialLoss);
             controller?.ApplySpeedModifier(controller.CurrentSpeed * 0.45f, 2.2f);
             return;
@@ -45,6 +47,7 @@ public class Level3Obstacle : MonoBehaviour
         {
             if (applied) return;
             applied = true;
+            ObstacleGuideHUD.NotifyHit("log");
             HUDControls hud = FindFirstObjectByType<HUDControls>();
             // Trees no longer damage health on contact; they only break materials.
             hud?.BreakMaterials(Level3Config.TreeMaterialLoss);

@@ -60,6 +60,7 @@ public class PipeControlslevel3 : MonoBehaviour
         if (playerMovement == null)
             playerMovement = FindFirstObjectByType<PlayerMovementOG>();
         VillageProgress();
+        HideTankLabels();
 
         // Push ourselves to InventoryUI so it always has a valid reference,
         // regardless of object-activation state or script-execution order.
@@ -71,14 +72,19 @@ public class PipeControlslevel3 : MonoBehaviour
         UpdateUI();
     }
 
+    void HideTankLabels()
+    {
+        if (tank1 != null) tank1.gameObject.SetActive(false);
+        if (tank2 != null) tank2.gameObject.SetActive(false);
+        if (tank3 != null) tank3.gameObject.SetActive(false);
+    }
+
     void UpdateUI()
     {
-        material.text          = $"Material: {materialLevel}";
-        healthText.text        = $"Health: {health:F0}";
-        tank1.text             = $"Tank 1: {tank1Amount}%";
-        tank2.text             = $"Tank 2: {tank2Amount}%";
-        tank3.text             = $"Tank 3: {tank3Amount}%";
-        villageProgressText.text = $"Village Progress: {villageLevel:F0}%";
+        if (material != null) material.text = $"Material: {materialLevel}";
+        if (healthText != null) healthText.text = $"Health: {health:F0}";
+        if (villageProgressText != null)
+            villageProgressText.text = $"Village Progress: {villageLevel:F0}%";
     }
 
     // ── Speed ─────────────────────────────────────────────────────────────
@@ -150,7 +156,8 @@ public class PipeControlslevel3 : MonoBehaviour
             }
         }
 
-        string summary = $"Collected — Pipes:{gained0} Screws:{gained1} Paste:{gained2} Taps:{gained3}";
+        string summary = $"Collected Pipes:{gained0} Screws:{gained1} Paste:{gained2} Taps:{gained3}";
+        GameAudio.PlayPickup();
         GameInfoUI.Post(summary, GameInfoUI.MsgType.Pickup);
         Debug.Log($"TankMaterialINC: {summary}");
     }
@@ -277,19 +284,19 @@ public class PipeControlslevel3 : MonoBehaviour
         if (other.CompareTag("PipeFix1"))
         {
             NearbyPipe = PipeZone.Pipe1;
-            GameInfoUI.Post("Near Pipe Joint 1 — open inventory and press USE!", GameInfoUI.MsgType.Interaction);
+            GameInfoUI.Post("Near Pipe Joint 1. Open inventory and press USE!", GameInfoUI.MsgType.Interaction);
             return;
         }
         if (other.CompareTag("PipeFix2"))
         {
             NearbyPipe = PipeZone.Pipe2;
-            GameInfoUI.Post("Near Water Tap — open inventory and press USE!", GameInfoUI.MsgType.Interaction);
+            GameInfoUI.Post("Near Water Tap. Open inventory and press USE!", GameInfoUI.MsgType.Interaction);
             return;
         }
         if (other.CompareTag("PipeFix3"))
         {
             NearbyPipe = PipeZone.Pipe3;
-            GameInfoUI.Post("Near Storage Tank — open inventory and press USE!", GameInfoUI.MsgType.Interaction);
+            GameInfoUI.Post("Near Storage Tank. Open inventory and press USE!", GameInfoUI.MsgType.Interaction);
             return;
         }
 
@@ -332,8 +339,14 @@ public class PipeControlslevel3 : MonoBehaviour
             hasHit = true;
             LevelProgress();
             GameInfoUI.Post("Zuri completed the mission! The village is saved!", GameInfoUI.MsgType.Win);
-            if (EndLevelDialogue.Instance != null)
-                EndLevelDialogue.Instance.ShowForLevel(3);
+            HUDControls hud = FindFirstObjectByType<HUDControls>();
+            if (hud != null)
+            {
+                if (RunStateManager.Instance != null)
+                    RunStateManager.Instance.BeginFinishSequence(hud.LevelProgress);
+                else
+                    hud.LevelProgress();
+            }
         }
         if (other.CompareTag("AnimalAttack"))
         {

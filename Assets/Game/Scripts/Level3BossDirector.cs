@@ -50,7 +50,7 @@ public class Level3BossDirector : MonoBehaviour
                 {
                     phase = Phase.Lightning;
                     timer = 3.5f;
-                    Level3FeedbackUI.Show("FINAL CHALLENGE — LIGHTNING!", new Color(1f, 0.92f, 0.25f), 2f);
+                    Level3FeedbackUI.Show("FINAL CHALLENGE! LIGHTNING!", new Color(1f, 0.92f, 0.25f), 2f);
                 }
                 break;
             case Phase.Lightning:
@@ -94,7 +94,7 @@ public class Level3BossDirector : MonoBehaviour
                 {
                     phase = Phase.Mud;
                     timer = 3.5f;
-                    Level3FeedbackUI.Show("MUD — JUMP OR LOSE MATERIALS!", new Color(0.62f, 0.42f, 0.18f), 1.6f);
+                    Level3FeedbackUI.Show("MUD! JUMP OR LOSE MATERIALS!", new Color(0.62f, 0.42f, 0.18f), 1.6f);
                 }
                 break;
             case Phase.Mud:

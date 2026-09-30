@@ -96,7 +96,10 @@ public static class Level3Primitives
         GameObject root = new GameObject("Rock");
         root.transform.SetParent(parent, false);
         root.transform.position = Level3Ground.LanePosition(lane, z);
-        Visual(PrimitiveType.Cube, root.transform, new Vector3(0f, 0.55f, 0f), new Vector3(1.45f, 1.05f, 1.25f), Rock, "Boulder");
+        if (!NaturePackVisuals.AttachRock(root.transform, 1.35f))
+        {
+            Visual(PrimitiveType.Cube, root.transform, new Vector3(0f, 0.55f, 0f), new Vector3(1.45f, 1.05f, 1.25f), Rock, "Boulder");
+        }
         TallTrigger(root, 1.55f, 1.4f);
         Kinematic(root);
         root.AddComponent<Level3Obstacle>().Setup(Level3ObstacleKind.Rock, true);
@@ -108,9 +111,12 @@ public static class Level3Primitives
         GameObject root = new GameObject("Tree");
         root.transform.SetParent(parent, false);
         root.transform.position = Level3Ground.LanePosition(lane, z);
-        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 3.6f, 0f), new Vector3(0.7f, 3.6f, 0.7f), TreeTrunk, "Trunk");
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(0f, 7.6f, 0f), new Vector3(3.4f, 3.2f, 3.4f), TreeLeaves, "Canopy");
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(0.7f, 8.2f, 0.4f), new Vector3(2.1f, 1.9f, 2.1f), TreeLeaves * 0.85f, "CanopyB");
+        if (!NaturePackVisuals.AttachTree(root.transform, 8.8f))
+        {
+            Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 3.6f, 0f), new Vector3(0.7f, 3.6f, 0.7f), TreeTrunk, "Trunk");
+            Visual(PrimitiveType.Sphere, root.transform, new Vector3(0f, 7.6f, 0f), new Vector3(3.4f, 3.2f, 3.4f), TreeLeaves, "Canopy");
+            Visual(PrimitiveType.Sphere, root.transform, new Vector3(0.7f, 8.2f, 0.4f), new Vector3(2.1f, 1.9f, 2.1f), TreeLeaves * 0.85f, "CanopyB");
+        }
         TallTrigger(root, 2.1f, 2.1f, 9f, 3.6f);
         Kinematic(root);
         root.AddComponent<Level3Obstacle>().Setup(Level3ObstacleKind.Tree, false);
@@ -500,14 +506,15 @@ public static class Level3Primitives
 
         GameObject bolt = new GameObject("Bolt");
         bolt.transform.SetParent(root.transform, false);
-        // Tall neon-yellow outer column — reaches high into the sky
-        GameObject outer = Visual(PrimitiveType.Cylinder, bolt.transform,
-            new Vector3(0f, 22f, 0f), new Vector3(0.75f, 22f, 0.75f), Lightning, "Outer");
-        MakeTransparent(outer.GetComponent<Renderer>(), new Color(1f, 0.95f, 0.05f, 0.88f));
-        // Bright white-yellow inner core — taller than the outer for a glow-through effect
-        GameObject core = Visual(PrimitiveType.Cylinder, bolt.transform,
-            new Vector3(0f, 22f, 0f), new Vector3(0.28f, 23f, 0.28f), LightningCore, "Core");
-        MakeTransparent(core.GetComponent<Renderer>(), new Color(1f, 1f, 0.85f, 0.95f));
+        if (!AttachLightningPackFx(bolt.transform))
+        {
+            GameObject outer = Visual(PrimitiveType.Cylinder, bolt.transform,
+                new Vector3(0f, 22f, 0f), new Vector3(0.75f, 22f, 0.75f), Lightning, "Outer");
+            MakeTransparent(outer.GetComponent<Renderer>(), new Color(1f, 0.95f, 0.05f, 0.88f));
+            GameObject core = Visual(PrimitiveType.Cylinder, bolt.transform,
+                new Vector3(0f, 22f, 0f), new Vector3(0.28f, 23f, 0.28f), LightningCore, "Core");
+            MakeTransparent(core.GetComponent<Renderer>(), new Color(1f, 1f, 0.85f, 0.95f));
+        }
         // Wide ground-flash ring at the base
         GameObject flash = Visual(PrimitiveType.Cylinder, bolt.transform,
             new Vector3(0f, 0.05f, 0f), new Vector3(2.8f, 0.07f, 2.8f), Lightning, "GroundFlash");
@@ -524,13 +531,43 @@ public static class Level3Primitives
         return root;
     }
 
+    static bool AttachLightningPackFx(Transform parent)
+    {
+        GameObject prefab = Resources.Load<GameObject>("Weather/Lightning");
+        if (prefab == null) return false;
+
+        for (int i = 0; i < 4; i++)
+        {
+            GameObject strike = Object.Instantiate(prefab, parent, false);
+            strike.name = $"FX_LightningII_{i}";
+            strike.transform.localPosition = new Vector3(0f, 22f, 0f);
+            strike.transform.localRotation = Quaternion.Euler(0f, i * 90f, 0f);
+            strike.transform.localScale = new Vector3(8.5f, 44f, 1f);
+            Collider[] colliders = strike.GetComponentsInChildren<Collider>(true);
+            for (int c = 0; c < colliders.Length; c++)
+                if (colliders[c] != null) colliders[c].enabled = false;
+        }
+
+        GameObject lightObject = new GameObject("LightningFlashLight");
+        lightObject.transform.SetParent(parent, false);
+        lightObject.transform.localPosition = new Vector3(0f, 8f, 0f);
+        Light flashLight = lightObject.AddComponent<Light>();
+        flashLight.type = LightType.Point;
+        flashLight.color = new Color(0.72f, 0.84f, 1f);
+        flashLight.intensity = 5.5f;
+        flashLight.range = 38f;
+        flashLight.shadows = LightShadows.None;
+        return true;
+    }
+
     public static GameObject MakeTankDisplay(Transform parent, int tankIndex, int lane, float z, Level3PipeRepair repair)
     {
         GameObject root = new GameObject($"Tank{tankIndex + 1}_Display");
         root.transform.SetParent(parent, false);
         root.transform.position = Level3Ground.LanePosition(lane, z);
 
-        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 1.2f, 0f), new Vector3(2.2f, 1.2f, 2.2f), Tank, "TankBody");
+        GameObject body = Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 1.2f, 0f), new Vector3(2.2f, 1.2f, 2.2f), Tank, "TankBody");
+        YoyoTankWrap.Apply(body.GetComponent<Renderer>(), YoyoTankColor.Blue);
         GameObject fill = Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.6f, 0f), new Vector3(2f, 0.6f, 2f), new Color(0.3f, 0.55f, 0.85f), "Fill");
 
         GameObject flow = Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.35f, 1.2f), new Vector3(0.22f, 0.25f, 0.22f), WaterFlow, "Flow");
@@ -589,6 +626,7 @@ public static class Level3Primitives
         repair.BindFx(point);
 
         Visual(PrimitiveType.Cube, root.transform, new Vector3(0f, topY + 0.7f, 0f), new Vector3(1.8f, 0.35f, 0.2f), YellowRepair, "TankLabel");
+        StackRepairMaterials(root.transform, span);
 
         Kinematic(root);
         if (Level3Config.EnableSpawnDebug)
@@ -597,6 +635,62 @@ public static class Level3Primitives
         }
 
         return root;
+    }
+
+    static void StackRepairMaterials(Transform parent, float span)
+    {
+        Color brick = new Color(0.72f, 0.32f, 0.18f);
+        Color brickDark = new Color(0.52f, 0.22f, 0.12f);
+        Color bag = new Color(0.76f, 0.63f, 0.39f);
+        Color bagSeam = new Color(0.45f, 0.32f, 0.17f);
+
+        float half = Mathf.Max(1.6f, span * 0.42f);
+        Vector3[] brickPos =
+        {
+            new Vector3(-half * 0.55f, 0.28f, 1.15f),
+            new Vector3(-half * 0.55f, 0.62f, 1.15f),
+            new Vector3(-half * 0.18f, 0.28f, 1.25f),
+            new Vector3(half * 0.22f, 0.28f, 1.2f),
+            new Vector3(half * 0.55f, 0.28f, 1.15f),
+            new Vector3(half * 0.55f, 0.62f, 1.15f)
+        };
+        for (int i = 0; i < brickPos.Length; i++)
+        {
+            GameObject block = Visual(PrimitiveType.Cube, parent, brickPos[i],
+                new Vector3(0.72f, 0.32f, 0.38f), i % 2 == 0 ? brick : brickDark, $"Brick_{i + 1}");
+            block.transform.localRotation = Quaternion.Euler(0f, (i * 17f) % 40f - 18f, 0f);
+        }
+
+        Vector3[] bagPos =
+        {
+            new Vector3(-half * 0.85f, 0.42f, -1.05f),
+            new Vector3(-half * 0.35f, 0.42f, -1.15f),
+            new Vector3(half * 0.35f, 0.42f, -1.1f),
+            new Vector3(half * 0.85f, 0.42f, -1.05f),
+            new Vector3(-half * 0.15f, 0.95f, -1.0f)
+        };
+        for (int i = 0; i < bagPos.Length; i++)
+        {
+            GameObject sandBag = Visual(PrimitiveType.Capsule, parent, bagPos[i],
+                new Vector3(0.72f, 0.95f, 0.58f), i == 4 ? bag * 0.9f : bag, $"SandBag_{i + 1}");
+            sandBag.transform.localRotation = Quaternion.Euler(0f, i % 2 == 0 ? -12f : 14f, 90f);
+            Visual(PrimitiveType.Cube, parent, bagPos[i] + new Vector3(0f, 0.02f, 0f),
+                new Vector3(0.1f, 0.78f, 0.62f), bagSeam, $"BagTie_{i + 1}")
+                .transform.localRotation = sandBag.transform.localRotation;
+        }
+
+        Vector3[] pipePos =
+        {
+            new Vector3(-half * 0.7f, 0.22f, 0.15f),
+            new Vector3(0f, 0.22f, 0.35f),
+            new Vector3(half * 0.7f, 0.22f, 0.1f)
+        };
+        for (int i = 0; i < pipePos.Length; i++)
+        {
+            GameObject length = Visual(PrimitiveType.Cylinder, parent, pipePos[i],
+                new Vector3(0.22f, 0.85f, 0.22f), PipeMetal, $"RepairPipe_{i + 1}");
+            length.transform.localRotation = Quaternion.Euler(90f, 18f + i * 28f, 0f);
+        }
     }
 
     public static GameObject MakeBossRepair(Transform parent, int lane, float z)
@@ -637,7 +731,8 @@ public static class Level3Primitives
             new Vector3(0f, colCenterY, 0f),
             new Vector3(colRadius, colHalfH, colRadius),
             Acid, "Outer");
-        MakeTransparent(outer.GetComponent<Renderer>(), new Color(0.45f, 0.95f, 0.22f, 0.30f));
+        MakeTransparent(outer.GetComponent<Renderer>(), new Color(0.45f, 0.95f, 0.22f, 0.10f));
+        BuildAcidRainParticles(active.transform);
 
         warning.SetActive(false);
         active.SetActive(false);
@@ -650,6 +745,65 @@ public static class Level3Primitives
         Kinematic(root);
         root.AddComponent<Level3AcidRainZone>().Setup(lane, warning, active);
         return root;
+    }
+
+    static void BuildAcidRainParticles(Transform parent)
+    {
+        GameObject rainObject = new GameObject("RainParticles");
+        rainObject.transform.SetParent(parent, false);
+        rainObject.transform.localPosition = new Vector3(0f, 36f, 0f);
+
+        ParticleSystem rain = rainObject.AddComponent<ParticleSystem>();
+        var main = rain.main;
+        main.loop = true;
+        main.playOnAwake = true;
+        main.simulationSpace = ParticleSystemSimulationSpace.Local;
+        main.startLifetime = new ParticleSystem.MinMaxCurve(1.15f, 1.45f);
+        main.startSpeed = 0f;
+        main.startSize = new ParticleSystem.MinMaxCurve(0.035f, 0.085f);
+        main.startColor = new ParticleSystem.MinMaxGradient(
+            new Color(0.38f, 0.95f, 0.48f, 0.82f),
+            new Color(0.62f, 1f, 0.72f, 0.95f));
+        main.maxParticles = 1400;
+
+        var emission = rain.emission;
+        emission.rateOverTime = 420f;
+
+        var shape = rain.shape;
+        shape.enabled = true;
+        shape.shapeType = ParticleSystemShapeType.Box;
+        shape.scale = new Vector3(4f, 0.35f, 4f);
+
+        var velocity = rain.velocityOverLifetime;
+        velocity.enabled = true;
+        velocity.space = ParticleSystemSimulationSpace.Local;
+        velocity.y = new ParticleSystem.MinMaxCurve(-30f, -25f);
+        velocity.x = new ParticleSystem.MinMaxCurve(-6f, 6f);
+        velocity.z = new ParticleSystem.MinMaxCurve(-5f, 5f);
+
+        var noise = rain.noise;
+        noise.enabled = true;
+        noise.strength = 0.16f;
+        noise.frequency = 0.35f;
+        noise.scrollSpeed = 0.25f;
+
+        ParticleSystemRenderer renderer = rainObject.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.Stretch;
+        renderer.lengthScale = 4.5f;
+        renderer.velocityScale = 0.06f;
+        renderer.cameraVelocityScale = 0f;
+
+        Material waterMaterial = NamuWaterFxLibrary.LoadTrailMaterial();
+        if (waterMaterial != null)
+        {
+            Material rainMaterial = new Material(waterMaterial);
+            Color tint = new Color(0.40f, 1f, 0.52f, 0.88f);
+            if (rainMaterial.HasProperty("_BaseColor")) rainMaterial.SetColor("_BaseColor", tint);
+            if (rainMaterial.HasProperty("_Color")) rainMaterial.SetColor("_Color", tint);
+            renderer.material = rainMaterial;
+        }
+
+        rain.Play(true);
     }
 
     public static GameObject MakeRollingLog(Transform parent, int lane, float z, int laneSpan = 2)
@@ -666,10 +820,19 @@ public static class Level3Primitives
         root.transform.SetParent(parent, false);
         root.transform.position = new Vector3(midX, Level3Ground.SurfaceY, z);
 
-        GameObject mesh = Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.72f, 0f), new Vector3(1.45f, width * 0.5f, 1.45f), LogBark, "Log");
-        mesh.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(-width * 0.48f, 0.72f, 0f), new Vector3(1.35f, 1.35f, 1.35f), LogDark, "EndL");
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(width * 0.48f, 0.72f, 0f), new Vector3(1.35f, 1.35f, 1.35f), LogDark, "EndR");
+        Transform rollPivot = NaturePackVisuals.CreateLogRollPivot(root.transform);
+        if (!NaturePackVisuals.AttachLogAcross(rollPivot, 0f, width))
+        {
+            GameObject mesh = Visual(PrimitiveType.Cylinder, rollPivot, new Vector3(0f, 0.72f, 0f), new Vector3(1.45f, width * 0.5f, 1.45f), LogBark, "Log");
+            mesh.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            Visual(PrimitiveType.Sphere, rollPivot, new Vector3(-width * 0.48f, 0.72f, 0f), new Vector3(1.35f, 1.35f, 1.35f), LogDark, "EndL");
+            Visual(PrimitiveType.Sphere, rollPivot, new Vector3(width * 0.48f, 0.72f, 0f), new Vector3(1.35f, 1.35f, 1.35f), LogDark, "EndR");
+            NaturePackVisuals.AlignRollingLogPivot(rollPivot);
+        }
+        else
+        {
+            NaturePackVisuals.AlignRollingLogPivot(rollPivot);
+        }
 
         BoxCollider box = root.AddComponent<BoxCollider>();
         box.isTrigger = true;

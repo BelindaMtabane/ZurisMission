@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Level3PipeRepair : MonoBehaviour
@@ -9,14 +10,41 @@ public class Level3PipeRepair : MonoBehaviour
     readonly GameObject[] tankVisuals = new GameObject[3];
     readonly GameObject[] flowVisuals = new GameObject[3];
     readonly GameObject[] fillVisuals = new GameObject[3];
+    readonly List<Level3RepairPoint> gates = new List<Level3RepairPoint>(32);
+
+    int extraJobs;
 
     public static bool AllTanksRepaired =>
         Instance != null && Instance.progress[0] >= 100 && Instance.progress[1] >= 100 && Instance.progress[2] >= 100;
+
+    public static int RemainingPipes => Instance != null ? Instance.CountRemaining() : 0;
 
     public int GetProgress(int tankIndex)
     {
         if (tankIndex < 0 || tankIndex > 2) return 0;
         return progress[tankIndex];
+    }
+
+    public static void NotifyLightningMaintenance()
+    {
+        Instance?.ApplyLightningMaintenance();
+    }
+
+    public void RegisterGate(Level3RepairPoint point)
+    {
+        if (point == null || gates.Contains(point)) return;
+        gates.Add(point);
+    }
+
+    int CountRemaining()
+    {
+        int unrepaired = 0;
+        for (int i = 0; i < gates.Count; i++)
+        {
+            if (gates[i] != null && !gates[i].IsRepaired) unrepaired++;
+        }
+
+        return unrepaired + extraJobs;
     }
 
     void Awake()
@@ -83,13 +111,75 @@ public class Level3PipeRepair : MonoBehaviour
         string msg = $"TANK {tankIndex + 1}: {progress[tankIndex]}%";
         if (progress[tankIndex] >= 100)
         {
-            msg += " — REPAIRED!";
+            msg += " REPAIRED!";
             if (flowVisuals[tankIndex] != null) flowVisuals[tankIndex].SetActive(true);
         }
 
         Level3FeedbackUI.Show(msg, new Color(1f, 0.88f, 0.15f), 1.8f);
         FlashRepair(tankIndex);
+        GameAudio.PlayMaintenance();
         return true;
+    }
+
+    /// <summary>
+    /// After a successful repair: close the gate unless lightning left extra jobs
+    /// that still need this pipe section.
+    /// </summary>
+    public bool CloseGateAfterRepair()
+    {
+        if (extraJobs > 0)
+        {
+            extraJobs--;
+            return false;
+        }
+
+        return true;
+    }
+
+    void ApplyLightningMaintenance()
+    {
+        int damagedTank;
+        if (TryReopenRepairedGate(out damagedTank))
+        {
+            // Reopened an already-fixed pipe — remaining count rises automatically.
+        }
+        else
+        {
+            extraJobs++;
+            damagedTank = Random.Range(0, 3);
+        }
+
+        int loss = Level3Config.ProgressPerRepair(damagedTank);
+        progress[damagedTank] = Mathf.Max(0, progress[damagedTank] - loss);
+        if (progress[damagedTank] < 100 && flowVisuals[damagedTank] != null)
+            flowVisuals[damagedTank].SetActive(false);
+        UpdateTankVisual(damagedTank);
+
+        HUDControls hud = FindFirstObjectByType<HUDControls>();
+        hud?.ApplyLevel3TankProgress(progress[0], progress[1], progress[2]);
+
+        int remaining = CountRemaining();
+        Level3FeedbackUI.Show(
+            remaining == 1
+                ? "LIGHTNING DAMAGE! 1 PIPE TO FIX"
+                : $"LIGHTNING DAMAGE! {remaining} PIPES TO FIX",
+            new Color(1f, 0.72f, 0.2f),
+            2.2f);
+    }
+
+    bool TryReopenRepairedGate(out int tankIndex)
+    {
+        tankIndex = 0;
+        for (int i = 0; i < gates.Count; i++)
+        {
+            Level3RepairPoint gate = gates[i];
+            if (gate == null || !gate.IsRepaired) continue;
+            tankIndex = gate.TankIndex;
+            gate.Reopen();
+            return true;
+        }
+
+        return false;
     }
 
     void UpdateTankVisual(int tankIndex)
@@ -106,7 +196,9 @@ public class Level3PipeRepair : MonoBehaviour
             Color tint = Color.Lerp(new Color(0.45f, 0.48f, 0.52f), new Color(0.25f, 0.7f, 1f), t);
             for (int i = 0; i < rends.Length; i++)
             {
-                if (rends[i] != null) rends[i].material.color = tint;
+                if (rends[i] == null) continue;
+                if (rends[i].name == "TankBody") continue;
+                rends[i].material.color = tint;
             }
         }
     }
@@ -117,10 +209,9 @@ public class Level3PipeRepair : MonoBehaviour
         Renderer[] rends = tankVisuals[tankIndex].GetComponentsInChildren<Renderer>();
         for (int i = 0; i < rends.Length; i++)
         {
-            if (rends[i] != null)
-            {
-                rends[i].material.color = Level3Primitives.YellowRepair;
-            }
+            if (rends[i] == null) continue;
+            if (rends[i].name == "TankBody") continue;
+            rends[i].material.color = Level3Primitives.YellowRepair;
         }
     }
 }
@@ -131,11 +222,40 @@ public class Level3RepairPoint : MonoBehaviour
     [SerializeField] bool isRepaired;
     GameObject fxRoot;
     float nextTryTime;
+    bool registered;
+
+    public bool IsRepaired => isRepaired;
+    public int TankIndex => tankIndex;
 
     public void Setup(int tank)
     {
         tankIndex = tank;
         isRepaired = false;
+        Register();
+    }
+
+    void Start() => Register();
+
+    void Register()
+    {
+        if (registered || Level3PipeRepair.Instance == null) return;
+        Level3PipeRepair.Instance.RegisterGate(this);
+        registered = true;
+    }
+
+    public void Reopen()
+    {
+        isRepaired = false;
+        nextTryTime = 0f;
+        Collider col = GetComponent<Collider>();
+        if (col != null) col.enabled = true;
+        GameObject paint = fxRoot != null ? fxRoot : gameObject;
+        Renderer[] rends = paint.GetComponentsInChildren<Renderer>();
+        Color yellow = Level3Primitives.YellowRepair;
+        for (int i = 0; i < rends.Length; i++)
+        {
+            if (rends[i] != null) rends[i].material.color = yellow;
+        }
     }
 
     public void BindFx(GameObject fx)
@@ -162,15 +282,18 @@ public class Level3RepairPoint : MonoBehaviour
 
         if (Level3PipeRepair.Instance.TryRepair(tankIndex))
         {
-            isRepaired = true;
-            Collider col = GetComponent<Collider>();
-            if (col != null) col.enabled = false;
             PlayRepairFx();
-            GameObject paint = fxRoot != null ? fxRoot : gameObject;
-            Renderer[] rends = paint.GetComponentsInChildren<Renderer>();
-            for (int i = 0; i < rends.Length; i++)
+            if (Level3PipeRepair.Instance.CloseGateAfterRepair())
             {
-                if (rends[i] != null) rends[i].material.color = new Color(0.2f, 0.85f, 0.45f);
+                isRepaired = true;
+                Collider col = GetComponent<Collider>();
+                if (col != null) col.enabled = false;
+                GameObject paint = fxRoot != null ? fxRoot : gameObject;
+                Renderer[] rends = paint.GetComponentsInChildren<Renderer>();
+                for (int i = 0; i < rends.Length; i++)
+                {
+                    if (rends[i] != null) rends[i].material.color = new Color(0.2f, 0.85f, 0.45f);
+                }
             }
         }
         else

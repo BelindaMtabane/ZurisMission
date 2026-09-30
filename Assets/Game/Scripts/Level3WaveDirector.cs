@@ -99,12 +99,12 @@ public class Level3WaveDirector : MonoBehaviour
                 break;
             case WaveMode.Combined:
                 Level3FeedbackUI.Show(
-                    "FINAL PUSH! SNAKES + WARTHOGS — STAY ALERT!",
+                    "FINAL PUSH! SNAKES + WARTHOGS! STAY ALERT!",
                     new Color(1f, 0.25f, 0.15f),
                     2.5f);
                 break;
             case WaveMode.CombinedHard:
-                Level3FeedbackUI.Show("SURVIVAL SPRINT — MAXIMUM DANGER!", new Color(1f, 0.1f, 0.05f), 3f);
+                Level3FeedbackUI.Show("SURVIVAL SPRINT! MAXIMUM DANGER!", new Color(1f, 0.1f, 0.05f), 3f);
                 break;
             case WaveMode.None:
                 break;

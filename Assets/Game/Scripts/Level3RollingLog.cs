@@ -15,10 +15,17 @@ public class Level3RollingLog : MonoBehaviour
 
     enum Phase { Wait, Roll }
     Phase phase = Phase.Wait;
+    Transform rollPivot;
 
     public void Setup(float rollSpeed)
     {
         speed = rollSpeed;
+    }
+
+    void Awake()
+    {
+        rollPivot = transform.Find("LogRollVisual");
+        if (rollPivot == null) rollPivot = transform;
     }
 
     void Update()
@@ -32,13 +39,13 @@ public class Level3RollingLog : MonoBehaviour
             if (player.position.z > transform.position.z - StartAhead)
             {
                 phase = Phase.Roll;
-                Level3FeedbackUI.Show("ROLLING LOG — JUMP OR SWITCH LANES!", new Color(0.72f, 0.48f, 0.22f), 1.3f);
+                Level3FeedbackUI.Show("ROLLING LOG! JUMP OR SWITCH LANES!", new Color(0.72f, 0.48f, 0.22f), 1.3f);
             }
             return;
         }
 
         transform.position += Vector3.back * (speed * Time.deltaTime);
-        transform.Rotate(Vector3.right, speed * 22f * Time.deltaTime, Space.Self);
+        rollPivot.Rotate(Vector3.right, speed * 22f * Time.deltaTime, Space.Self);
 
         if (transform.position.z < player.position.z - DespawnBehind)
         {
@@ -64,6 +71,7 @@ public class Level3RollingLog : MonoBehaviour
 
         hit = true;
         // Log: materials loss only (no health damage, no slowdown in Level 3)
+        ObstacleGuideHUD.NotifyHit("log");
         FindFirstObjectByType<HUDControls>()?.BreakMaterials(Level3Config.LogMaterialLoss);
     }
 

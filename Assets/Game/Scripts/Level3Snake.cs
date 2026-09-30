@@ -52,7 +52,7 @@ public class Level3Snake : MonoBehaviour
                 Level3SnakeDirector.TryStartSnake(this);
                 phase = Phase.Approach;
                 Level3FeedbackUI.Show(
-                    $"SNAKE AHEAD — LANE {LevelLanes.DisplayNumber(laneIndex)}!",
+                    $"SNAKE AHEAD! LANE {LevelLanes.DisplayNumber(laneIndex)}!",
                     new Color(0.45f, 0.95f, 0.4f),
                     1.2f);
             }
@@ -81,6 +81,7 @@ public class Level3Snake : MonoBehaviour
         }
 
         hit = true;
+        ObstacleGuideHUD.NotifyHit("snake");
         FindFirstObjectByType<HUDControls>()?.ChangeHealth(-Level3Config.SnakeHealthDamage, "A snake bit you!");
         Level3FeedbackUI.Show("SNAKE BITE!", new Color(0.9f, 0.25f, 0.15f), 1f);
     }

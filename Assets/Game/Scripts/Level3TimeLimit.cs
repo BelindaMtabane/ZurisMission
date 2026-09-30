@@ -69,7 +69,7 @@ public class Level3TimeLimit : MonoBehaviour
         if (!warn120 && Remaining <= 120f)
         {
             warn120 = true;
-            Level3FeedbackUI.Show("2 MINUTES LEFT — HURRY!", new Color(1f, 0.8f, 0.1f), 2f);
+            Level3FeedbackUI.Show("2 MINUTES LEFT! HURRY!", new Color(1f, 0.8f, 0.1f), 2f);
         }
         else if (!warn90 && Remaining <= 90f)
         {
@@ -79,7 +79,7 @@ public class Level3TimeLimit : MonoBehaviour
         else if (!warn60 && Remaining <= 60f)
         {
             warn60 = true;
-            Level3FeedbackUI.Show("1 MINUTE LEFT — FINAL PUSH!", new Color(1f, 0.35f, 0.05f), 2.5f);
+            Level3FeedbackUI.Show("1 MINUTE LEFT! FINAL PUSH!", new Color(1f, 0.35f, 0.05f), 2.5f);
         }
         else if (!warn30 && Remaining <= 30f)
         {

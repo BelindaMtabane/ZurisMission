@@ -87,7 +87,7 @@ public class Level3AcidRainZone : MonoBehaviour
                     else
                     {
                         Level3FeedbackUI.Show(
-                            $"ACID RAIN IN LANE {LevelLanes.DisplayNumber(laneIndex)} — {Level3Config.AcidWarningSeconds:0} SECONDS!",
+                            $"ACID RAIN IN LANE {LevelLanes.DisplayNumber(laneIndex)}! {Level3Config.AcidWarningSeconds:0} SECONDS!",
                             new Color(0.45f, 0.95f, 0.28f),
                             Level3Config.AcidWarningSeconds + 1f);
                     }
@@ -158,7 +158,7 @@ public class Level3AcidRainZone : MonoBehaviour
 
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         hud?.ChangeHealth(-Level3Config.AcidHealthDamage, "Acid rain burned you!");
-        Level3FeedbackUI.Show("ACID RAIN — -10 HEALTH!", new Color(0.3f, 0.85f, 0.15f), 0.6f);
+        Level3FeedbackUI.Show("ACID RAIN! LOST 10 HEALTH!", new Color(0.3f, 0.85f, 0.15f), 0.6f);
         damaged = true;
         playerCollided = true;
     }
@@ -180,9 +180,10 @@ public class Level3AcidRainZone : MonoBehaviour
         if (RunStateManager.Instance != null && !RunStateManager.Instance.IsPlaying) return;
         if (Level3LeafProtection.TryBlockAcid()) return;
 
+        ObstacleGuideHUD.NotifyHit("acid");
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         hud?.ChangeHealth(-Level3Config.AcidHealthDamage, "Acid rain burned you!");
-        Level3FeedbackUI.Show("ACID RAIN — -10 HEALTH!", new Color(0.3f, 0.85f, 0.15f), 0.6f);
+        Level3FeedbackUI.Show("ACID RAIN! LOST 10 HEALTH!", new Color(0.3f, 0.85f, 0.15f), 0.6f);
         damaged = true;
         playerCollided = true;
     }
@@ -222,6 +223,14 @@ public class Level3AcidRainZone : MonoBehaviour
         for (int i = 0; i < activeRoot.transform.childCount && i < activeChildBaseScales.Length; i++)
         {
             Transform child = activeRoot.transform.GetChild(i);
+            ParticleSystem rain = child.GetComponent<ParticleSystem>();
+            if (rain != null)
+            {
+                var shape = rain.shape;
+                shape.scale = new Vector3(2.64f * radiusScale, 0.35f, 2.64f * radiusScale);
+                continue;
+            }
+
             Vector3 b = activeChildBaseScales[i];
             child.localScale = new Vector3(b.x * radiusScale, b.y, b.z * radiusScale);
         }
