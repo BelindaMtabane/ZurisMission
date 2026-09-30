@@ -5,8 +5,7 @@ using UnityEngine;
 /// <summary>
 /// Randomly scatters village props (wells, boreholes, tanks, houses, NPCs)
 /// across a level's full runner length, clear of the 4 lane positions
-/// (-4.6, -0.6, 3.4, 7.4) using the established safe decoration band
-/// (X -20..-12 left / +12..+20 right of the lanes).
+/// using a lane-safe band (roughly |X| 14–22, scaled from active lane positions).
 /// </summary>
 public static class LevelPropScatter
 {
@@ -48,7 +47,7 @@ public static class LevelPropScatter
         placed = new List<Placed>();
         rng = new System.Random(101);
         for (int i = 0; i < 7; i++) SpawnWell(25f, 970f);
-        for (int i = 0; i < 6; i++) SpawnHouse(25f, 970f);
+        for (int i = 0; i < 18; i++) SpawnHouse(25f, 970f);
         Log("Level1");
     }
 
@@ -84,10 +83,13 @@ public static class LevelPropScatter
     // ── Spot-finding ─────────────────────────────────────────────────────
     static bool TryFindSpot(float zMin, float zMax, float radius, out float x, out float z)
     {
+        float laneEdge = 6f;
+        float inner = laneEdge + 8f;
+        float outer = inner + 11f;
         for (int attempt = 0; attempt < 60; attempt++)
         {
             bool left = rng.NextDouble() < 0.5;
-            x = left ? Lerp(-20f, -12f) : Lerp(12f, 20f);
+            x = left ? Lerp(-outer, -inner) : Lerp(inner, outer);
             z = Lerp(zMin, zMax);
             bool ok = true;
             foreach (var p in placed)
@@ -178,11 +180,16 @@ public static class LevelPropScatter
 
     static GameObject BuildWaterDisc(float x, float y, float z, float radius)
     {
-        var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        disc.transform.position = new Vector3(x, y, z);
-        disc.transform.localScale = new Vector3(radius, 0.02f, radius);
-        TintPrimitive(disc, new Color(0.15f, 0.45f, 0.78f));
-        return disc;
+        var patch = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        patch.transform.position = new Vector3(x, y, z);
+        patch.transform.localRotation = Quaternion.identity;
+        float width = radius * 0.9f;
+        float depth = radius * 0.72f;
+        patch.transform.localScale = new Vector3(width / 10f, 1f, depth / 10f);
+        var col = patch.GetComponent<Collider>();
+        if (col != null) Object.DestroyImmediate(col);
+        TintPrimitive(patch, new Color(0.15f, 0.45f, 0.78f));
+        return patch;
     }
 
     static void TintPrimitive(GameObject go, Color c)

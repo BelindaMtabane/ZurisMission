@@ -175,9 +175,12 @@ public class Level1DryBushlandsBuilder : MonoBehaviour
         cactus.transform.SetParent(parent, false);
         cactus.transform.localPosition = new Vector3(x, 0f, z);
 
-        Primitive(PrimitiveType.Cylinder, cactus.transform, new Vector3(0f, 1.4f, 0f), new Vector3(0.6f, 1.4f, 0.6f), BushlandColors.Cactus, "Trunk");
-        Primitive(PrimitiveType.Sphere, cactus.transform, new Vector3(0.7f, 1.8f, 0f), new Vector3(0.7f, 0.45f, 0.45f), BushlandColors.Cactus, "ArmL");
-        Primitive(PrimitiveType.Capsule, cactus.transform, new Vector3(-0.65f, 2.1f, 0f), new Vector3(0.35f, 0.55f, 0.35f), BushlandColors.Cactus, "ArmR");
+        if (!NaturePackVisuals.AttachCactus(cactus.transform, 2.4f))
+        {
+            Primitive(PrimitiveType.Cylinder, cactus.transform, new Vector3(0f, 1.4f, 0f), new Vector3(0.6f, 1.4f, 0.6f), BushlandColors.Cactus, "Trunk");
+            Primitive(PrimitiveType.Sphere, cactus.transform, new Vector3(0.7f, 1.8f, 0f), new Vector3(0.7f, 0.45f, 0.45f), BushlandColors.Cactus, "ArmL");
+            Primitive(PrimitiveType.Capsule, cactus.transform, new Vector3(-0.65f, 2.1f, 0f), new Vector3(0.35f, 0.55f, 0.35f), BushlandColors.Cactus, "ArmR");
+        }
 
         if (asHazard)
         {
@@ -195,8 +198,11 @@ public class Level1DryBushlandsBuilder : MonoBehaviour
         GameObject rock = new GameObject("Rock");
         rock.transform.SetParent(parent, false);
         rock.transform.localPosition = new Vector3(x, 0f, z);
-        Primitive(PrimitiveType.Sphere, rock.transform, new Vector3(0f, 0.5f, 0f), new Vector3(2.2f, 1.1f, 1.8f), BushlandColors.Rock, "Boulder");
-        Primitive(PrimitiveType.Cube, rock.transform, new Vector3(0.7f, 0.35f, 0.4f), new Vector3(1.1f, 0.7f, 1.1f), BushlandColors.Rock, "Chunk");
+        if (!NaturePackVisuals.AttachRock(rock.transform, 1.4f))
+        {
+            Primitive(PrimitiveType.Sphere, rock.transform, new Vector3(0f, 0.5f, 0f), new Vector3(2.2f, 1.1f, 1.8f), BushlandColors.Rock, "Boulder");
+            Primitive(PrimitiveType.Cube, rock.transform, new Vector3(0.7f, 0.35f, 0.4f), new Vector3(1.1f, 0.7f, 1.1f), BushlandColors.Rock, "Chunk");
+        }
         GameObject telegraph = Primitive(PrimitiveType.Cube, rock.transform, new Vector3(0f, 0.2f, -6f), new Vector3(1.8f, 0.1f, 1.8f), new Color(0.7f, 0.35f, 0.1f), "Telegraph");
         BoxCollider col = rock.AddComponent<BoxCollider>();
         col.size = new Vector3(2.2f, 1.4f, 1.8f);
@@ -235,13 +241,13 @@ public class Level1DryBushlandsBuilder : MonoBehaviour
         pit.transform.SetParent(parent, false);
         pit.transform.localPosition = new Vector3(x, 0.05f, z);
 
-        GameObject disc = Primitive(PrimitiveType.Cylinder, pit.transform, Vector3.zero, new Vector3(3.4f, 0.08f, 3.4f), BushlandColors.SandPit, "Pit");
+        GameObject disc = Primitive(PrimitiveType.Cylinder, pit.transform, Vector3.zero, new Vector3(5.8f, 0.14f, 5.8f), BushlandColors.SandPit, "Pit");
         Object.Destroy(disc.GetComponent<Collider>());
 
-        GameObject telegraph = Primitive(PrimitiveType.Cylinder, pit.transform, new Vector3(0f, 0.12f, 0f), new Vector3(3.8f, 0.02f, 3.8f), new Color(1f, 0.85f, 0.3f), "Telegraph");
+        GameObject telegraph = Primitive(PrimitiveType.Cylinder, pit.transform, new Vector3(0f, 0.16f, 0f), new Vector3(6.5f, 0.03f, 6.5f), new Color(1f, 0.85f, 0.3f), "Telegraph");
         CapsuleCollider col = pit.AddComponent<CapsuleCollider>();
         col.direction = 1;
-        col.radius = 1.6f;
+        col.radius = 2.75f;
         col.height = 0.6f;
         BushlandHazard hz = pit.AddComponent<BushlandHazard>();
         hz.Setup(BushlandHazardType.SandPit, telegraph, col);

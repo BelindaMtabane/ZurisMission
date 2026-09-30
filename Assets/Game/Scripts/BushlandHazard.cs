@@ -136,6 +136,7 @@ public class BushlandHazard : MonoBehaviour
     {
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         PlayerController controller = player.GetComponent<PlayerController>();
+        NotifyInventory();
 
         switch (hazardType)
         {
@@ -174,6 +175,20 @@ public class BushlandHazard : MonoBehaviour
                 hud?.ChangeHealth(-14f, "Broken glass dropped your health to 0.");
                 hud?.ChangeBucket(-6f);
                 Debug.Log("[Hazard] Glass: slow, health -14, bucket -6");
+                break;
+        }
+    }
+
+    void NotifyInventory()
+    {
+        switch (hazardType)
+        {
+            case BushlandHazardType.SandPit:
+                ObstacleGuideHUD.NotifyHit("sand_pit");
+                break;
+            case BushlandHazardType.HeatWave:
+            case BushlandHazardType.DustDevil:
+                ObstacleGuideHUD.NotifyHit("heat_wave");
                 break;
         }
     }
