@@ -252,6 +252,25 @@ public class HudLayout : MonoBehaviour
         banner.anchorMax = new Vector2(0f, 1f);
         banner.pivot = new Vector2(0f, 1f);
 
+        if (banner.Find("GuideRow") != null)
+        {
+            RectTransform missionGuide = FindRect("MissionPanel");
+            float width = missionGuide != null ? Mathf.Max(640f, missionGuide.sizeDelta.x) : 720f;
+            if (missionGuide != null)
+            {
+                float left = missionGuide.anchoredPosition.x;
+                float topOffset = -missionGuide.anchoredPosition.y + missionGuide.sizeDelta.y + gapBelowMission;
+                banner.anchoredPosition = new Vector2(left, -topOffset);
+            }
+            else
+            {
+                banner.anchoredPosition = new Vector2(4f, -240f);
+            }
+
+            banner.sizeDelta = new Vector2(width, 210f);
+            return;
+        }
+
         TMP_Text label = banner.GetComponentInChildren<TMP_Text>(true);
 
         RectTransform mission = FindRect("MissionPanel");
