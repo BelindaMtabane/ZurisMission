@@ -27,7 +27,7 @@ Finding Water → Creating Access → Storing and Sharing
 🌍 Levels
 Level	Goal	Theme
 🪣 Level 1: Rebuild the Well	Collect bricks and sand, build the well, bring water home	Every drop matters.
-![Uploading Screenshot 2026-09-30 224104.png…]()
+<img width="742" height="417" alt="Screenshot 2026-09-30 224104" src="https://github.com/user-attachments/assets/f2f6d2b1-ba44-4f50-a097-8824a352ce9b" />
 
 🕳️ Level 2: Build the Borehole	Collect pipes and parts, cross the village safely, build the borehole	Working together creates stronger solutions.
 <img width="738" height="412" alt="Screenshot 2026-09-30 224137" src="https://github.com/user-attachments/assets/b1bfc21d-b052-49a6-813e-12c8c410dca3" />
