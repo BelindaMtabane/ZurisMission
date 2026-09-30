@@ -12,6 +12,8 @@ using UnityEngine.SceneManagement;
 public class LevelTimerUI : MonoBehaviour
 {
     public static LevelTimerUI Instance { get; private set; }
+    public float RemainingSeconds => _remaining;
+    public float DurationSeconds => durationSeconds;
 
     [SerializeField] float durationSeconds = 90f;   // 1:30
 
@@ -38,20 +40,9 @@ public class LevelTimerUI : MonoBehaviour
 
     // ── Palette ──────────────────────────────────────────────────────────
     static Color C(float r, float g, float b, float a = 1f) => new Color(r, g, b, a);
-    static readonly Color ColLabel  = C(0.30f, 0.19f, 0.09f);
-    static readonly Color ColTime   = C(0.20f, 0.35f, 0.10f);
-    static readonly Color ColUrgent = C(0.75f, 0.06f, 0.06f);
-
-    static Sprite panel1Sprite;
-    static Sprite Panel1()
-    {
-        if (panel1Sprite == null)
-        {
-            Sprite[] sprites = Resources.LoadAll<Sprite>("UI/PANEL1");
-            panel1Sprite = sprites.Length > 0 ? sprites[0] : null;
-        }
-        return panel1Sprite;
-    }
+    static readonly Color ColLabel  = C(1f, 0.98f, 0.92f);
+    static readonly Color ColTime   = C(0.55f, 1f, 0.65f);
+    static readonly Color ColUrgent = C(1f, 0.35f, 0.35f);
 
     // ══════════════════════════════════════════════════════════════════════
     void Awake()
@@ -100,18 +91,17 @@ public class LevelTimerUI : MonoBehaviour
         var badge = new GameObject("TimerBadge");
         badge.transform.SetParent(cvGO.transform, false);
         var img = badge.AddComponent<Image>();
-        Sprite p1 = Panel1();
-        if (p1 != null) { img.sprite = p1; img.type = Image.Type.Sliced; img.color = Color.white; }
-        else img.color = new Color(0.30f, 0.20f, 0.12f, 0.96f);
+        AdventureUI.ApplyPanel(img);
+        if (img.sprite == null) img.color = new Color(0.30f, 0.20f, 0.12f, 0.96f);
         var rt = badge.GetComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0.700f, 0.875f);
-        rt.anchorMax = new Vector2(0.985f, 0.985f);
+        rt.anchorMin = new Vector2(0.805f, 0.828f);
+        rt.anchorMax = new Vector2(0.988f, 0.912f);
         rt.offsetMin = rt.offsetMax = Vector2.zero;
 
         Txt(badge, "Lbl", "TIME LEFT", 18, FontStyles.Bold, ColLabel,
             new Vector2(0.05f, 0.56f), new Vector2(0.95f, 0.90f));
 
-        _timeText = Txt(badge, "Time", "1:30", 40, FontStyles.Bold, ColTime,
+        _timeText = Txt(badge, "Time", "1:30", 38, FontStyles.Bold, ColTime,
             new Vector2(0.05f, 0.06f), new Vector2(0.95f, 0.58f));
     }
 
@@ -128,6 +118,8 @@ public class LevelTimerUI : MonoBehaviour
         t.color            = col;
         t.alignment        = TextAlignmentOptions.Center;
         t.textWrappingMode = TextWrappingModes.Normal;
+        t.outlineWidth     = 0.22f;
+        t.outlineColor     = new Color(0f, 0f, 0f, 0.85f);
         var rt = go.GetComponent<RectTransform>();
         rt.anchorMin = aMin; rt.anchorMax = aMax;
         rt.offsetMin = rt.offsetMax = Vector2.zero;

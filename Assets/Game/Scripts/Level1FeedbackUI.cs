@@ -88,17 +88,6 @@ public class Level1FeedbackUI : MonoBehaviour
         hideRoutine = null;
     }
 
-    static Sprite panel1Sprite;
-    static Sprite Panel1()
-    {
-        if (panel1Sprite == null)
-        {
-            Sprite[] sprites = Resources.LoadAll<Sprite>("UI/PANEL1");
-            panel1Sprite = sprites.Length > 0 ? sprites[0] : null;
-        }
-        return panel1Sprite;
-    }
-
     void BuildToast()
     {
         GameObject cvGo = new GameObject("Level1FeedbackCanvas");
@@ -112,12 +101,12 @@ public class Level1FeedbackUI : MonoBehaviour
         cs.matchWidthOrHeight  = 0.5f;
         cvGo.AddComponent<GraphicRaycaster>();
 
-        // Sits directly under the STATUS panel (top-right, anchors 0.700-0.985 x 0.335-0.860).
+        // Compact toast directly under the STATUS panel.
         GameObject root = new GameObject("Level1FeedbackToast");
         root.transform.SetParent(cvGo.transform, false);
         RectTransform rt = root.AddComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0.700f, 0.150f);
-        rt.anchorMax = new Vector2(0.985f, 0.320f);
+        rt.anchorMin = new Vector2(0.805f, 0.345f);
+        rt.anchorMax = new Vector2(0.988f, 0.458f);
         rt.offsetMin = rt.offsetMax = Vector2.zero;
 
         GameObject bgGo = new GameObject("Background");
@@ -128,9 +117,8 @@ public class Level1FeedbackUI : MonoBehaviour
         bgRt.offsetMin = Vector2.zero;
         bgRt.offsetMax = Vector2.zero;
         toastBackground = bgGo.AddComponent<Image>();
-        Sprite p1 = Panel1();
-        if (p1 != null) { toastBackground.sprite = p1; toastBackground.type = Image.Type.Sliced; toastBackground.color = Color.white; }
-        else toastBackground.color = new Color(0.30f, 0.20f, 0.12f, 0.96f);
+        AdventureUI.ApplyPanel(toastBackground);
+        if (toastBackground.sprite == null) toastBackground.color = new Color(0.30f, 0.20f, 0.12f, 0.96f);
         toastBackground.raycastTarget = false;
 
         GameObject textGo = new GameObject("Text");
@@ -147,10 +135,12 @@ public class Level1FeedbackUI : MonoBehaviour
             toastText.font = TMP_Settings.defaultFontAsset;
         }
 
-        toastText.fontSize = 22f;
+        toastText.fontSize = 20f;
+        toastText.color = HudTextStyle.Body;
         toastText.fontStyle = FontStyles.Bold;
         toastText.alignment = TextAlignmentOptions.Center;
         toastText.textWrappingMode = TextWrappingModes.Normal;
+        toastText.overflowMode = TextOverflowModes.Ellipsis;
         toastText.raycastTarget = false;
         toastText.outlineWidth = 0.2f;
         toastText.outlineColor = new Color(0f, 0f, 0f, 0.85f);

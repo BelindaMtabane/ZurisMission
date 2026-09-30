@@ -373,6 +373,7 @@ public class InventoryUI : MonoBehaviour
         _useBtn.onClick.AddListener(OnUsePressed);
 
         _usePanelGO.SetActive(false);
+        GameAudio.HookAllButtons();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────
@@ -403,6 +404,8 @@ public class InventoryUI : MonoBehaviour
         t.color            = col;
         t.alignment        = TextAlignmentOptions.Center;
         t.textWrappingMode = TextWrappingModes.Normal;
+        t.fontSize         = Mathf.Max(size, 18f);
+        HudTextStyle.ApplyOutline(t);
         var rt = go.GetComponent<RectTransform>();
         rt.anchorMin = aMin; rt.anchorMax = aMax;
         rt.offsetMin = rt.offsetMax = Vector2.zero;

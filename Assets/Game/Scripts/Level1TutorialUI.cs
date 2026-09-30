@@ -58,7 +58,7 @@ public class Level1TutorialUI : MonoBehaviour
 
     {
 
-        new TutorialTip(0.00f, "Use  A  and  D  to move between lanes"),
+        new TutorialTip(0.00f, "Hold  A  or  D  to move freely across the path"),
 
         new TutorialTip(0.02f, "Collect materials to build the village well"),
 
@@ -66,11 +66,11 @@ public class Level1TutorialUI : MonoBehaviour
 
         new TutorialTip(JumpHintProgress, "Press  SPACE  to jump over obstacles"),
 
-        new TutorialTip(HeatHintProgress, "Heat waves drain water — drink from cactus or springs!"),
+        new TutorialTip(HeatHintProgress, "Heat waves drain water. Drink from cactus or springs!"),
 
-        new TutorialTip(SnakeWaveProgress, "Snake ahead — dodge with  A  or  D"),
+        new TutorialTip(SnakeWaveProgress, "Snake ahead. Dodge with  A  or  D"),
 
-        new TutorialTip(LogHintProgress, "Rolling logs ahead — jump with  SPACE"),
+        new TutorialTip(LogHintProgress, "Rolling logs ahead. Jump with  SPACE"),
 
     };
 
@@ -300,7 +300,13 @@ public class Level1TutorialUI : MonoBehaviour
 
     {
 
-        Canvas canvas = FindFirstObjectByType<Canvas>();
+        Canvas canvas = null;
+
+        GameObject canvasGo = GameObject.Find("Canvas");
+
+        if (canvasGo != null) canvas = canvasGo.GetComponent<Canvas>();
+
+        if (canvas == null) canvas = FindFirstObjectByType<Canvas>();
 
         if (canvas == null) return;
 
@@ -352,13 +358,15 @@ public class Level1TutorialUI : MonoBehaviour
 
         RectTransform bannerRt = centerBannerRoot.AddComponent<RectTransform>();
 
-        bannerRt.anchorMin = new Vector2(0.5f, 0.82f);
+        bannerRt.anchorMin = new Vector2(0f, 1f);
 
-        bannerRt.anchorMax = new Vector2(0.5f, 0.82f);
+        bannerRt.anchorMax = new Vector2(0f, 1f);
 
-        bannerRt.pivot = new Vector2(0.5f, 0.5f);
+        bannerRt.pivot = new Vector2(0f, 1f);
 
-        bannerRt.sizeDelta = new Vector2(680f, 72f);
+        bannerRt.anchoredPosition = new Vector2(4f, -240f);
+
+        bannerRt.sizeDelta = new Vector2(620f, 64f);
 
 
 
@@ -378,7 +386,11 @@ public class Level1TutorialUI : MonoBehaviour
 
         centerBannerBg = bgGo.AddComponent<Image>();
 
-        centerBannerBg.color = new Color(0.05f, 0.08f, 0.12f, 0.72f);
+        AdventureUI.ApplyPanel(centerBannerBg);
+        if (centerBannerBg.sprite == null)
+            centerBannerBg.color = new Color(0.05f, 0.08f, 0.12f, 0.72f);
+        else
+            centerBannerBg.color = new Color(1f, 1f, 1f, 0.94f);
 
         centerBannerBg.raycastTarget = false;
 
@@ -394,7 +406,7 @@ public class Level1TutorialUI : MonoBehaviour
 
         textRt.anchorMax = Vector2.one;
 
-        textRt.offsetMin = new Vector2(16f, 8f);
+        textRt.offsetMin = new Vector2(46f, 8f);
 
         textRt.offsetMax = new Vector2(-16f, -8f);
 
@@ -418,7 +430,7 @@ public class Level1TutorialUI : MonoBehaviour
 
         centerBannerText.alignment = TextAlignmentOptions.Center;
 
-        centerBannerText.color = new Color(1f, 0.96f, 0.88f, 0.98f);
+        centerBannerText.color = HudTextStyle.Body;
 
         centerBannerText.outlineWidth = 0.2f;
 
@@ -427,6 +439,9 @@ public class Level1TutorialUI : MonoBehaviour
         centerBannerText.raycastTarget = false;
 
         centerBannerText.text = Tips[0].Message;
+
+        HudLayout.LayoutMissionPanel(HudLayout.FindMissionPanel());
+        HudLayout.LayoutTutorialBanner();
 
     }
 
@@ -502,7 +517,7 @@ public class Level1TutorialUI : MonoBehaviour
 
         tmp.text = text;
 
-        tmp.fontSize = 28f;
+        tmp.fontSize = 32f;
 
         tmp.fontStyle = FontStyles.Bold;
 

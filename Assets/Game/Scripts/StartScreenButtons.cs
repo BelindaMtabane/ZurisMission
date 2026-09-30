@@ -21,6 +21,15 @@ public class StartScreenButtons : MonoBehaviour
         SceneManager.sceneLoaded += (scene, _) => TryCreate(scene.name);
 
         string current = SceneManager.GetActiveScene().name;
+#if UNITY_EDITOR
+        // Editor-only testing switch: Tools > Zuri > Skip Start Screen When Testing
+        if (UnityEditor.EditorPrefs.GetBool("Zuri.SkipStartScreen", false))
+        {
+            _startScreenShown = true;
+            TryCreate(current);
+            return;
+        }
+#endif
 
         // If Play was pressed while a gameplay scene was open, redirect to
         // StartScreen first so the opening screen is always shown.
@@ -55,50 +64,31 @@ public class StartScreenButtons : MonoBehaviour
     static readonly Color ColBtnText    = C(1.00f, 1.00f, 1.00f);
     static readonly Color ColPanelText  = C(0.30f, 0.19f, 0.09f);   // dark brown — readable on parchment/wood panels
 
-    // ── Shared wood-textured UI assets (same sheet as the end-screen panels) ─
-    static Sprite panel1Sprite;
-    static Sprite Panel1()
-    {
-        if (panel1Sprite == null)
-        {
-            Sprite[] sprites = Resources.LoadAll<Sprite>("UI/PANEL1");
-            panel1Sprite = sprites.Length > 0 ? sprites[0] : null;
-        }
-        return panel1Sprite;
-    }
-
-    static readonly System.Collections.Generic.Dictionary<string, Sprite> uiKitCache = new();
-    static Sprite UiKitSprite(string spriteName)
-    {
-        if (uiKitCache.TryGetValue(spriteName, out Sprite cached) && cached != null) return cached;
-        Sprite[] sprites = Resources.LoadAll<Sprite>("UI/UIKitSheet");
-        foreach (var s in sprites)
-        {
-            if (s.name == spriteName) { uiKitCache[spriteName] = s; return s; }
-        }
-        return null;
-    }
-
-    static Sprite SettingsBtnSprite() => UiKitSprite("UIKit_07");
-    static Sprite WoodFrameSprite()   => UiKitSprite("UIKit_10");
-
     static void ApplyPanelSprite(Image img)
     {
-        Sprite s = Panel1();
-        if (s == null) { img.color = ColPanelSolid; return; }
-        img.sprite = s;
-        img.type   = Image.Type.Sliced;
-        img.color  = Color.white;
+        AdventureUI.ApplyPanel(img);
+        if (img.sprite == null) img.color = ColPanelSolid;
     }
 
     GameObject card;
     GameObject settingsPanel;
     GameObject creditsPanel;
     TMP_Text soundBtnLabel;
-    bool soundOn = true;
+    TMP_Text volumeLabel;
+    Slider volumeSlider;
 
     // ══════════════════════════════════════════════════════════════════════
-    void Awake() => BuildUI();
+    void Awake()
+    {
+        BuildUI();
+        GameAudio.OnChanged += RefreshSoundUi;
+        RefreshSoundUi();
+    }
+
+    void OnDestroy()
+    {
+        GameAudio.OnChanged -= RefreshSoundUi;
+    }
 
     // ══════════════════════════════════════════════════════════════════════
     void BuildUI()
@@ -121,40 +111,55 @@ public class StartScreenButtons : MonoBehaviour
         cardRT.anchorMin = new Vector2(0.35f, 0.15f);
         cardRT.anchorMax = new Vector2(0.65f, 0.75f);
         cardRT.offsetMin = cardRT.offsetMax = Vector2.zero;
-        card.AddComponent<Image>().color = ColOverlay;
+        var cardImg = card.AddComponent<Image>();
+        AdventureUI.ApplyPanel(cardImg);
+        if (cardImg.sprite == null) cardImg.color = ColOverlay;
+        else cardImg.color = new Color(1f, 1f, 1f, 0.98f);
 
         // ── Title ──────────────────────────────────────────────────────────
         MakeTxt(card, "SSB_Title",
                 "ZURI'S MISSION",
                 36, FontStyles.Bold, ColTitle,
-                new Vector2(0.05f, 0.75f), new Vector2(0.95f, 0.96f));
+                new Vector2(0.05f, 0.80f), new Vector2(0.95f, 0.96f));
 
-        // ── Subtitle ───────────────────────────────────────────────────────
         MakeTxt(card, "SSB_Sub",
                 "Help Zuri bring water to her village",
-                26, FontStyles.Bold, ColSubtitle,
-                new Vector2(0.05f, 0.60f), new Vector2(0.95f, 0.74f));
+                18, FontStyles.Bold, ColSubtitle,
+                new Vector2(0.05f, 0.70f), new Vector2(0.95f, 0.80f));
 
-        // ── NEW GAME ───────────────────────────────────────────────────────
-        var btnStart = MakeButton(card, "SSB_StartBtn",
-                                  "START GAME", ColBtnStart, LoadUISprite("newgameBTN"),
-                                  new Vector2(0.10f, 0.44f), new Vector2(0.90f, 0.60f));
-        btnStart.onClick.AddListener(() => SceneManager.LoadScene("MainGame"));
+        var btnL2 = MakeButton(card, "SSB_Level2Btn",
+                               "LEVEL 2", ColBtnSettings, AdventureUI.BtnMedium,
+                               new Vector2(0.08f, 0.28f), new Vector2(0.48f, 0.40f),
+                               overlayLabel: true);
+        btnL2.onClick.AddListener(() => LoadGameplay(SceneCatalog.Level2));
 
-        // ── SETTINGS ───────────────────────────────────────────────────────
+        var btnL3 = MakeButton(card, "SSB_Level3Btn",
+                               "LEVEL 3", ColBtnStart, AdventureUI.BtnMedium,
+                               new Vector2(0.52f, 0.28f), new Vector2(0.92f, 0.40f),
+                               overlayLabel: true);
+        btnL3.onClick.AddListener(() => LoadGameplay(SceneCatalog.Level3));
+
         var btnSettings = MakeButton(card, "SSB_SettingsBtn",
-                                     "SETTINGS", ColBtnSettings, SettingsBtnSprite(),
-                                     new Vector2(0.20f, 0.26f), new Vector2(0.80f, 0.42f));
+                                     "SETTINGS", ColBtnSettings, AdventureUI.BtnSetting,
+                                     new Vector2(0.20f, 0.16f), new Vector2(0.80f, 0.26f));
         btnSettings.onClick.AddListener(OpenSettings);
 
-        // ── EXIT ───────────────────────────────────────────────────────────
         var btnExit = MakeButton(card, "SSB_ExitBtn",
-                                 "EXIT", ColBtnExit, LoadUISprite("exitBTN"),
-                                 new Vector2(0.25f, 0.08f), new Vector2(0.75f, 0.24f));
+                                 "EXIT", ColBtnExit, AdventureUI.BtnQuit,
+                                 new Vector2(0.25f, 0.03f), new Vector2(0.75f, 0.14f));
         btnExit.onClick.AddListener(() => Application.Quit());
+
+        // Created last so its hitbox sits above Level 2/3 if anything overlaps.
+        var btnStart = MakeButton(card, "SSB_StartBtn",
+                                  "NEW GAME", ColBtnStart, AdventureUI.BtnMedium,
+                                  new Vector2(0.10f, 0.46f), new Vector2(0.90f, 0.66f),
+                                  overlayLabel: true);
+        btnStart.onClick.AddListener(StartNewGame);
+        btnStart.transform.SetAsLastSibling();
 
         BuildSettingsPanel(cvGO);
         BuildCreditsPanel(cvGO);
+        GameAudio.HookAllButtons();
     }
 
     // ── Settings panel: Credits / Sound / Close ─────────────────────────────
@@ -168,28 +173,36 @@ public class StartScreenButtons : MonoBehaviour
         ApplyPanelSprite(settingsPanel.AddComponent<Image>());
 
         MakeTxt(settingsPanel, "SP_Title", "SETTINGS", 32, FontStyles.Bold, ColPanelText,
-                new Vector2(0.05f, 0.78f), new Vector2(0.95f, 0.94f));
+                new Vector2(0.05f, 0.84f), new Vector2(0.95f, 0.97f));
 
         var btnCredits = MakeButton(settingsPanel, "SP_CreditsBtn",
-                                    "CREDITS", ColBtnSettings, WoodFrameSprite(),
-                                    new Vector2(0.15f, 0.54f), new Vector2(0.85f, 0.70f),
+                                    "CREDITS", ColBtnSettings, AdventureUI.BtnMedium,
+                                    new Vector2(0.15f, 0.68f), new Vector2(0.85f, 0.82f),
                                     overlayLabel: true);
         btnCredits.onClick.AddListener(OpenCredits);
 
         var soundBtnGO = MakeButton(settingsPanel, "SP_SoundBtn",
-                                    "SOUND: ON", ColBtnSettings, WoodFrameSprite(),
-                                    new Vector2(0.15f, 0.34f), new Vector2(0.85f, 0.50f),
+                                    "SOUND ON", ColBtnSettings, AdventureUI.BtnMedium,
+                                    new Vector2(0.15f, 0.52f), new Vector2(0.85f, 0.66f),
                                     overlayLabel: true);
         soundBtnLabel = soundBtnGO.GetComponentInChildren<TMP_Text>();
         soundBtnGO.onClick.AddListener(ToggleSound);
 
+        volumeLabel = MakeTxt(settingsPanel, "SP_VolumeLbl", "VOLUME  100", 18, FontStyles.Bold, ColPanelText,
+                new Vector2(0.08f, 0.42f), new Vector2(0.92f, 0.51f));
+
+        volumeSlider = BuildVolumeSlider(settingsPanel,
+                new Vector2(0.10f, 0.30f), new Vector2(0.90f, 0.42f));
+        volumeSlider.onValueChanged.AddListener(OnVolumeChanged);
+
         var btnClose = MakeButton(settingsPanel, "SP_CloseBtn",
-                                  "CLOSE", ColBtnExit, WoodFrameSprite(),
+                                  "CLOSE", ColBtnExit, AdventureUI.BtnMedium,
                                   new Vector2(0.25f, 0.08f), new Vector2(0.75f, 0.24f),
                                   overlayLabel: true);
         btnClose.onClick.AddListener(CloseSettings);
 
         settingsPanel.SetActive(false);
+        RefreshSoundUi();
     }
 
     // ── Credits panel ────────────────────────────────────────────────────
@@ -210,7 +223,7 @@ public class StartScreenButtons : MonoBehaviour
                 new Vector2(0.05f, 0.34f), new Vector2(0.95f, 0.74f));
 
         var btnBack = MakeButton(creditsPanel, "CP_BackBtn",
-                                 "BACK", ColBtnSettings, WoodFrameSprite(),
+                                 "BACK", ColBtnSettings, AdventureUI.BtnMedium,
                                  new Vector2(0.25f, 0.08f), new Vector2(0.75f, 0.24f),
                                  overlayLabel: true);
         btnBack.onClick.AddListener(() =>
@@ -226,12 +239,25 @@ public class StartScreenButtons : MonoBehaviour
     {
         card.SetActive(false);
         settingsPanel.SetActive(true);
+        RefreshSoundUi();
     }
 
     void CloseSettings()
     {
         settingsPanel.SetActive(false);
         card.SetActive(true);
+    }
+
+    static void StartNewGame()
+    {
+        Debug.Log("[StartScreen] New Game -> Level 1 (MainGame)");
+        LoadGameplay(SceneCatalog.MainGame);
+    }
+
+    static void LoadGameplay(string sceneName)
+    {
+        Time.timeScale = 1f;
+        SceneLoadOverlay.Load(sceneName);
     }
 
     void OpenCredits()
@@ -242,9 +268,41 @@ public class StartScreenButtons : MonoBehaviour
 
     void ToggleSound()
     {
-        soundOn = !soundOn;
-        AudioListener.volume = soundOn ? 1f : 0f;
-        if (soundBtnLabel != null) soundBtnLabel.text = soundOn ? "SOUND: ON" : "SOUND: OFF";
+        bool turningOff = !GameAudio.Muted;
+        if (turningOff) GameAudio.PlayClick();
+        GameAudio.ToggleMuted();
+        if (!turningOff) GameAudio.PlayClick();
+    }
+
+    void OnVolumeChanged(float value)
+    {
+        GameAudio.SetVolume(value);
+    }
+
+    void RefreshSoundUi()
+    {
+        GameAudio.Ensure();
+        bool on = !GameAudio.Muted && GameAudio.Volume > 0.001f;
+        if (soundBtnLabel != null) soundBtnLabel.text = on ? "SOUND ON" : "SOUND OFF";
+        if (volumeLabel != null) volumeLabel.text = $"VOLUME  {Mathf.RoundToInt(GameAudio.Volume * 100)}";
+        if (volumeSlider != null) volumeSlider.SetValueWithoutNotify(GameAudio.Volume);
+    }
+
+    Slider BuildVolumeSlider(GameObject parent, Vector2 aMin, Vector2 aMax)
+    {
+        Slider slider = AdventureUI.BuildHorizontalBar(
+            parent.transform, "SP_VolumeSlider", AdventureUI.FillGreen,
+            aMin, aMax, out _);
+        slider.interactable = true;
+        slider.minValue = 0f;
+        slider.maxValue = 1f;
+        slider.wholeNumbers = false;
+        slider.transition = Selectable.Transition.None;
+        Image track = slider.GetComponent<Image>();
+        if (track != null) track.raycastTarget = true;
+        if (slider.fillRect != null) slider.fillRect.GetComponent<Image>().raycastTarget = false;
+        slider.value = GameAudio.Volume;
+        return slider;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────
@@ -269,6 +327,7 @@ public class StartScreenButtons : MonoBehaviour
         t.color            = col;
         t.alignment        = TextAlignmentOptions.Center;
         t.textWrappingMode = TextWrappingModes.Normal;
+        t.raycastTarget    = false;
         var rt = go.GetComponent<RectTransform>();
         rt.anchorMin = aMin; rt.anchorMax = aMax;
         rt.offsetMin = rt.offsetMax = Vector2.zero;
@@ -291,34 +350,16 @@ public class StartScreenButtons : MonoBehaviour
 
         if (artSprite != null)
         {
-            // Art asset already has its own label baked in — no text overlay needed.
-            img.sprite      = artSprite;
-            img.color       = Color.white;
-
-            // Inset the rect to match the sprite's own aspect ratio, centered
-            // within the anchor slot. (AspectRatioFitter's Parent modes force
-            // full-stretch anchors to the immediate parent, which would blow
-            // this button out to the whole card — not what we want here.)
-            // Force a layout pass first: rt.rect is unreliable immediately
-            // after (re)parenting/anchoring, before Canvas has resolved it.
-            Canvas.ForceUpdateCanvases();
-            float boxW = rt.rect.width;
-            float boxH = rt.rect.height;
-            float targetAspect = artSprite.rect.width / artSprite.rect.height;
-            float fitW, fitH;
-            if (targetAspect > boxW / boxH) { fitW = boxW; fitH = boxW / targetAspect; }
-            else { fitH = boxH; fitW = boxH * targetAspect; }
-            float dx = (boxW - fitW) * 0.5f;
-            float dy = (boxH - fitH) * 0.5f;
-            rt.offsetMin = new Vector2(dx, dy);
-            rt.offsetMax = new Vector2(-dx, -dy);
+            img.sprite = artSprite;
+            img.color  = Color.white;
+            img.type   = Image.Type.Simple;
+            img.preserveAspect = true;
 
             colors.normalColor      = Color.white;
             colors.highlightedColor = Color.Lerp(Color.white, Color.yellow, 0.2f);
             colors.pressedColor     = Color.Lerp(Color.white, Color.gray, 0.3f);
             colors.selectedColor    = Color.white;
 
-            // Generic wood frames have no baked-in text — overlay the label.
             if (overlayLabel)
             {
                 MakeTxt(go, name + "_Lbl", label, 20, FontStyles.Bold, ColBtnText,
@@ -340,11 +381,5 @@ public class StartScreenButtons : MonoBehaviour
         btn.colors        = colors;
         btn.targetGraphic = img;
         return btn;
-    }
-
-    static Sprite LoadUISprite(string name)
-    {
-        Sprite[] sprites = Resources.LoadAll<Sprite>("UI/" + name);
-        return sprites.Length > 0 ? sprites[0] : null;
     }
 }

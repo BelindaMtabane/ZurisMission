@@ -38,33 +38,7 @@ public class EndLevelDialogue : MonoBehaviour
     string _nextScene = "";
     bool   _showing   = false;
 
-    // ── Shared wood-textured UI assets (same sheet as the end-screen panels) ─
-    static Sprite panel1Sprite;
-    static Sprite Panel1()
-    {
-        if (panel1Sprite == null)
-        {
-            Sprite[] sprites = Resources.LoadAll<Sprite>("UI/PANEL1");
-            panel1Sprite = sprites.Length > 0 ? sprites[0] : null;
-        }
-        return panel1Sprite;
-    }
-
-    static Sprite continueBtnSprite;
-    static Sprite ContinueButtonSprite()
-    {
-        if (continueBtnSprite == null)
-        {
-            Sprite[] sprites = Resources.LoadAll<Sprite>("UI/UIKitSheet");
-            foreach (var s in sprites)
-            {
-                if (s.name == "UIKit_04") { continueBtnSprite = s; break; }
-            }
-        }
-        return continueBtnSprite;
-    }
-
-    // Dark-brown palette for text sitting on the parchment panel.
+    // Dark-brown palette for text sitting on the adventure popup panel.
     static readonly Color ColDarkText  = new Color(0.28f, 0.17f, 0.08f);
     static readonly Color ColDarkTitle = new Color(0.55f, 0.10f, 0.05f);
     static readonly Color ColDivider   = new Color(0.55f, 0.42f, 0.24f);
@@ -107,6 +81,7 @@ public class EndLevelDialogue : MonoBehaviour
 
         // Hide every HUD layer so only this overlay is visible
         LevelHUDStrip.Instance?.SetVisible(false);
+        Level3StatusHUD.Instance?.SetVisible(false);
         LevelTimerUI.Instance?.SetVisible(false);
         InventoryUI.Instance?.SetVisible(false);
         GameInfoUI.Instance?.SetVisible(false);
@@ -122,13 +97,13 @@ public class EndLevelDialogue : MonoBehaviour
                 congrats =
                     "Zuri has carried water back to the village and kept her community\n" +
                     "hydrated through the heat and danger of the desert.\n" +
-                    "Step one of saving the village is done — incredible work!";
+                    "Step one of saving the village is done. Incredible work!";
                 nextInfo =
-                    "Level 2  —  The River Crossing\n" +
+                    "Level 2: The River Crossing\n" +
                     "Zuri must navigate a wild river system and release floodgates to " +
                     "irrigate the farmlands. Watch out for speeding cars, deep river " +
                     "currents, and slippery mud patches. Stay fast and stay healthy!";
-                scene = "Level2";
+                scene = SceneCatalog.Level2;
                 break;
 
             case 2:
@@ -138,12 +113,12 @@ public class EndLevelDialogue : MonoBehaviour
                     "Zuri managed every floodgate and survived every hazard the " +
                     "wilderness threw at her. The community grows stronger each day!";
                 nextInfo =
-                    "Level 3  —  The Final Repair\n" +
+                    "Level 3: The Final Repair\n" +
                     "The village water pipes have burst! Zuri must locate and repair " +
                     "three broken pipe sections scattered across a rugged landscape. " +
                     "Collect materials, avoid dangers, and fix every pipe to complete " +
                     "the water system and save the village for good!";
-                scene = "Level3End";
+                scene = SceneCatalog.Level3;
                 break;
 
             default: // level 3 / end of game
@@ -151,14 +126,14 @@ public class EndLevelDialogue : MonoBehaviour
                 congrats =
                     "Zuri has done it! All three pipes are repaired and clean water\n" +
                     "now flows to every home in the village.\n" +
-                    "The community is saved — Zuri is a true hero!";
+                    "The community is saved. Zuri is a true hero!";
                 nextInfo =
                     "End of Zuri's Mission\n" +
                     "Thanks to Zuri's bravery, determination, and hard work, the " +
                     "village will never go without clean water again. The crops grow, " +
                     "the children are healthy, and hope is restored.\n" +
                     "Thank you for playing Zuri's Mission!";
-                scene = "";
+                scene = SceneCatalog.StartScreen;
                 break;
         }
 
@@ -196,8 +171,9 @@ public class EndLevelDialogue : MonoBehaviour
         Time.timeScale = 1f;
         _canvasGO.SetActive(false);
         if (!string.IsNullOrEmpty(_nextScene))
-            SceneManager.LoadScene(_nextScene);
-        // Level 3 end — stays on screen (or you can add main-menu navigation here)
+            SceneLoadOverlay.Load(_nextScene);
+        else
+            SceneLoadOverlay.Load(SceneCatalog.StartScreen);
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -227,9 +203,8 @@ public class EndLevelDialogue : MonoBehaviour
         // ── Main dialogue panel (wood-framed parchment, 9-sliced) ───────────
         var panelGO = Img(_canvasGO, "Panel", Color.white, V(0.12f, 0.03f), V(0.88f, 0.97f));
         var panelImg = panelGO.GetComponent<Image>();
-        Sprite panelSprite = Panel1();
-        if (panelSprite != null) { panelImg.sprite = panelSprite; panelImg.type = Image.Type.Sliced; }
-        else panelImg.color = new Color(0.30f, 0.20f, 0.12f, 0.97f);
+        AdventureUI.ApplyPanel(panelImg);
+        if (panelImg.sprite == null) panelImg.color = new Color(0.30f, 0.20f, 0.12f, 0.97f);
         var panel = panelGO;
 
         // ── Header bar (warm wood tone) ──────────────────────────────────────
@@ -246,7 +221,7 @@ public class EndLevelDialogue : MonoBehaviour
             V(0.03f, 0.838f), V(0.97f, 0.843f));
 
         // ── Stats header ────────────────────────────────────────────────────
-        Txt(panel, "StatsLbl", "—  MISSION STATS  —", 24, FontStyles.Bold,
+        Txt(panel, "StatsLbl", "MISSION STATS", 24, FontStyles.Bold,
             ColDarkTitle,
             V(0.03f, 0.795f), V(0.97f, 0.838f));
 
@@ -269,7 +244,7 @@ public class EndLevelDialogue : MonoBehaviour
             V(0.03f, 0.488f), V(0.97f, 0.493f));
 
         // ── Next mission header ─────────────────────────────────────────────
-        Txt(panel, "NextLbl", "—  NEXT MISSION  —", 24, FontStyles.Bold,
+        Txt(panel, "NextLbl", "NEXT MISSION", 24, FontStyles.Bold,
             ColDarkTitle,
             V(0.03f, 0.448f), V(0.97f, 0.488f));
 
@@ -290,7 +265,7 @@ public class EndLevelDialogue : MonoBehaviour
         _continueBtn = btnGO.AddComponent<Button>();
         _continueBtn.targetGraphic = btnImg;
 
-        Sprite contSprite = ContinueButtonSprite();
+        Sprite contSprite = AdventureUI.BtnMedium ?? AdventureUI.BtnPlay;
         if (contSprite != null)
         {
             btnImg.sprite = contSprite;
@@ -311,6 +286,10 @@ public class EndLevelDialogue : MonoBehaviour
             cols.highlightedColor = Color.Lerp(Color.white, Color.yellow, 0.2f);
             cols.pressedColor     = Color.Lerp(Color.white, Color.gray, 0.3f);
             _continueBtn.colors   = cols;
+
+            Txt(btnGO, "BtnLabel", "CONTINUE  >>", 28,
+                FontStyles.Bold, Color.white,
+                V(0, 0), V(1, 1)).alignment = TextAlignmentOptions.Center;
         }
         else
         {
@@ -331,6 +310,7 @@ public class EndLevelDialogue : MonoBehaviour
 
         // ── Hidden by default ───────────────────────────────────────────────
         _canvasGO.SetActive(false);
+        GameAudio.HookAllButtons();
     }
 
     // ── UI helpers ─────────────────────────────────────────────────────────

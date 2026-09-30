@@ -113,17 +113,14 @@ public class PlayerHUDBase : MonoBehaviour
             hudControls.HealthIncreaseManager();
             Debug.Log("Player health increased!");
         }
-        if (other.CompareTag("EndLevel1"))
+        if (other.CompareTag("EndLevel1")
+            || other.CompareTag("EndLevel2")
+            || other.CompareTag("EndLvl3End"))
         {
-            hudControls.LevelProgress();
-        }
-        if (other.CompareTag("EndLevel2"))
-        {
-            hudControls.LevelProgress();
-        }
-        if (other.CompareTag("EndLvl3End"))
-        {
-            hudControls.LevelProgress();
+            if (RunStateManager.Instance != null)
+                RunStateManager.Instance.BeginFinishSequence(hudControls.LevelProgress);
+            else
+                hudControls.LevelProgress();
         }
     }
         

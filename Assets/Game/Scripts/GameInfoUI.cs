@@ -141,7 +141,9 @@ public class GameInfoUI : MonoBehaviour
         textGO.transform.SetParent(panel.transform, false);
 
         TextMeshProUGUI tmp    = textGO.AddComponent<TextMeshProUGUI>();
-        tmp.fontSize           = 13f;
+        tmp.fontSize           = 18f;
+        tmp.outlineWidth       = 0.2f;
+        tmp.outlineColor       = new Color(0f, 0f, 0f, 0.85f);
         tmp.alignment          = TextAlignmentOptions.TopLeft;
         tmp.overflowMode       = TextOverflowModes.Truncate;
         tmp.textWrappingMode   = TextWrappingModes.Normal;

@@ -64,13 +64,11 @@ public class Level2FeedbackUI : MonoBehaviour
         toastText.color = color;
         if (toastBackground != null)
         {
-            Color bg = color;
-            bg.a = 0.22f;
-            toastBackground.color = bg;
+            if (toastBackground.sprite != null) toastBackground.color = Color.white;
+            toastBackground.gameObject.SetActive(true);
         }
 
         toastText.gameObject.SetActive(true);
-        if (toastBackground != null) toastBackground.gameObject.SetActive(true);
 
         if (hideRoutine != null) StopCoroutine(hideRoutine);
         hideRoutine = StartCoroutine(HideAfter(duration));
@@ -86,16 +84,22 @@ public class Level2FeedbackUI : MonoBehaviour
 
     void BuildToast()
     {
-        Canvas canvas = FindFirstObjectByType<Canvas>();
-        if (canvas == null) return;
+        GameObject canvasObject = new GameObject("Level2FeedbackCanvas");
+        canvasObject.transform.SetParent(transform, false);
+        Canvas canvas = canvasObject.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 145;
+        CanvasScaler scaler = canvasObject.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.matchWidthOrHeight = 0.5f;
 
         GameObject root = new GameObject("Level2FeedbackToast");
         root.transform.SetParent(canvas.transform, false);
         RectTransform rt = root.AddComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0.5f, 0.72f);
-        rt.anchorMax = new Vector2(0.5f, 0.72f);
-        rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.sizeDelta = new Vector2(560f, 72f);
+        rt.anchorMin = new Vector2(0.70f, 0.36f);
+        rt.anchorMax = new Vector2(0.985f, 0.54f);
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
 
         GameObject bgGo = new GameObject("Background");
         bgGo.transform.SetParent(root.transform, false);
@@ -105,7 +109,11 @@ public class Level2FeedbackUI : MonoBehaviour
         bgRt.offsetMin = Vector2.zero;
         bgRt.offsetMax = Vector2.zero;
         toastBackground = bgGo.AddComponent<Image>();
-        toastBackground.color = new Color(0.2f, 0.55f, 0.35f, 0.22f);
+        AdventureUI.ApplyPanel(toastBackground);
+        if (toastBackground.sprite == null)
+            toastBackground.color = new Color(0.10f, 0.16f, 0.12f, 0.94f);
+        else
+            toastBackground.color = Color.white;
         toastBackground.raycastTarget = false;
 
         GameObject textGo = new GameObject("Text");
@@ -113,8 +121,8 @@ public class Level2FeedbackUI : MonoBehaviour
         RectTransform textRt = textGo.AddComponent<RectTransform>();
         textRt.anchorMin = Vector2.zero;
         textRt.anchorMax = Vector2.one;
-        textRt.offsetMin = new Vector2(12f, 6f);
-        textRt.offsetMax = new Vector2(-12f, -6f);
+        textRt.offsetMin = new Vector2(18f, 12f);
+        textRt.offsetMax = new Vector2(-18f, -12f);
 
         toastText = textGo.AddComponent<TextMeshProUGUI>();
         if (TMP_Settings.defaultFontAsset != null)
@@ -122,9 +130,12 @@ public class Level2FeedbackUI : MonoBehaviour
             toastText.font = TMP_Settings.defaultFontAsset;
         }
 
-        toastText.fontSize = 28f;
+        toastText.fontSize = 22f;
+        toastText.color = HudTextStyle.Body;
         toastText.fontStyle = FontStyles.Bold;
         toastText.alignment = TextAlignmentOptions.Center;
+        toastText.textWrappingMode = TextWrappingModes.Normal;
+        toastText.overflowMode = TextOverflowModes.Ellipsis;
         toastText.raycastTarget = false;
         toastText.outlineWidth = 0.2f;
         toastText.outlineColor = new Color(0f, 0f, 0f, 0.85f);
