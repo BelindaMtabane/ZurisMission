@@ -41,6 +41,7 @@ public class Level2WaterDropletPickup : MonoBehaviour
         collected = true;
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         hud?.CollectLevel2WaterDroplet(playerWaterAmount, bucketAmount);
+        GameAudio.PlayWater();
         gameObject.SetActive(false);
     }
 }
@@ -60,6 +61,7 @@ public class Level2BaobabPickup : MonoBehaviour
         collected = true;
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         hud?.CollectBaobabWater(playerWaterAmount);
+        GameAudio.PlayWaterSplash();
         gameObject.SetActive(false);
     }
 }
@@ -86,6 +88,7 @@ public class Level2MaterialPickup : MonoBehaviour
         collected = true;
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         hud?.CollectLevel2Material(kind, amount);
+        GameAudio.PlayPickup();
         gameObject.SetActive(false);
     }
 }
@@ -105,6 +108,7 @@ public class Level2BubbleShieldPickup : MonoBehaviour
 
         collected = true;
         Level2BubbleShield.Activate(shieldDuration, consumeOnBlock);
+        GameAudio.PlayPickup();
         gameObject.SetActive(false);
     }
 }
@@ -129,6 +133,7 @@ public class Level2SpeedFruitPickup : MonoBehaviour
 
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         hud?.CollectLevel2SpeedFruit(bucketCost);
+        GameAudio.PlayPickup();
         gameObject.SetActive(false);
     }
 }
@@ -152,6 +157,7 @@ public class Level2HealthFruitPickup : MonoBehaviour
 
         collected = true;
         FindFirstObjectByType<HUDControls>()?.CollectLevel2Health(healthAmount);
+        GameAudio.PlayPickup();
         gameObject.SetActive(false);
     }
 }
@@ -163,6 +169,8 @@ public class Level2WaterPoolPickup : MonoBehaviour
 
     bool collected;
 
+    void Start() => GameAudio.AttachSpringLoop(gameObject);
+
     void OnTriggerEnter(Collider other)
     {
         if (collected) return;
@@ -171,6 +179,7 @@ public class Level2WaterPoolPickup : MonoBehaviour
 
         collected = true;
         FindFirstObjectByType<HUDControls>()?.CollectLevel2WaterPool(playerWaterAmount, bucketAmount);
+        GameAudio.PlayWaterSplash();
         gameObject.SetActive(false);
     }
 }
@@ -191,6 +200,7 @@ public class Level2JumpBoostPickup : MonoBehaviour
         collected = true;
         PlayerController controller = other.GetComponent<PlayerController>();
         controller?.ApplyJumpBoost(jumpMultiplier, duration);
+        GameAudio.PlayPickup();
         gameObject.SetActive(false);
     }
 }

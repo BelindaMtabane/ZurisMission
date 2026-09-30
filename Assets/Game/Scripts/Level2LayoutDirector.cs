@@ -192,7 +192,7 @@ public class Level2LayoutDirector : MonoBehaviour
         HealthFruit(root, 2, 0.046f, NextHealth(ref healthIndex));
         WaterPool(root, 1, 0.058f);
         Cactus(root, 3, 0.070f);
-        Rock(root, 1, 0.082f);
+        MudPuddle(root, 1, 0.082f);
         MudPuddle(root, 3, 0.090f);
         MaterialPickup(root, 2, 0.094f, NextMaterial(ref materialIndex));
         MudPuddle(root, 2, 0.106f);
@@ -204,7 +204,7 @@ public class Level2LayoutDirector : MonoBehaviour
         Warthog(root, 0.168f, true, 36f);
         WaterDrop(root, 1, 0.182f);
         MaterialPickup(root, 0, 0.194f, NextMaterial(ref materialIndex));
-        Rock(root, 3, 0.206f);
+        MudPuddle(root, 3, 0.206f);
         MudPuddle(root, 2, 0.218f);
         MudPuddle(root, 0, 0.226f);
         HealthFruit(root, 3, 0.230f, NextHealth(ref healthIndex));
@@ -230,7 +230,7 @@ public class Level2LayoutDirector : MonoBehaviour
         Monster(root, 2, 0.470f);
         Cactus(root, 1, 0.482f);
         WaterPool(root, 3, 0.490f);
-        Rock(root, 0, 0.500f);
+        MudPuddle(root, 0, 0.500f);
         Warthog(root, 0.512f, false, 38f);
         MudPuddle(root, 2, 0.524f);
         MudPuddle(root, 0, 0.538f);
@@ -241,7 +241,7 @@ public class Level2LayoutDirector : MonoBehaviour
         RollingLog(root, 1, 0.566f, 2);
         BubbleShield(root, 1, 0.588f);
         Monster(root, 0, 0.600f);
-        Rock(root, 3, 0.610f);
+        MudPuddle(root, 3, 0.610f);
         WaterDrop(root, 2, 0.618f);
         MudPuddle(root, 1, 0.628f);
         MudPuddle(root, 3, 0.636f);
@@ -250,12 +250,12 @@ public class Level2LayoutDirector : MonoBehaviour
         Warthog(root, 0.640f, true, 40f);
         MaterialPickup(root, 2, 0.658f, NextMaterial(ref materialIndex));
         Poison(root, 3, 0.668f);
-        Rock(root, 1, 0.678f);
+        MudPuddle(root, 1, 0.678f);
         HealthFruit(root, 1, 0.686f, NextHealth(ref healthIndex));
         RollingLog(root, 1, 0.698f, 2);
         MudPuddle(root, 2, 0.708f);
         MudPuddle(root, 1, 0.740f);
-        Rock(root, 0, 0.716f);
+        MudPuddle(root, 0, 0.716f);
         BubbleShield(root, 2, 0.726f);
         Monster(root, 3, 0.736f);
         WaterPool(root, 0, 0.754f);
@@ -266,7 +266,7 @@ public class Level2LayoutDirector : MonoBehaviour
         // === 75–100% finish stretch — more obstacles, still recoverable ===
         RollingLog(root, 2, 0.786f, 2);
         MaterialPickup(root, 3, 0.802f, NextMaterial(ref materialIndex));
-        Rock(root, 0, 0.810f);
+        MudPuddle(root, 0, 0.810f);
         Monster(root, 2, 0.820f);
         HealthFruit(root, 1, 0.828f, NextHealth(ref healthIndex));
         MudPuddle(root, 3, 0.836f);
@@ -277,7 +277,7 @@ public class Level2LayoutDirector : MonoBehaviour
         RollingLog(root, 0, 0.882f, 2);
         Warthog(root, 0.892f, false, 43f);
         MaterialPickup(root, 2, 0.900f, NextMaterial(ref materialIndex));
-        Rock(root, 3, 0.908f);
+        MudPuddle(root, 3, 0.908f);
         WaterPool(root, 1, 0.916f);
         Monster(root, 0, 0.926f);
         HealthFruit(root, 3, 0.934f, NextHealth(ref healthIndex));
@@ -315,6 +315,8 @@ public class Level2LayoutDirector : MonoBehaviour
         HealthFruit(root, 1, 0.718f, NextHealth(ref healthIndex));
         HealthFruit(root, 2, 0.838f, NextHealth(ref healthIndex));
         HealthFruit(root, 1, 0.918f, NextHealth(ref healthIndex));
+        // Roadside scenery is streamed per ground tile by RunnerEnvironmentStreamer.
+        VillageFinishCourtyard.Build(root, Level2Progress.EndZ, Level2Ground.SurfaceY);
     }
 
     static float NextHealth(ref int healthIndex)

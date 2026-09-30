@@ -17,7 +17,10 @@ public class Level2FinishGate : MonoBehaviour
         HUDControls hud = FindFirstObjectByType<HUDControls>();
         if (hud == null) return;
 
-        hud.LevelProgress();
+        if (RunStateManager.Instance != null)
+            RunStateManager.Instance.BeginFinishSequence(hud.LevelProgress);
+        else
+            hud.LevelProgress();
     }
 
     static bool IsPlayer(Collider other)

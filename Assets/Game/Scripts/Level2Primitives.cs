@@ -177,15 +177,18 @@ public static class Level2Primitives
 
         GameObject tree = new GameObject("Tree");
         tree.transform.SetParent(root.transform, false);
-        Visual(PrimitiveType.Cylinder, tree.transform, new Vector3(0f, 3.2f, 0f), new Vector3(1.7f, 3.2f, 1.7f), BaobabTrunk, "Trunk");
-        Visual(PrimitiveType.Cylinder, tree.transform, new Vector3(0f, 1.1f, 0f), new Vector3(2.05f, 1.1f, 2.05f), BaobabBark, "Base");
-        Visual(PrimitiveType.Cylinder, tree.transform, new Vector3(1.4f, 5.6f, 0.2f), new Vector3(0.28f, 1.1f, 0.28f), BaobabBark, "BranchR");
-        Visual(PrimitiveType.Cylinder, tree.transform, new Vector3(-1.35f, 5.5f, -0.15f), new Vector3(0.26f, 1.0f, 0.26f), BaobabBark, "BranchL");
-        Visual(PrimitiveType.Sphere, tree.transform, new Vector3(0f, 6.6f, 0f), new Vector3(4.4f, 2.4f, 4.4f), BaobabCanopy, "Canopy");
-        Visual(PrimitiveType.Sphere, tree.transform, new Vector3(1.5f, 6.2f, 0.6f), new Vector3(2.2f, 1.4f, 2.2f), BaobabLeaf, "CanopyR");
-        Visual(PrimitiveType.Sphere, tree.transform, new Vector3(-1.4f, 6.15f, -0.5f), new Vector3(2.0f, 1.3f, 2.0f), BaobabLeaf, "CanopyL");
+        if (!NaturePackVisuals.AttachTree(tree.transform, 8.5f))
+        {
+            Visual(PrimitiveType.Cylinder, tree.transform, new Vector3(0f, 3.2f, 0f), new Vector3(1.7f, 3.2f, 1.7f), BaobabTrunk, "Trunk");
+            Visual(PrimitiveType.Cylinder, tree.transform, new Vector3(0f, 1.1f, 0f), new Vector3(2.05f, 1.1f, 2.05f), BaobabBark, "Base");
+            Visual(PrimitiveType.Cylinder, tree.transform, new Vector3(1.4f, 5.6f, 0.2f), new Vector3(0.28f, 1.1f, 0.28f), BaobabBark, "BranchR");
+            Visual(PrimitiveType.Cylinder, tree.transform, new Vector3(-1.35f, 5.5f, -0.15f), new Vector3(0.26f, 1.0f, 0.26f), BaobabBark, "BranchL");
+            Visual(PrimitiveType.Sphere, tree.transform, new Vector3(0f, 6.6f, 0f), new Vector3(4.4f, 2.4f, 4.4f), BaobabCanopy, "Canopy");
+            Visual(PrimitiveType.Sphere, tree.transform, new Vector3(1.5f, 6.2f, 0.6f), new Vector3(2.2f, 1.4f, 2.2f), BaobabLeaf, "CanopyR");
+            Visual(PrimitiveType.Sphere, tree.transform, new Vector3(-1.4f, 6.15f, -0.5f), new Vector3(2.0f, 1.3f, 2.0f), BaobabLeaf, "CanopyL");
+            tree.transform.localScale = Vector3.one * RunnerVisualScale.TreeBoost;
+        }
         Visual(PrimitiveType.Sphere, tree.transform, new Vector3(0.4f, 1.6f, 0.7f), new Vector3(0.32f, 0.42f, 0.32f), WaterDrop, "Dew");
-        tree.transform.localScale = Vector3.one * RunnerVisualScale.TreeBoost;
 
         GameObject pickup = new GameObject("PickupTrigger");
         pickup.transform.SetParent(root.transform, false);
@@ -282,8 +285,11 @@ public static class Level2Primitives
         root.transform.SetParent(parent, false);
         root.transform.position = Level2Ground.LanePosition(lane, z);
 
-        Visual(PrimitiveType.Cube, root.transform, new Vector3(0f, 0.7f, 0f), new Vector3(2.1f, 1.5f, 1.8f), Rock, "Boulder");
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(0.5f, 1.2f, 0.15f), new Vector3(1.1f, 0.85f, 1.0f), Rock, "Chunk");
+        if (!NaturePackVisuals.AttachRock(root.transform, 1.7f))
+        {
+            Visual(PrimitiveType.Cube, root.transform, new Vector3(0f, 0.7f, 0f), new Vector3(2.1f, 1.5f, 1.8f), Rock, "Boulder");
+            Visual(PrimitiveType.Sphere, root.transform, new Vector3(0.5f, 1.2f, 0.15f), new Vector3(1.1f, 0.85f, 1.0f), Rock, "Chunk");
+        }
 
         TallTrigger(root, 2.2f, 2.0f, 4.5f, 1.4f);
         KinematicBody(root);
@@ -298,8 +304,12 @@ public static class Level2Primitives
         root.transform.SetParent(parent, false);
         root.transform.position = Level2Ground.LanePosition(lane, z);
 
-        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.1f, 0f), new Vector3(3.6f, 0.1f, 3.6f), MudPuddle, "Puddle");
-        GameObject shine = Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0.2f, 0.16f, 0.15f), new Vector3(2.2f, 0.06f, 2.2f), MudShine, "Shine");
+        // Keep ordinary mud hazards irregular so they cannot be mistaken for
+        // the round potholes that always contain a mud monster.
+        Visual(PrimitiveType.Sphere, root.transform, new Vector3(0f, 0.10f, 0f), new Vector3(3.4f, 0.10f, 2.15f), MudPuddle, "MudSplat");
+        Visual(PrimitiveType.Sphere, root.transform, new Vector3(-1.45f, 0.10f, 0.62f), new Vector3(1.35f, 0.08f, 1.05f), MudPuddle * 0.90f, "MudBlobL");
+        Visual(PrimitiveType.Sphere, root.transform, new Vector3(1.38f, 0.10f, -0.48f), new Vector3(1.15f, 0.08f, 0.92f), MudPuddle * 0.94f, "MudBlobR");
+        GameObject shine = Visual(PrimitiveType.Sphere, root.transform, new Vector3(0.35f, 0.17f, 0.05f), new Vector3(1.7f, 0.035f, 0.82f), MudShine, "Shine");
         MakeTransparent(shine.GetComponent<Renderer>(), MudShine);
 
         TallTrigger(root, 3.2f, 3.2f, 3.8f, 1.2f);
@@ -320,13 +330,16 @@ public static class Level2Primitives
 
         GameObject plantBody = new GameObject("PlantBody");
         plantBody.transform.SetParent(root.transform, false);
-        Visual(PrimitiveType.Cylinder, plantBody.transform, new Vector3(0f, 1.05f, 0f), new Vector3(0.9f, 1.05f, 0.9f), PoisonPlant, "Stem");
-        Visual(PrimitiveType.Capsule, plantBody.transform, new Vector3(-0.85f, 1.7f, 0.1f), new Vector3(0.7f, 1.15f, 0.4f), PoisonLeaf, "LeafL");
-        Visual(PrimitiveType.Capsule, plantBody.transform, new Vector3(0.85f, 1.8f, -0.1f), new Vector3(0.7f, 1.2f, 0.4f), PoisonLeaf, "LeafR");
-        Visual(PrimitiveType.Capsule, plantBody.transform, new Vector3(0f, 1.55f, 0.7f), new Vector3(0.55f, 0.95f, 0.35f), PoisonLeaf, "LeafF");
-        Visual(PrimitiveType.Sphere, plantBody.transform, new Vector3(0f, 2.15f, 0f), new Vector3(1.15f, 0.95f, 1.15f), PoisonPlant, "Bulb");
-        Visual(PrimitiveType.Sphere, plantBody.transform, new Vector3(0.35f, 2.35f, 0.2f), new Vector3(0.35f, 0.28f, 0.35f), new Color(0.45f, 0.95f, 0.22f), "GlowSpot");
-        plantBody.transform.localScale = Vector3.one * RunnerVisualScale.PlantBoost;
+        if (!NaturePackVisuals.AttachBush(plantBody.transform, 3.6f))
+        {
+            Visual(PrimitiveType.Cylinder, plantBody.transform, new Vector3(0f, 1.05f, 0f), new Vector3(0.9f, 1.05f, 0.9f), PoisonPlant, "Stem");
+            Visual(PrimitiveType.Capsule, plantBody.transform, new Vector3(-0.85f, 1.7f, 0.1f), new Vector3(0.7f, 1.15f, 0.4f), PoisonLeaf, "LeafL");
+            Visual(PrimitiveType.Capsule, plantBody.transform, new Vector3(0.85f, 1.8f, -0.1f), new Vector3(0.7f, 1.2f, 0.4f), PoisonLeaf, "LeafR");
+            Visual(PrimitiveType.Capsule, plantBody.transform, new Vector3(0f, 1.55f, 0.7f), new Vector3(0.55f, 0.95f, 0.35f), PoisonLeaf, "LeafF");
+            Visual(PrimitiveType.Sphere, plantBody.transform, new Vector3(0f, 2.15f, 0f), new Vector3(1.15f, 0.95f, 1.15f), PoisonPlant, "Bulb");
+            Visual(PrimitiveType.Sphere, plantBody.transform, new Vector3(0.35f, 2.35f, 0.2f), new Vector3(0.35f, 0.28f, 0.35f), new Color(0.45f, 0.95f, 0.22f), "GlowSpot");
+            plantBody.transform.localScale = Vector3.one * RunnerVisualScale.PlantBoost;
+        }
 
         float laneCenterX = (LevelLanes.X(rightLane) - LevelLanes.X(lane)) * 0.5f;
         float plantTopY = RunnerVisualScale.V(new Vector3(0f, 2.15f, 0f)).y * RunnerVisualScale.PlantBoost;
@@ -378,22 +391,49 @@ public static class Level2Primitives
         root.transform.SetParent(parent, false);
         root.transform.position = Level2Ground.LanePosition(lane, z, 0.1f);
 
-        GameObject warningRoot = new GameObject("MonsterWarning");
+        GameObject warningRoot = new GameObject("BrownPothole");
         warningRoot.transform.SetParent(root.transform, false);
         warningRoot.transform.localPosition = new Vector3(0f, 0.08f, 0f);
-        Visual(PrimitiveType.Cylinder, warningRoot.transform, new Vector3(0f, 0.05f, 0f), new Vector3(2.8f, 0.06f, 2.8f), Warning, "GroundCircle");
-        Visual(PrimitiveType.Sphere, warningRoot.transform, new Vector3(0.5f, 0.3f, 0.25f), new Vector3(0.5f, 0.32f, 0.5f), MudPuddle, "Splash");
-        warningRoot.SetActive(false);
+        Visual(PrimitiveType.Cylinder, warningRoot.transform, new Vector3(0f, 0.02f, 0f), new Vector3(3.2f, 0.07f, 3.2f), new Color(0.24f, 0.13f, 0.055f), "DarkMudHole");
+        Visual(PrimitiveType.Cylinder, warningRoot.transform, new Vector3(0f, -0.01f, 0f), new Vector3(3.8f, 0.045f, 3.8f), MudPuddle, "MudRim");
+        Visual(PrimitiveType.Sphere, warningRoot.transform, new Vector3(1.4f, 0.12f, 0.55f), new Vector3(0.55f, 0.18f, 0.55f), MudShine, "MudSplash");
 
         GameObject visualRoot = new GameObject("Visual");
         visualRoot.transform.SetParent(root.transform, false);
-        Visual(PrimitiveType.Capsule, visualRoot.transform, new Vector3(0f, 1.35f, 0f), new Vector3(1.6f, 1.3f, 1.6f), MonsterBody, "Body");
-        Visual(PrimitiveType.Sphere, visualRoot.transform, new Vector3(0f, 2.45f, 0.4f), new Vector3(1.15f, 1.15f, 1.15f), MonsterBody, "Head");
-        Visual(PrimitiveType.Sphere, visualRoot.transform, new Vector3(-0.3f, 2.55f, 0.8f), new Vector3(0.24f, 0.24f, 0.24f), MonsterEye, "EyeL");
-        Visual(PrimitiveType.Sphere, visualRoot.transform, new Vector3(0.3f, 2.55f, 0.8f), new Vector3(0.24f, 0.24f, 0.24f), MonsterEye, "EyeR");
+        GameObject monsterPrefab = Resources.Load<GameObject>("Monsters/SlimePBR");
+#if UNITY_EDITOR
+        if (monsterPrefab == null)
+        {
+            monsterPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/RPG Monster DUO PBR Polyart/Prefabs/PBRDefault/SlimePBR.prefab");
+        }
+#endif
+        if (monsterPrefab != null)
+        {
+            GameObject model = Object.Instantiate(monsterPrefab, visualRoot.transform);
+            model.name = "RPG_MudMonster";
+            model.transform.localPosition = Vector3.zero;
+            model.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            model.transform.localScale = Vector3.one * 2.6f;
+            NaturePackVisuals.EnsureSceneObjectMaterials(model);
+            foreach (Collider collider in model.GetComponentsInChildren<Collider>(true))
+                collider.enabled = false;
+        }
+        else
+        {
+            Visual(PrimitiveType.Capsule, visualRoot.transform, new Vector3(0f, 1.35f, 0f), new Vector3(1.9f, 1.55f, 1.9f), MonsterBody, "Body");
+            Visual(PrimitiveType.Sphere, visualRoot.transform, new Vector3(0f, 2.65f, 0.4f), new Vector3(1.35f, 1.35f, 1.35f), MonsterBody, "Head");
+            Visual(PrimitiveType.Sphere, visualRoot.transform, new Vector3(-0.34f, 2.78f, 0.9f), new Vector3(0.28f, 0.28f, 0.28f), MonsterEye, "EyeL");
+            Visual(PrimitiveType.Sphere, visualRoot.transform, new Vector3(0.34f, 2.78f, 0.9f), new Vector3(0.28f, 0.28f, 0.28f), MonsterEye, "EyeR");
+        }
         visualRoot.SetActive(false);
 
+        SphereCollider potholeTrigger = root.AddComponent<SphereCollider>();
+        potholeTrigger.isTrigger = true;
+        potholeTrigger.center = new Vector3(0f, 0.25f, 0f);
+        potholeTrigger.radius = 2.7f;
         KinematicBody(root);
+        root.AddComponent<Level2MudPothole>();
         Level2MudMonster monster = root.AddComponent<Level2MudMonster>();
         monster.Setup(lane, spawnProgress, warningRoot, visualRoot);
         return root;
@@ -424,21 +464,30 @@ public static class Level2Primitives
         float leftX = LevelLanes.X(leftLane);
         float rightX = LevelLanes.X(rightLane);
         float midX = (leftX + rightX) * 0.5f;
-        float width = Mathf.Abs(rightX - leftX) + 2.6f;
+        float width = Mathf.Abs(rightX - leftX) + 1.6f;
 
         GameObject root = new GameObject(span >= 3 ? "RollingLog_3Lane" : "RollingLog_2Lane");
         root.transform.SetParent(parent, false);
         root.transform.position = new Vector3(midX, Level2Ground.SurfaceY, z);
 
-        GameObject mesh = Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.9f, 0f), new Vector3(1.8f, width * 0.5f, 1.8f), LogBark, "Log");
-        mesh.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(-width * 0.48f, 0.9f, 0f), new Vector3(1.7f, 1.7f, 1.7f), LogDark, "EndL");
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(width * 0.48f, 0.9f, 0f), new Vector3(1.7f, 1.7f, 1.7f), LogDark, "EndR");
+        Transform rollPivot = NaturePackVisuals.CreateLogRollPivot(root.transform);
+        if (!NaturePackVisuals.AttachLevel2RollingLog(rollPivot, width))
+        {
+            GameObject mesh = Visual(PrimitiveType.Cylinder, rollPivot, new Vector3(0f, 0.68f, 0f), new Vector3(1.3f, width * 0.5f, 1.3f), LogBark, "Log");
+            mesh.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            Visual(PrimitiveType.Sphere, rollPivot, new Vector3(-width * 0.48f, 0.68f, 0f), new Vector3(1.2f, 1.2f, 1.2f), LogDark, "EndL");
+            Visual(PrimitiveType.Sphere, rollPivot, new Vector3(width * 0.48f, 0.68f, 0f), new Vector3(1.2f, 1.2f, 1.2f), LogDark, "EndR");
+            NaturePackVisuals.AlignRollingLogPivot(rollPivot);
+        }
+        else
+        {
+            NaturePackVisuals.AlignRollingLogPivot(rollPivot);
+        }
 
         BoxCollider box = root.AddComponent<BoxCollider>();
         box.isTrigger = true;
-        box.center = RunnerVisualScale.V(new Vector3(0f, 0.95f, 0f));
-        box.size = RunnerVisualScale.V(new Vector3(width, 2.6f, 2.2f));
+        box.center = RunnerVisualScale.V(new Vector3(0f, 0.72f, 0f));
+        box.size = RunnerVisualScale.V(new Vector3(width, 1.9f, 1.8f));
         KinematicBody(root);
         root.AddComponent<Level2RollingLog>().Setup(speed);
         return root;
@@ -452,10 +501,13 @@ public static class Level2Primitives
 
         GameObject body = new GameObject("PlantBody");
         body.transform.SetParent(root.transform, false);
-        Visual(PrimitiveType.Cylinder, body.transform, new Vector3(0f, 2.1f, 0f), new Vector3(0.85f, 2.1f, 0.85f), CactusGreen, "Trunk");
-        Visual(PrimitiveType.Sphere, body.transform, new Vector3(0.95f, 2.7f, 0f), new Vector3(1.0f, 0.6f, 0.6f), CactusArm, "ArmL");
-        Visual(PrimitiveType.Capsule, body.transform, new Vector3(-0.9f, 3.1f, 0f), new Vector3(0.48f, 0.8f, 0.48f), CactusArm, "ArmR");
-        body.transform.localScale = Vector3.one * RunnerVisualScale.PlantBoost;
+        if (!NaturePackVisuals.AttachCactus(body.transform, 4.2f))
+        {
+            Visual(PrimitiveType.Cylinder, body.transform, new Vector3(0f, 2.1f, 0f), new Vector3(0.85f, 2.1f, 0.85f), CactusGreen, "Trunk");
+            Visual(PrimitiveType.Sphere, body.transform, new Vector3(0.95f, 2.7f, 0f), new Vector3(1.0f, 0.6f, 0.6f), CactusArm, "ArmL");
+            Visual(PrimitiveType.Capsule, body.transform, new Vector3(-0.9f, 3.1f, 0f), new Vector3(0.48f, 0.8f, 0.48f), CactusArm, "ArmR");
+            body.transform.localScale = Vector3.one * RunnerVisualScale.PlantBoost;
+        }
 
         TallTrigger(root, 2.0f * RunnerVisualScale.PlantBoost, 2.0f * RunnerVisualScale.PlantBoost, 5f * RunnerVisualScale.PlantBoost, 1.8f * RunnerVisualScale.PlantBoost);
         KinematicBody(root);
@@ -488,12 +540,9 @@ public static class Level2Primitives
         root.transform.SetParent(parent, false);
         root.transform.position = Level2Ground.LanePosition(lane, z);
 
-        Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.12f, 0f), new Vector3(3.4f, 0.12f, 3.4f), WaterPool, "Pool");
-        GameObject ripple = Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0.12f, 0.18f, 0.12f), new Vector3(2.1f, 0.07f, 2.1f), WaterPoolDeep, "Ripple");
-        MakeTransparent(ripple.GetComponent<Renderer>(), new Color(WaterPoolDeep.r, WaterPoolDeep.g, WaterPoolDeep.b, 0.65f));
-        Visual(PrimitiveType.Sphere, root.transform, new Vector3(0f, 0.5f, 0f), new Vector3(0.4f, 0.7f, 0.4f), WaterGlow, "Splash");
+        AquisWaterVisuals.BuildLevel2PoolVisuals(root.transform, WaterPool, WaterPoolDeep);
 
-        TallTrigger(root, 3.2f, 3.2f, 3.8f, 1.2f);
+        TallTrigger(root, 4.8f, 4.2f, 3.8f, 1.2f);
         KinematicBody(root);
         root.AddComponent<Level2WaterPoolPickup>();
         return root;
@@ -507,14 +556,17 @@ public static class Level2Primitives
 
         GameObject visual = new GameObject("Visual");
         visual.transform.SetParent(root.transform, false);
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(0f, 0.65f, 0f), new Vector3(2.6f, 1.0f, 1.2f), Warthog, "Body");
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.4f, 0.80f, 0f), new Vector3(0.85f, 0.65f, 0.9f), WarthogSnout, "Head");
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.75f, 0.72f, 0.35f), new Vector3(0.35f, 0.18f, 0.18f), Color.white, "TuskL");
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.75f, 0.72f, -0.35f), new Vector3(0.35f, 0.18f, 0.18f), Color.white, "TuskR");
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(0.7f, 0.18f, 0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegFL");
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(0.7f, 0.18f, -0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegFR");
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(-0.7f, 0.18f, 0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegBL");
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(-0.7f, 0.18f, -0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegBR");
+        if (!AttachBrownPig(visual.transform))
+        {
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3(0f, 0.65f, 0f), new Vector3(2.6f, 1.0f, 1.2f), Warthog, "Body");
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.4f, 0.80f, 0f), new Vector3(0.85f, 0.65f, 0.9f), WarthogSnout, "Head");
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.75f, 0.72f, 0.35f), new Vector3(0.35f, 0.18f, 0.18f), Color.white, "TuskL");
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.75f, 0.72f, -0.35f), new Vector3(0.35f, 0.18f, 0.18f), Color.white, "TuskR");
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3(0.7f, 0.18f, 0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegFL");
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3(0.7f, 0.18f, -0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegFR");
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3(-0.7f, 0.18f, 0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegBL");
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3(-0.7f, 0.18f, -0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegBR");
+        }
 
         BoxCollider box = root.AddComponent<BoxCollider>();
         box.isTrigger = true;
@@ -523,5 +575,54 @@ public static class Level2Primitives
         KinematicBody(root);
         root.AddComponent<Level2Warthog>().Setup(goRight, speed, visual);
         return root;
+    }
+
+    static bool AttachBrownPig(Transform parent)
+    {
+        GameObject source = Resources.Load<GameObject>("Animals/BrownPig");
+        if (source == null) return false;
+
+        GameObject pig = Object.Instantiate(source, parent, false);
+        pig.name = "BrownPigWarthog";
+        pig.transform.localPosition = Vector3.zero;
+        pig.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+        pig.transform.localScale = Vector3.one;
+
+        Collider[] colliders = pig.GetComponentsInChildren<Collider>(true);
+        for (int i = 0; i < colliders.Length; i++)
+            if (colliders[i] != null) colliders[i].enabled = false;
+
+        Animator[] animators = pig.GetComponentsInChildren<Animator>(true);
+        for (int i = 0; i < animators.Length; i++)
+            if (animators[i] != null) animators[i].applyRootMotion = false;
+
+        Renderer[] renderers = pig.GetComponentsInChildren<Renderer>(true);
+        if (renderers.Length == 0)
+        {
+            Object.Destroy(pig);
+            return false;
+        }
+
+        Color brownTint = new Color(0.58f, 0.34f, 0.16f, 1f);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Material[] materials = renderers[i].materials;
+            for (int m = 0; m < materials.Length; m++)
+            {
+                Material material = materials[m];
+                if (material == null || !material.name.StartsWith("Pig")) continue;
+                if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", brownTint);
+                if (material.HasProperty("_Color")) material.SetColor("_Color", brownTint);
+            }
+        }
+
+        Bounds bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
+        pig.transform.localScale *= 2.4f / Mathf.Max(0.01f, bounds.size.y);
+
+        bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
+        pig.transform.position += Vector3.up * (parent.position.y - bounds.min.y);
+        return true;
     }
 }

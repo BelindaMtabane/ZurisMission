@@ -44,6 +44,8 @@ public class Level2Obstacle : MonoBehaviour
 
         if (kind == Level2ObstacleKind.MudPuddle)
         {
+            ObstacleGuideHUD.NotifyHit("mud");
+            GameAudio.PlayMud();
             Level2MudSlowEffect.Apply(controller, mudSlowMultiplier, mudSlowDuration);
             return;
         }

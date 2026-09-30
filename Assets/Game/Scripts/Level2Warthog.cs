@@ -34,7 +34,7 @@ public class Level2Warthog : MonoBehaviour
     const float MinTrackSpeed = 92f;
     const float MaxTrackSpeed = 110f;
     const float JumpClearanceY = 1.6f;
-    const float HitLaneHalfWidth = 4.2f;
+    const float HitLaneHalfWidth = 5.1f;
     const float HitDepthHalfWidth = 4.5f;
     const float PlayerClearDistanceZ = 1.25f;
     const float PathEdgePadding = 5f;
@@ -131,6 +131,8 @@ public class Level2Warthog : MonoBehaviour
         if (depthDelta > HitDepthHalfWidth) return;
 
         hit = true;
+        ObstacleGuideHUD.NotifyHit("warthog");
+        GameAudio.PlayWarthog();
         FindFirstObjectByType<HUDControls>()?.ChangeHealth(-Level2Config.WarthogHealthDamage, "A warthog charged into you!");
     }
 
@@ -157,7 +159,7 @@ public class Level2Warthog : MonoBehaviour
         if (!warned)
         {
             warned = true;
-            Level2FeedbackUI.Show("WARTHOG CHARGING — JUMP!", new Color(1f, 0.55f, 0.15f), 1.2f);
+            Level2FeedbackUI.Show("WARTHOG CHARGING! JUMP!", new Color(1f, 0.55f, 0.15f), 1.2f);
         }
     }
 

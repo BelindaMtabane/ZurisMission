@@ -13,7 +13,7 @@ public static class Level2Config
 
     public const float WarthogHealthDamage = 10f;
 
-    public const float MudBallHealthDamage = 5f;
+    public const float MudBallHealthDamage = 14f;
     public const float MudBallSlowMultiplier = 0.45f;
     public const float MudBallSlowDuration = 2.4f;
 

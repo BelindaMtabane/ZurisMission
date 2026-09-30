@@ -165,10 +165,11 @@ public class Level2BubbleShield : MonoBehaviour
             timerText.font = TMP_Settings.defaultFontAsset;
         }
 
-        timerText.fontSize = 22f;
+        timerText.fontSize = 26f;
         timerText.fontStyle = FontStyles.Bold;
         timerText.alignment = TextAlignmentOptions.Center;
-        timerText.color = new Color(0.75f, 0.94f, 1f, 0.95f);
+        timerText.color = HudTextStyle.Body;
+        HudTextStyle.ApplyOutline(timerText);
         timerText.raycastTarget = false;
     }
 }
