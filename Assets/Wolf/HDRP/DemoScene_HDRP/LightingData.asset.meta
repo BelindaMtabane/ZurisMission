@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c41454214b4222b4ebf60b0ee95ef31f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 112000000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 311465
+  packageName: Realistic Furry Wolf
+  packageVersion: 1.0
+  assetPath: Assets/Wolf/HDRP/DemoScene_HDRP/LightingData.asset
+  uploadId: 733725

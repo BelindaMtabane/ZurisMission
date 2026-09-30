@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 1404cccc3227c264cadbdb0beed67fa5
+timeCreated: 1506355179
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 93117
+  packageName: Klen
+  packageVersion: 1.0
+  assetPath: Assets/klen/Model/Maple_468Poly.controller
+  uploadId: 202789

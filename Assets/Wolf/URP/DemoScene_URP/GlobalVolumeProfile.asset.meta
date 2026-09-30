@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 8d8278780a63f1c4bafa2aea2721ccab
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 311465
+  packageName: Realistic Furry Wolf
+  packageVersion: 1.0
+  assetPath: Assets/Wolf/URP/DemoScene_URP/GlobalVolumeProfile.asset
+  uploadId: 733725

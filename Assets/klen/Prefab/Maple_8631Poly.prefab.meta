@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 35561ca73af3a7c4898756735f464857
+timeCreated: 1506360013
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 93117
+  packageName: Klen
+  packageVersion: 1.0
+  assetPath: Assets/klen/Prefab/Maple_8631Poly.prefab
+  uploadId: 202789

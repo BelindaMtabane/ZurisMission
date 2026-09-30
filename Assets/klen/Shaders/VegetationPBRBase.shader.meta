@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 698f0d046da0e3a45b116e8135a5a530
+timeCreated: 1505655433
+licenseType: Store
+ShaderImporter:
+  defaultTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 93117
+  packageName: Klen
+  packageVersion: 1.0
+  assetPath: Assets/klen/Shaders/VegetationPBRBase.shader
+  uploadId: 202789

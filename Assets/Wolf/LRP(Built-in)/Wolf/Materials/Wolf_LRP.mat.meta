@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2477fa28dea7e3040b285b38df0c5423
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 311465
+  packageName: Realistic Furry Wolf
+  packageVersion: 1.0
+  assetPath: Assets/Wolf/LRP(Built-in)/Wolf/Materials/Wolf_LRP.mat
+  uploadId: 733725

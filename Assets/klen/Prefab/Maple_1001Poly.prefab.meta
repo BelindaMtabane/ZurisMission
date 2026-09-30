@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 1c7b06a63b38a134f963bf318ec6a01a
+timeCreated: 1506359996
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 93117
+  packageName: Klen
+  packageVersion: 1.0
+  assetPath: Assets/klen/Prefab/Maple_1001Poly.prefab
+  uploadId: 202789

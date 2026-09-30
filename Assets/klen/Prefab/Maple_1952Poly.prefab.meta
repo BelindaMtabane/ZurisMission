@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 95604178c763044448e885f2950e685a
+timeCreated: 1506360006
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 93117
+  packageName: Klen
+  packageVersion: 1.0
+  assetPath: Assets/klen/Prefab/Maple_1952Poly.prefab
+  uploadId: 202789

@@ -1,0 +1,45 @@
+	
+--------------Pig(Pork) Funny and Fried 3D character LITE----------------------------
+
+This pack contains 3d Animated model of a Funny fried PIG.Best fit for Fun, Openworld games.You can use this pack commercially.
+
+Note : This is a Lite version of the asset "Pig Funny and Fried character"
+whats new in the full version : 8 Animations (idle, look, walk, run, hit, death, run-funny, jump/fall)
+
+Technical Details:-
+		- Character : Pig (Pork)
+		- Animations : 1 (look)
+		- Props (Toggle-able) : Box, Wings, Breads
+		- Prefabs : 12
+		- Poly count (in Tris) : 7752 (Including all Props)
+		- Used Material(s) : URP/Lit
+		- Texture maps : Albedo/Base Color, Metallic Smoothness, Normal
+		- Texture Size : 2048 x2048 (Png Fromat)
+
+Features:-
+	- Optimized lowpoly models (Best for PC and Mobiles)
+	- Props can be toggled On/Off	
+	- All meshes are UV Unwrapped
+	- You can add Custom PBR textures
+	- Smooth animations (Seamless loop)
+	- High quality 2K textures
+	- Textures can be Easy to edit/modify
+	- Demo scene, Colliders included
+	- Mobile/AR Ready asset
+		
+Folder details:-
+
+	Materials : Where the materials for the model located.	
+	Meshes : Contain FBX format of the 3d model.	
+	Textures : Contains Textures, that are in (.PNG) file format	
+	(Other folders - Prefabs, Scenes)
+
+How to use:-
+	Simply drag and drop the prefab from Prefab folder to your scene and use it.
+
+.................................................................................
+
+About Me : "SR Studios Kerala", Indie Game developer & 2D-3D Artist from Alappuzha, Kerala, India
+contact : srstudioskerala@gmail.com
+
+................Thanks for downloading this package................................

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 9de485e3d49d87546a6f98c5a1a3dc8c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 311465
+  packageName: Realistic Furry Wolf
+  packageVersion: 1.0
+  assetPath: Assets/Wolf/LRP(Built-in)/Wolf/Materials/EyeGlassWolf_LRP.mat
+  uploadId: 733725
