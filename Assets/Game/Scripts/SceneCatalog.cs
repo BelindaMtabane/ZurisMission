@@ -8,6 +8,7 @@ public static class SceneCatalog
 {
     public const string Tutorial = "Tutorial";
     public const string StartScreen = "StartScreen";
+    public const string MiniNarrative1 = "MiniNarrative1";
     public const string MainGame = "MainGame";
     public const string Level2 = "Level2";
     public const string Level3 = "Level3";
@@ -33,7 +34,7 @@ public static class SceneCatalog
         sceneName == MainGame || sceneName == Level2;
 
     public static bool ShouldIgnoreBootstrap(string sceneName) =>
-        sceneName == StartScreen || sceneName == StarterInfor;
+        sceneName == StartScreen || sceneName == StarterInfor || sceneName == MiniNarrative1;
 
     /// <summary>
     /// Returns the next gameplay scene, or empty string when there is no next scene.

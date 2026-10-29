@@ -8,7 +8,8 @@ public class SceneBootstrapper : MonoBehaviour
     private static readonly HashSet<string> IgnoredScenes = new HashSet<string>
     {
         SceneCatalog.StartScreen,
-        SceneCatalog.StarterInfor
+        SceneCatalog.StarterInfor,
+        SceneCatalog.MiniNarrative1
     };
 
     private static readonly Dictionary<string, float> VillageProgressMap = new Dictionary<string, float>

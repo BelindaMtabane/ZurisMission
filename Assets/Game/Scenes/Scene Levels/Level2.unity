@@ -13322,9 +13322,9 @@ CanvasRenderer:
 --- !u!1001 &1455647675
 PrefabInstance:
   m_ObjectHideFlags: 0
-  serializedVersion: 2
+    serializedVersion: 2
   m_Modification:
-    serializedVersion: 3
+  serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 293755405428359856, guid: 750453e3dc5701f4c91289ed2fc5df48, type: 3}
@@ -14620,7 +14620,7 @@ Material:
   - MOTIONVECTORS
   m_LockedProperties: 
   m_SavedProperties:
-    serializedVersion: 3
+  serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
         m_Texture: {fileID: 0}
@@ -16966,9 +16966,9 @@ CanvasRenderer:
 --- !u!1001 &1819746666
 PrefabInstance:
   m_ObjectHideFlags: 0
-  serializedVersion: 2
+    serializedVersion: 2
   m_Modification:
-    serializedVersion: 3
+  serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1882061928368989805, guid: 9d815b9999bfa4e45a8639a6f090e6db, type: 3}
@@ -19040,7 +19040,7 @@ PrefabInstance:
 --- !u!1001 &2029374678
 PrefabInstance:
   m_ObjectHideFlags: 0
-  serializedVersion: 2
+    serializedVersion: 2
   m_Modification:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
@@ -19097,9 +19097,9 @@ PrefabInstance:
 --- !u!1001 &2050212105
 PrefabInstance:
   m_ObjectHideFlags: 0
-  serializedVersion: 2
+    serializedVersion: 2
   m_Modification:
-    serializedVersion: 3
+  serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 5986958801767457440, guid: 87a7b985b15a4244091de35d7df9169a, type: 3}

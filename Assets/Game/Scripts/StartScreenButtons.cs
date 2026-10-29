@@ -250,14 +250,14 @@ public class StartScreenButtons : MonoBehaviour
 
     static void StartNewGame()
     {
-        Debug.Log("[StartScreen] New Game -> Level 1 (MainGame)");
-        LoadGameplay(SceneCatalog.MainGame);
+        Debug.Log("[StartScreen] New Game -> Mini Narrative 1");
+        LoadGameplay(SceneCatalog.MiniNarrative1);
     }
 
     static void LoadGameplay(string sceneName)
     {
         Time.timeScale = 1f;
-        SceneLoadOverlay.Load(sceneName);
+        SceneManager.LoadScene(sceneName);
     }
 
     void OpenCredits()
