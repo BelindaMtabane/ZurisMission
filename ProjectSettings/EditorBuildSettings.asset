@@ -20,6 +20,18 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/Scene Levels/Level3.unity
     guid: 38edd36fe2e0b974fa3c29abd4c831d2
+  - enabled: 1
+    path: Assets/Game/Scenes/Scene Narrative/MiniNarrative1.unity
+    guid: 9d7c8d6ae9b897240932201208deeae4
+  - enabled: 1
+    path: Assets/Game/Scenes/Scene Narrative/MiniNarrative2.unity
+    guid: 94285f03459a1434fb0fe122e2acb0cf
+  - enabled: 1
+    path: Assets/Game/Scenes/Scene Narrative/MiniNarrative3.unity
+    guid: a1196126bdfc1cd4da14490f2a89f7a2
+  - enabled: 1
+    path: Assets/Game/Scenes/Scene Narrative/MiniNarrative4.unity
+    guid: af1f3cc322fe02f4ba1530c126a2753a
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

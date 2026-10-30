@@ -579,15 +579,10 @@ public class HUDControls : MonoBehaviour
 
     public void SceneChange(float sceneNumber)
     {
-        if (sceneNumber == 2f)
-        {
-            SceneLoadOverlay.Load(SceneCatalog.Level2);
-        }
-
-        if (sceneNumber == 4f)
-        {
-            SceneLoadOverlay.Load(SceneCatalog.Level3);
-        }
+        _ = sceneNumber;
+        string next = SceneCatalog.GetNextScene(SceneCatalog.ActiveName);
+        if (!string.IsNullOrEmpty(next))
+            SceneLoadOverlay.Load(next);
     }
 
     public void CollectLevel3Material(string kind, int amount = 10)
@@ -621,7 +616,7 @@ public class HUDControls : MonoBehaviour
             {
                 RunStateManager.Instance?.NotifyVictory(
                     "MISSION COMPLETE!",
-                    "You repaired every water tank and secured clean water for the whole village.\n\nThank you for playing Zuri's Mission!");
+                    "You repaired every water tank and secured clean water for the whole village.\n\nContinue to the final story when you are ready.");
                 Debug.Log("[HUDControls] Level3 complete ÔÇö all tanks repaired");
                 return;
             }
@@ -653,13 +648,13 @@ public class HUDControls : MonoBehaviour
         {
             RunStateManager.Instance?.NotifyVictory(
                 "LEVEL 1 COMPLETE",
-                "Materials, water, and hydration reached 60%.\n\nStart Level 2 when you are ready.");
+                "Materials, water, and hydration reached 60%.\n\nContinue to the next story when you are ready.");
         }
         else if (SceneCatalog.IsLevel2(sceneName))
         {
             RunStateManager.Instance?.NotifyVictory(
                 "LEVEL 2 COMPLETE",
-                "Materials, water, and hydration reached 60%.\n\nStart Level 3 when you are ready.");
+                "Materials, water, and hydration reached 60%.\n\nContinue to the next story when you are ready.");
         }
         else
         {

@@ -103,7 +103,7 @@ public class EndLevelDialogue : MonoBehaviour
                     "Zuri must navigate a wild river system and release floodgates to " +
                     "irrigate the farmlands. Watch out for speeding cars, deep river " +
                     "currents, and slippery mud patches. Stay fast and stay healthy!";
-                scene = SceneCatalog.Level2;
+                scene = SceneCatalog.MiniNarrative2;
                 break;
 
             case 2:
@@ -118,7 +118,7 @@ public class EndLevelDialogue : MonoBehaviour
                     "three broken pipe sections scattered across a rugged landscape. " +
                     "Collect materials, avoid dangers, and fix every pipe to complete " +
                     "the water system and save the village for good!";
-                scene = SceneCatalog.Level3;
+                scene = SceneCatalog.MiniNarrative3;
                 break;
 
             default: // level 3 / end of game
@@ -133,7 +133,7 @@ public class EndLevelDialogue : MonoBehaviour
                     "village will never go without clean water again. The crops grow, " +
                     "the children are healthy, and hope is restored.\n" +
                     "Thank you for playing Zuri's Mission!";
-                scene = SceneCatalog.StartScreen;
+                scene = SceneCatalog.MiniNarrative4;
                 break;
         }
 

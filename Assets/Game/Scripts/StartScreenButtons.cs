@@ -129,25 +129,31 @@ public class StartScreenButtons : MonoBehaviour
 
         var btnL2 = MakeButton(card, "SSB_Level2Btn",
                                "LEVEL 2", ColBtnSettings, AdventureUI.BtnMedium,
-                               new Vector2(0.08f, 0.28f), new Vector2(0.48f, 0.40f),
+                               new Vector2(0.08f, 0.32f), new Vector2(0.48f, 0.43f),
                                overlayLabel: true);
-        btnL2.onClick.AddListener(() => LoadGameplay(SceneCatalog.Level2));
+        btnL2.onClick.AddListener(() => LoadGameplay(SceneCatalog.MiniNarrative2));
 
         var btnL3 = MakeButton(card, "SSB_Level3Btn",
                                "LEVEL 3", ColBtnStart, AdventureUI.BtnMedium,
-                               new Vector2(0.52f, 0.28f), new Vector2(0.92f, 0.40f),
+                               new Vector2(0.52f, 0.32f), new Vector2(0.92f, 0.43f),
                                overlayLabel: true);
-        btnL3.onClick.AddListener(() => LoadGameplay(SceneCatalog.Level3));
+        btnL3.onClick.AddListener(() => LoadGameplay(SceneCatalog.MiniNarrative3));
 
         var btnSettings = MakeButton(card, "SSB_SettingsBtn",
                                      "SETTINGS", ColBtnSettings, AdventureUI.BtnSetting,
-                                     new Vector2(0.20f, 0.16f), new Vector2(0.80f, 0.26f));
+                                     new Vector2(0.20f, 0.21f), new Vector2(0.80f, 0.30f));
         btnSettings.onClick.AddListener(OpenSettings);
 
         var btnExit = MakeButton(card, "SSB_ExitBtn",
                                  "EXIT", ColBtnExit, AdventureUI.BtnQuit,
-                                 new Vector2(0.25f, 0.03f), new Vector2(0.75f, 0.14f));
+                                 new Vector2(0.25f, 0.11f), new Vector2(0.75f, 0.20f));
         btnExit.onClick.AddListener(() => Application.Quit());
+
+        var btnReset = MakeButton(card, "SSB_ResetBtn",
+                                  "RESET", ColBtnExit, AdventureUI.BtnMedium,
+                                  new Vector2(0.25f, 0.01f), new Vector2(0.75f, 0.10f),
+                                  overlayLabel: true);
+        btnReset.onClick.AddListener(ResetNarrativeSaves);
 
         // Created last so its hitbox sits above Level 2/3 if anything overlaps.
         var btnStart = MakeButton(card, "SSB_StartBtn",
@@ -246,6 +252,13 @@ public class StartScreenButtons : MonoBehaviour
     {
         settingsPanel.SetActive(false);
         card.SetActive(true);
+    }
+
+    static void ResetNarrativeSaves()
+    {
+        SceneCatalog.ResetAllProgress();
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneCatalog.StartScreen);
     }
 
     static void StartNewGame()

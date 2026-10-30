@@ -9,7 +9,10 @@ public class SceneBootstrapper : MonoBehaviour
     {
         SceneCatalog.StartScreen,
         SceneCatalog.StarterInfor,
-        SceneCatalog.MiniNarrative1
+        SceneCatalog.MiniNarrative1,
+        SceneCatalog.MiniNarrative2,
+        SceneCatalog.MiniNarrative3,
+        SceneCatalog.MiniNarrative4
     };
 
     private static readonly Dictionary<string, float> VillageProgressMap = new Dictionary<string, float>

@@ -73,6 +73,7 @@ public sealed class NarrativeScene1Controller : MonoBehaviour
     TMP_Text commentaryText;
     TMP_Text storyTitle;
     TMP_Text skipButtonText;
+    string authoredSkipLabel;
     Button narrativeNextButton;
     Button nextQuestionButton;
     Button skipButton;
@@ -90,6 +91,7 @@ public sealed class NarrativeScene1Controller : MonoBehaviour
     int correctAnswers;
     bool answerSelected;
     bool playingStory2;
+    bool allowNarrativeSkip;
     Coroutine narrativeButtonRoutine;
 
     void Awake()
@@ -126,6 +128,9 @@ public sealed class NarrativeScene1Controller : MonoBehaviour
         storyTitle = FindComponent<TMP_Text>("StoryPanel/StoryTitle");
         skipButton = FindComponent<Button>("StoryPanel/SkipButton");
         skipButtonText = skipButton != null ? skipButton.GetComponentInChildren<TMP_Text>(true) : null;
+        authoredSkipLabel = skipButtonText != null && !string.IsNullOrWhiteSpace(skipButtonText.text)
+            ? skipButtonText.text
+            : "SKIP STORY 2";
 
         answerButtons[0] = FindComponent<Button>("QuestionPanel/Answer1");
         answerButtons[1] = FindComponent<Button>("QuestionPanel/Answer2");
@@ -180,8 +185,8 @@ public sealed class NarrativeScene1Controller : MonoBehaviour
         narrativeNextButton.onClick.AddListener(AdvanceNarrative);
         nextQuestionButton.onClick.RemoveListener(HandleNextQuestion);
         nextQuestionButton.onClick.AddListener(HandleNextQuestion);
-        skipButton.onClick.RemoveListener(HandleContinueAfterQuiz);
-        skipButton.onClick.AddListener(HandleContinueAfterQuiz);
+        skipButton.onClick.RemoveAllListeners();
+        skipButton.onClick.AddListener(HandleSkipPressed);
 
         answerButtons[0].onClick.RemoveListener(SelectAnswer1);
         answerButtons[0].onClick.AddListener(SelectAnswer1);
@@ -204,19 +209,13 @@ public sealed class NarrativeScene1Controller : MonoBehaviour
 
     void RefreshStoryUi(string message = null)
     {
-        bool story2Unlocked = StoryNarrativeData.Story2Unlocked;
+        if (!string.IsNullOrEmpty(message) && storyTitle != null)
+            storyTitle.text = message;
 
-        storyTitle.text = string.IsNullOrEmpty(message)
-            ? "STORIES"
-            : message;
-
-        storyButtonLabels[0].text = "Story 1 — The Great Water Mystery";
-        storyButtonLabels[1].text = story2Unlocked
-            ? "Story 2 — The Hidden Water Clue"
-            : "Story 2 — Locked";
-
-        storyButtons[0].interactable = true;
-        storyButtons[1].interactable = story2Unlocked;
+        if (storyButtons[0] != null)
+            storyButtons[0].interactable = true;
+        if (storyButtons[1] != null)
+            storyButtons[1].interactable = StoryNarrativeData.Story2Unlocked;
     }
 
     void ApplyExistingFont()
@@ -259,7 +258,7 @@ public sealed class NarrativeScene1Controller : MonoBehaviour
             questionAttempted[i] = false;
             submittedCorrect[i] = false;
         }
-        skipButton.gameObject.SetActive(false);
+        allowNarrativeSkip = CurrentStoryAlreadyRead();
         ShowNarrative(CurrentOpening[dialogueIndex]);
     }
 
@@ -327,7 +326,7 @@ public sealed class NarrativeScene1Controller : MonoBehaviour
         narrativeTitle.gameObject.SetActive(true);
         narrativeNextButton.gameObject.SetActive(true);
         narrativeNextButton.interactable = false;
-        skipButton.gameObject.SetActive(false);
+        RefreshNarrativeSkipButton();
 
         if (flow == Flow.Opening && dialogueIndex == CurrentOpening.Length - 1)
             narrativeTitle.text = playingStory2
@@ -390,9 +389,30 @@ public sealed class NarrativeScene1Controller : MonoBehaviour
 
     void BeginQuiz()
     {
+        if (playingStory2)
+            StoryNarrativeData.MarkStory2Read();
+        else
+            StoryNarrativeData.MarkStory1Read();
+
         flow = Flow.Quiz;
         questionIndex = 0;
         ShowQuestion();
+    }
+
+    void RefreshNarrativeSkipButton()
+    {
+        bool show = CurrentStoryAlreadyRead() && (flow == Flow.Opening || flow == Flow.Ending);
+        skipButton.gameObject.SetActive(show);
+        skipButton.interactable = show;
+        if (show)
+            skipButtonText.text = "SKIP";
+    }
+
+    void StopNarrativeButtonTimer()
+    {
+        if (narrativeButtonRoutine == null) return;
+        StopCoroutine(narrativeButtonRoutine);
+        narrativeButtonRoutine = null;
     }
 
     void ShowQuestion()
@@ -531,7 +551,7 @@ public sealed class NarrativeScene1Controller : MonoBehaviour
             ? "Story 2 will remain unlocked if you skip it."
             : "Continue to Zuri's collection mission.";
         PrepareResultButtons(story2Unlocked
-            ? "SKIP STORY 2 — PLAY LEVEL 1"
+            ? authoredSkipLabel
             : "PLAY LEVEL 1");
     }
 
@@ -564,14 +584,31 @@ public sealed class NarrativeScene1Controller : MonoBehaviour
         skipButton.Select();
     }
 
-    void HandleContinueAfterQuiz()
+    bool CurrentStoryAlreadyRead()
     {
+        return playingStory2
+            ? StoryNarrativeData.HasReadStory2
+            : StoryNarrativeData.HasReadStory1;
+    }
+
+    void HandleSkipPressed()
+    {
+        if (flow == Flow.Finished) return;
+
+        if (flow != Flow.Result && CurrentStoryAlreadyRead())
+        {
+            LoadLevelOne();
+            return;
+        }
+
         if (flow != Flow.Result) return;
         skipButton.interactable = false;
         skipButton.gameObject.SetActive(false);
 
         if (resultAction == ResultAction.RetryStory1Quiz)
             RestartQuiz();
+        else if (resultAction == ResultAction.PlayLevel1AfterEnding)
+            LoadLevelOne();
         else
             BeginEnding();
     }
@@ -600,7 +637,11 @@ public sealed class NarrativeScene1Controller : MonoBehaviour
     {
         if (flow == Flow.Finished) return;
 
+        StopNarrativeButtonTimer();
         flow = Flow.Finished;
-        SceneManager.LoadScene(SceneCatalog.MainGame);
+        skipButton.interactable = false;
+        skipButton.gameObject.SetActive(false);
+        Time.timeScale = 1f;
+        SceneLoadOverlay.Load(SceneCatalog.MainGame);
     }
 }

@@ -3,10 +3,13 @@ using UnityEngine;
 public enum StorySpeaker
 {
     Zuri,
+    Naledi,
     Villager1,
     Villager2,
     StageDirection,
-    TitleCard
+    TitleCard,
+    Kaelo,
+    Everyone
 }
 
 public enum StoryQuizDifficulty
@@ -67,7 +70,9 @@ public static class StoryNarrativeData
 {
     const string Story1UnlockedKey = "DropByDrop.Narrative.Story1Unlocked";
     const string Story1CompletedKey = "DropByDrop.Narrative.Story1Completed";
+    const string Story1ReadKey = "DropByDrop.Narrative.Story1Read";
     const string Story2UnlockedKey = "DropByDrop.Narrative.Story2Unlocked";
+    const string Story2ReadKey = "DropByDrop.Narrative.Story2Read";
     const string Level1UnlockedKey = "DropByDrop.Narrative.Level1Unlocked";
     const string Story1BestScoreKey = "DropByDrop.Narrative.Story1BestQuizScore";
 
@@ -362,6 +367,33 @@ public static class StoryNarrativeData
     public static bool Story2Unlocked => PlayerPrefs.GetInt(Story2UnlockedKey, 0) == 1;
     public static bool Level1Unlocked => PlayerPrefs.GetInt(Level1UnlockedKey, 0) == 1;
     public static int Story1BestScore => PlayerPrefs.GetInt(Story1BestScoreKey, 0);
+    public static bool HasReadStory1 => PlayerPrefs.GetInt(Story1ReadKey, 0) == 1 || Story1Completed;
+    public static bool HasReadStory2 => PlayerPrefs.GetInt(Story2ReadKey, 0) == 1;
+
+    public static void MarkStory1Read()
+    {
+        PlayerPrefs.SetInt(Story1ReadKey, 1);
+        PlayerPrefs.Save();
+    }
+
+    public static void MarkStory2Read()
+    {
+        PlayerPrefs.SetInt(Story2ReadKey, 1);
+        PlayerPrefs.Save();
+    }
+
+    public static void ResetAll()
+    {
+        PlayerPrefs.DeleteKey(Story1UnlockedKey);
+        PlayerPrefs.DeleteKey(Story1CompletedKey);
+        PlayerPrefs.DeleteKey(Story1ReadKey);
+        PlayerPrefs.DeleteKey(Story2UnlockedKey);
+        PlayerPrefs.DeleteKey(Story2ReadKey);
+        PlayerPrefs.DeleteKey(Level1UnlockedKey);
+        PlayerPrefs.DeleteKey(Story1BestScoreKey);
+        PlayerPrefs.Save();
+        EnsureInitialized();
+    }
 
     public static void EnsureInitialized()
     {

@@ -237,6 +237,7 @@ public class RunStateManager : MonoBehaviour
                 // real title+message before calling SetState — calling
                 // EnsureVictoryPanel() again with no args here would stomp
                 // that copy back to the generic "YOU WIN" defaults.
+                SceneCatalog.RecordLevelVictory(SceneManager.GetActiveScene().name);
                 Time.timeScale = 0f;
                 PauseGameMenu.Hide();
                 SetPanels(false, true, false);
@@ -494,19 +495,6 @@ public class RunStateManager : MonoBehaviour
             AdventureUI.BtnMedium, overlayLabel: true);
         menuButton.onClick.AddListener(GoToMainMenu);
 
-        string activeScene = SceneManager.GetActiveScene().name;
-        string testScene = SceneCatalog.IsLevel1(activeScene) ? SceneCatalog.Level2
-            : SceneCatalog.IsLevel2(activeScene) ? SceneCatalog.Level3
-            : "";
-        if (!string.IsNullOrEmpty(testScene))
-        {
-            string testLabel = testScene == SceneCatalog.Level2 ? "GO TO LEVEL 2" : "GO TO LEVEL 3";
-            var testButton = EndButton(inner, "TestNextLevel", testLabel, ColBtnNext,
-                new Vector2(0.25f, 0.035f), new Vector2(0.75f, 0.145f),
-                AdventureUI.BtnMedium, overlayLabel: true);
-            testButton.onClick.AddListener(() => GoToScene(testScene));
-        }
-
         deathPanel.SetActive(false);
         GameAudio.HookAllButtons();
     }
@@ -552,7 +540,11 @@ public class RunStateManager : MonoBehaviour
         victoryMessageText = EndTxt(inner, "Message", "You completed the level.", 26, FontStyles.Bold, ColCream,
                new Vector2(0.06f, 0.44f), new Vector2(0.94f, 0.72f));
 
-        string nextLabel = nextScene == SceneCatalog.Level3 ? "START LEVEL 3"
+        string nextLabel = nextScene == SceneCatalog.MiniNarrative2
+            || nextScene == SceneCatalog.MiniNarrative3
+            || nextScene == SceneCatalog.MiniNarrative4
+            ? "CONTINUE"
+            : nextScene == SceneCatalog.Level3 ? "START LEVEL 3"
             : nextScene == SceneCatalog.Level2 ? "START LEVEL 2"
             : nextScene == SceneCatalog.StartScreen || string.IsNullOrEmpty(nextScene) ? "MAIN MENU"
             : "NEXT LEVEL";
@@ -579,13 +571,6 @@ public class RunStateManager : MonoBehaviour
                 ? "You completed the level."
                 : message;
         }
-    }
-
-    void GoToScene(string sceneName)
-    {
-        if (string.IsNullOrEmpty(sceneName)) return;
-        Time.timeScale = 1f;
-        SceneLoadOverlay.Load(sceneName);
     }
 
     // ── Shared end-screen helpers ────────────────────────────────────────
