@@ -129,7 +129,8 @@ public static class Level1Primitives
         root.transform.SetParent(parent, false);
         root.transform.position = Level1Ground.LanePosition(lane, z);
 
-        AquisWaterVisuals.BuildLevel1SpringVisuals(root.transform, WaterPool, WaterPoolDeep);
+        if (CreatedProps.SpawnFitWidth(CreatedProps.WaterPool, root.transform, Vector3.zero, RunnerVisualScale.F(4.4f)) == null)
+            AquisWaterVisuals.BuildLevel1SpringVisuals(root.transform, WaterPool, WaterPoolDeep);
 
         TallTrigger(root, 4.8f, 4.2f);
         KinematicBody(root);
@@ -179,17 +180,24 @@ public static class Level1Primitives
         root.transform.SetParent(parent, false);
         root.transform.position = Level1Ground.LanePosition(lane, z);
 
-        if (kind == Level1MaterialKind.Hammer)
+        string prefabName = kind == Level1MaterialKind.Hammer ? CreatedProps.Hammer
+            : kind == Level1MaterialKind.Brick ? CreatedProps.Bricks
+            : null;
+        float prefabHeight = kind == Level1MaterialKind.Hammer ? 2.1f : 1.3f;
+        bool usedPrefab = prefabName != null
+            && CreatedProps.SpawnFitHeight(prefabName, root.transform, Vector3.zero, RunnerVisualScale.F(prefabHeight)) != null;
+
+        if (!usedPrefab && kind == Level1MaterialKind.Hammer)
         {
             Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 1.0f, 0f), new Vector3(0.18f, 1.0f, 0.18f), HammerHandle, "Handle");
             Visual(PrimitiveType.Cube, root.transform, new Vector3(0f, 1.85f, 0f), new Vector3(0.85f, 0.45f, 0.55f), HammerHead, "Head");
         }
-        else if (kind == Level1MaterialKind.Brick)
+        else if (!usedPrefab && kind == Level1MaterialKind.Brick)
         {
             Visual(PrimitiveType.Cube, root.transform, new Vector3(0f, 0.55f, 0f), new Vector3(1.2f, 0.55f, 0.75f), BrickRed, "BrickA");
             Visual(PrimitiveType.Cube, root.transform, new Vector3(0.15f, 1.05f, 0.1f), new Vector3(1.1f, 0.5f, 0.7f), BrickRed * 0.9f, "BrickB");
         }
-        else
+        else if (!usedPrefab)
         {
             Vector3[] bagPositions =
             {
@@ -523,7 +531,8 @@ public static class Level1Primitives
             new Vector3(0.75f, 1.25f, 0.42f)
         };
 
-        for (int i = 0; i < positions.Length; i++)
+        bool usedPrefab = CreatedProps.SpawnFitHeight(CreatedProps.SandBag, root.transform, Vector3.zero, RunnerVisualScale.F(1.9f)) != null;
+        for (int i = 0; i < positions.Length && !usedPrefab; i++)
         {
             GameObject bag = Visual(
                 PrimitiveType.Capsule,

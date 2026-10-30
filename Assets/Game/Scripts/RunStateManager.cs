@@ -364,12 +364,10 @@ public class RunStateManager : MonoBehaviour
             }
         }
 
-        Font dynamicFont = Font.CreateDynamicFontFromOSFont(selected, 96);
-        if (dynamicFont != null)
-        {
-            promptFont = TMP_FontAsset.CreateFontAsset(dynamicFont);
-            if (promptFont != null) promptFont.name = "AdventurePromptFont";
-        }
+        // Loading by family name reads the OS font file directly; building from a
+        // dynamic Font object has no font data and logs "Unable to load font face".
+        promptFont = TMP_FontAsset.CreateFontAsset(selected, "Regular", 96);
+        if (promptFont != null) promptFont.name = "AdventurePromptFont";
 
         return promptFont != null ? promptFont : TMP_Settings.defaultFontAsset;
     }

@@ -319,10 +319,10 @@ public sealed class NarrativeScene4Controller : MonoBehaviour
     }
 
     StoryDialogueLine[] CurrentOpening =>
-        playingStory8 ? StoryNarrativeData4.Story8Opening : StoryNarrativeData4.Story7Opening;
+        StoryDialogueFitter.Fit(playingStory8 ? StoryNarrativeData4.Story8Opening : StoryNarrativeData4.Story7Opening, zuriText);
 
     StoryDialogueLine[] CurrentEnding =>
-        playingStory8 ? StoryNarrativeData4.Story8Ending : StoryNarrativeData4.Story7Ending;
+        StoryDialogueFitter.Fit(playingStory8 ? StoryNarrativeData4.Story8Ending : StoryNarrativeData4.Story7Ending, zuriText);
 
     void ShowLockedUntilStory6()
     {

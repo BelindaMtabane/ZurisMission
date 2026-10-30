@@ -145,15 +145,18 @@ public static class Level3Primitives
 
         if (kind == "Nails")
         {
-            BuildNails(root.transform);
+            if (CreatedProps.SpawnFitHeight(CreatedProps.Nails, root.transform, Vector3.zero, RunnerVisualScale.L3(1.35f)) == null)
+                BuildNails(root.transform);
         }
         else if (kind == "Hammer")
         {
-            BuildHammer(root.transform);
+            if (CreatedProps.SpawnFitHeight(CreatedProps.Hammer, root.transform, Vector3.zero, RunnerVisualScale.L3(2.0f)) == null)
+                BuildHammer(root.transform);
         }
         else if (kind == "Tape")
         {
-            BuildTape(root.transform);
+            if (CreatedProps.SpawnFitHeight(CreatedProps.Tape, root.transform, Vector3.zero, RunnerVisualScale.L3(1.1f)) == null)
+                BuildTape(root.transform);
         }
         else // Pipe (default)
         {
@@ -423,17 +426,22 @@ public static class Level3Primitives
         // Body — wide tan-brown rectangle
         GameObject visual = new GameObject("Visual");
         visual.transform.SetParent(root.transform, false);
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(0f, 0.65f, 0f),   new Vector3(2.6f, 1.0f, 1.2f), Warthog,      "Body");
-        // Head — slightly darker snout box
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.4f, 0.80f, 0f), new Vector3(0.85f, 0.65f, 0.9f), WarthogSnout, "Head");
-        // Tusks — two small white cubes on each side of the snout
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.85f, 0.58f,  0.25f), new Vector3(0.25f, 0.18f, 0.18f), Color.white, "TuskL");
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.85f, 0.58f, -0.25f), new Vector3(0.25f, 0.18f, 0.18f), Color.white, "TuskR");
-        // Legs — four short dark brown stubs
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3( 0.7f, 0.18f,  0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegFL");
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3( 0.7f, 0.18f, -0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegFR");
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(-0.7f, 0.18f,  0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegBL");
-        Visual(PrimitiveType.Cube, visual.transform, new Vector3(-0.7f, 0.18f, -0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegBR");
+        bool createdPig = CreatedProps.SpawnFitHeight(CreatedProps.Pig, visual.transform,
+            new Vector3(0f, -CreatedProps.WarthogRideHeight, 0f), RunnerVisualScale.L3(1.9f), goRight ? 90f : -90f) != null;
+        if (!createdPig)
+        {
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3(0f, 0.65f, 0f),   new Vector3(2.6f, 1.0f, 1.2f), Warthog,      "Body");
+            // Head — slightly darker snout box
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.4f, 0.80f, 0f), new Vector3(0.85f, 0.65f, 0.9f), WarthogSnout, "Head");
+            // Tusks — two small white cubes on each side of the snout
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.85f, 0.58f,  0.25f), new Vector3(0.25f, 0.18f, 0.18f), Color.white, "TuskL");
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.85f, 0.58f, -0.25f), new Vector3(0.25f, 0.18f, 0.18f), Color.white, "TuskR");
+            // Legs — four short dark brown stubs
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3( 0.7f, 0.18f,  0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegFL");
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3( 0.7f, 0.18f, -0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegFR");
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3(-0.7f, 0.18f,  0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegBL");
+            Visual(PrimitiveType.Cube, visual.transform, new Vector3(-0.7f, 0.18f, -0.45f), new Vector3(0.3f, 0.36f, 0.3f), WarthogSnout, "LegBR");
+        }
         visual.SetActive(true);
 
         TallTrigger(root, 2.8f, 1.5f, 5f, 1.4f);
@@ -566,9 +574,19 @@ public static class Level3Primitives
         root.transform.SetParent(parent, false);
         root.transform.position = Level3Ground.LanePosition(lane, z);
 
-        GameObject body = Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 1.2f, 0f), new Vector3(2.2f, 1.2f, 2.2f), Tank, "TankBody");
-        YoyoTankWrap.Apply(body.GetComponent<Renderer>(), YoyoTankColor.Blue);
+        GameObject body = CreatedProps.SpawnFitHeight(CreatedProps.Tank(tankIndex), root.transform, Vector3.zero, RunnerVisualScale.L3(3.4f), 180f);
+        bool tankPrefab = body != null;
+        if (tankPrefab)
+        {
+            body.name = "TankBody";
+        }
+        else
+        {
+            body = Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 1.2f, 0f), new Vector3(2.2f, 1.2f, 2.2f), Tank, "TankBody");
+            YoyoTankWrap.Apply(body.GetComponent<Renderer>(), YoyoTankColor.Blue);
+        }
         GameObject fill = Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.6f, 0f), new Vector3(2f, 0.6f, 2f), new Color(0.3f, 0.55f, 0.85f), "Fill");
+        if (tankPrefab) fill.GetComponent<Renderer>().enabled = false;
 
         GameObject flow = Visual(PrimitiveType.Cylinder, root.transform, new Vector3(0f, 0.35f, 1.2f), new Vector3(0.22f, 0.25f, 0.22f), WaterFlow, "Flow");
         MakeTransparent(flow.GetComponent<Renderer>(), WaterFlow);
@@ -645,6 +663,16 @@ public static class Level3Primitives
         Color bagSeam = new Color(0.45f, 0.32f, 0.17f);
 
         float half = Mathf.Max(1.6f, span * 0.42f);
+        if (CreatedProps.Load(CreatedProps.Bricks) != null && CreatedProps.Load(CreatedProps.SandBag) != null)
+        {
+            CreatedProps.SpawnFitHeight(CreatedProps.Bricks, parent, RunnerVisualScale.V(new Vector3(-half * 0.55f, 0f, 1.2f)), RunnerVisualScale.L3(0.7f), -8f);
+            CreatedProps.SpawnFitHeight(CreatedProps.Bricks, parent, RunnerVisualScale.V(new Vector3(half * 0.55f, 0f, 1.2f)), RunnerVisualScale.L3(0.7f), 10f);
+            CreatedProps.SpawnFitHeight(CreatedProps.SandBag, parent, RunnerVisualScale.V(new Vector3(-half * 0.6f, 0f, -1.1f)), RunnerVisualScale.L3(1.0f), -12f);
+            CreatedProps.SpawnFitHeight(CreatedProps.SandBag, parent, RunnerVisualScale.V(new Vector3(half * 0.6f, 0f, -1.1f)), RunnerVisualScale.L3(1.0f), 14f);
+            StackRepairPipes(parent, half);
+            return;
+        }
+
         Vector3[] brickPos =
         {
             new Vector3(-half * 0.55f, 0.28f, 1.15f),
@@ -679,6 +707,11 @@ public static class Level3Primitives
                 .transform.localRotation = sandBag.transform.localRotation;
         }
 
+        StackRepairPipes(parent, half);
+    }
+
+    static void StackRepairPipes(Transform parent, float half)
+    {
         Vector3[] pipePos =
         {
             new Vector3(-half * 0.7f, 0.22f, 0.15f),

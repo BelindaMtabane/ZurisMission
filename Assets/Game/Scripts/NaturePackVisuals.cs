@@ -65,12 +65,12 @@ public static class NaturePackVisuals
 
     public static bool AttachCactus(Transform parent, float targetHeight, float yaw = float.NaN)
     {
-        return AttachPlant(parent, Pick(CactusNames, parent), targetHeight * CactusVisualScale, yaw);
+        return AttachPlant(parent, Pick(CreatedProps.PreferCreated(CreatedProps.Cacti, CactusNames), parent), targetHeight * CactusVisualScale, yaw);
     }
 
     public static bool AttachRock(Transform parent, float targetHeight, Vector3 localPos = default)
     {
-        GameObject go = Spawn(parent, Pick(RockNames, parent), localPos, applyPlantTint: false);
+        GameObject go = Spawn(parent, Pick(CreatedProps.PreferCreated(CreatedProps.Rocks, RockNames), parent), localPos, applyPlantTint: false);
         if (go == null) return false;
         FitHeight(go.transform, targetHeight);
         ClampFootprint(go.transform, targetHeight * 1.25f);
@@ -124,7 +124,7 @@ public static class NaturePackVisuals
 
     public static bool AttachLogAcross(Transform parent, float localY, float width)
     {
-        GameObject go = Spawn(parent, Pick(LogNames, parent), Vector3.zero);
+        GameObject go = Spawn(parent, Pick(CreatedProps.PreferCreated(CreatedProps.Logs, LogNames), parent), Vector3.zero);
         if (go == null) return false;
 
         AlignLongestAxis(go.transform, Vector3.right);
@@ -144,7 +144,7 @@ public static class NaturePackVisuals
     /// </summary>
     public static bool AttachLevel2RollingLog(Transform parent, float width)
     {
-        const string prefabName = "Log_08";
+        string prefabName = CreatedProps.Load(CreatedProps.Logs[0]) != null ? CreatedProps.Logs[0] : "Log_08";
         const int segmentCount = 2;
         float segmentLength = width / segmentCount;
 
@@ -153,7 +153,7 @@ public static class NaturePackVisuals
             GameObject segment = Spawn(parent, prefabName, Vector3.zero);
             if (segment == null) return false;
 
-            segment.name = $"Log_08_RollSegment_{i + 1}";
+            segment.name = $"{prefabName}_RollSegment_{i + 1}";
             AlignLongestAxis(segment.transform, Vector3.right);
 
             Bounds bounds = WorldBounds(segment);
@@ -288,7 +288,13 @@ public static class NaturePackVisuals
             spot.transform.rotation = Quaternion.Euler(0f, left ? -40f : 40f, 0f);
             AddMudWallow(spot.transform, 2.4f + Hash01(i * 11 + seed) * 0.8f);
 
-            if (prefab != null)
+            GameObject created = CreatedProps.SpawnFitHeight(
+                CreatedProps.MudMonster, spot.transform, Vector3.zero, 2.4f + Hash01(i) * 0.5f, 180f);
+            if (created != null)
+            {
+                created.name = "Created_MudMonster";
+            }
+            else if (prefab != null)
             {
                 GameObject model = Object.Instantiate(prefab, spot.transform);
                 model.name = "RPG_MudMonster";
@@ -707,7 +713,8 @@ public static class NaturePackVisuals
         if (string.IsNullOrEmpty(name)) return null;
         if (Cache.TryGetValue(name, out GameObject cached) && cached != null) return cached;
 
-        GameObject prefab = Resources.Load<GameObject>(ResourcesFolder + name);
+        GameObject prefab = CreatedProps.Load(name);
+        if (prefab == null) prefab = Resources.Load<GameObject>(ResourcesFolder + name);
 #if UNITY_EDITOR
         if (prefab == null)
         {
@@ -948,9 +955,11 @@ public static class NaturePackVisuals
     {
         float thornBias = RunnerFoliageProfile.Current.ThornBushBias;
         float roll = Hash01(seed);
+        string[] thorns = CreatedProps.PreferCreated(CreatedProps.Thorns, ThornBushNames);
         if (roll < thornBias)
-            return Pick(ThornBushNames, seed);
-        return Pick(BushNames, seed);
+            return Pick(thorns, seed);
+        string bush = Pick(BushNames, seed);
+        return bush.StartsWith("Thorns") ? Pick(thorns, seed) : bush;
     }
 
     static float Hash01(Transform seed) => Hash01(seed.GetInstanceID());

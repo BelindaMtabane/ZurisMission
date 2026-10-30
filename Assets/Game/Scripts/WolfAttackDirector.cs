@@ -36,7 +36,8 @@ public class WolfAttackDirector : MonoBehaviour
 
     void Start()
     {
-        wolfPrefab = Resources.Load<GameObject>("Enemies/Wolf");
+        wolfPrefab = CreatedProps.Load(CreatedProps.Wolf);
+        if (wolfPrefab == null) wolfPrefab = Resources.Load<GameObject>("Enemies/Wolf");
         nextRandomAttack = Random.Range(8f, 13f);
         CachePlayer();
     }

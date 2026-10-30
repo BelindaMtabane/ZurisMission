@@ -197,7 +197,7 @@ public class Level3PipeRepair : MonoBehaviour
             for (int i = 0; i < rends.Length; i++)
             {
                 if (rends[i] == null) continue;
-                if (rends[i].name == "TankBody") continue;
+                if (IsTankBody(rends[i].transform, tankVisuals[tankIndex].transform)) continue;
                 rends[i].material.color = tint;
             }
         }
@@ -210,9 +210,20 @@ public class Level3PipeRepair : MonoBehaviour
         for (int i = 0; i < rends.Length; i++)
         {
             if (rends[i] == null) continue;
-            if (rends[i].name == "TankBody") continue;
+            if (IsTankBody(rends[i].transform, tankVisuals[tankIndex].transform)) continue;
             rends[i].material.color = Level3Primitives.YellowRepair;
         }
+    }
+
+    static bool IsTankBody(Transform t, Transform tankRoot)
+    {
+        while (t != null && t != tankRoot)
+        {
+            if (t.name == "TankBody") return true;
+            t = t.parent;
+        }
+
+        return false;
     }
 }
 

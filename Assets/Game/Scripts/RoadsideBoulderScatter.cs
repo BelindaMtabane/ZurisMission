@@ -26,10 +26,21 @@ public static class RoadsideBoulderScatter
 
     static readonly Dictionary<string, GameObject> Cache = new();
 
+    const float MountainSegmentLength = 12f;
+    const float MountainWallHeight = 3.6f;
+    const float DeadTreeSpacing = 7f;
+
     public static void ScatterBoulderWalls(Transform parent, float startZ, float endZ, float groundY)
     {
         if (parent == null || endZ <= startZ) return;
-        if (!HasAnyPrefab()) return;
+
+        bool level1 = SceneCatalog.IsLevel1(SceneCatalog.ActiveName);
+        string mountainWall = CreatedProps.MountainWallForActiveScene();
+        bool useDeadTrees = level1
+            && CreatedProps.Load(CreatedProps.DeadTrees[0]) != null
+            && CreatedProps.Load(CreatedProps.Rocks[0]) != null;
+        bool useMountainWalls = !level1 && CreatedProps.Load(mountainWall) != null;
+        if (!useDeadTrees && !useMountainWalls && !HasAnyPrefab()) return;
 
         LevelLanes.GetBoulderWallBand(out float wallInner, out float wallOuter);
         float minAbsX = wallInner;
@@ -45,6 +56,20 @@ public static class RoadsideBoulderScatter
         {
             for (int c = root.childCount - 1; c >= 0; c--)
                 Object.Destroy(root.GetChild(c).gameObject);
+        }
+
+        if (useDeadTrees)
+        {
+            ScatterDeadTreesAndRocks(root, startZ, endZ, groundY, wallInner, wallOuter);
+            EnsureVisualOnly();
+            return;
+        }
+
+        if (useMountainWalls)
+        {
+            ScatterMountainWalls(root, mountainWall, startZ, endZ, groundY, wallInner, wallOuter);
+            EnsureVisualOnly();
+            return;
         }
 
         float span = endZ - startZ;
@@ -111,6 +136,66 @@ public static class RoadsideBoulderScatter
         }
 
         EnsureVisualOnly();
+    }
+
+    static void ScatterDeadTreesAndRocks(Transform root, float startZ, float endZ, float groundY, float wallInner, float wallOuter)
+    {
+        float span = endZ - startZ;
+        int steps = Mathf.Max(1, Mathf.CeilToInt(span / DeadTreeSpacing));
+
+        for (int s = 0; s < steps; s++)
+        {
+            for (int side = 0; side < 2; side++)
+            {
+                int seed = s * 2 + side;
+                bool left = side == 0;
+                float z = startZ + (s + 0.5f) / steps * span + (Hash01(seed * 61 + 3) - 0.5f) * DeadTreeSpacing * 0.5f;
+                float mag = Mathf.Lerp(wallInner, wallOuter, Hash01(seed * 23 + 1));
+                float yaw = Hash01(seed * 17 + 5) * 360f;
+                bool tree = Hash01(seed * 41 + 9) < 0.45f;
+
+                string prefabName = tree
+                    ? CreatedProps.Pick(CreatedProps.DeadTrees, seed)
+                    : CreatedProps.Pick(CreatedProps.Rocks, seed);
+                float height = tree
+                    ? 5.5f + Hash01(seed * 7) * 2.5f
+                    : 1.1f + Hash01(seed * 13) * 1.3f;
+
+                GameObject prop = CreatedProps.SpawnFitHeight(prefabName, root, Vector3.zero, height, yaw);
+                if (prop == null) continue;
+
+                prop.name = $"BoulderWall_{prefabName}_{s}_{side}";
+                prop.transform.position = new Vector3(left ? -mag : mag, groundY, z);
+            }
+        }
+    }
+
+    static void ScatterMountainWalls(Transform root, string wallName, float startZ, float endZ, float groundY, float wallInner, float wallOuter)
+    {
+        float depth = Mathf.Max(2.5f, (wallOuter - wallInner) * 0.85f);
+        float bandMid = wallInner + depth * 0.5f;
+        int segments = Mathf.Max(1, Mathf.CeilToInt((endZ - startZ) / MountainSegmentLength));
+        float length = (endZ - startZ) / segments;
+
+        for (int s = 0; s < segments; s++)
+        {
+            float z = startZ + (s + 0.5f) * length;
+            for (int side = 0; side < 2; side++)
+            {
+                bool left = side == 0;
+                float height = MountainWallHeight * (0.85f + Hash01(s * 31 + side * 7) * 0.3f);
+                GameObject wall = CreatedProps.SpawnFitBox(
+                    wallName,
+                    root,
+                    Vector3.zero,
+                    new Vector3(length * 1.04f, height, depth),
+                    left ? 90f : -90f);
+                if (wall == null) continue;
+
+                wall.name = $"BoulderWall_{wallName}_{s}_{side}";
+                wall.transform.position = new Vector3(left ? -bandMid : bandMid, groundY, z);
+            }
+        }
     }
 
     static bool HasAnyPrefab()

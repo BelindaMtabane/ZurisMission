@@ -304,10 +304,10 @@ public sealed class NarrativeScene3Controller : MonoBehaviour
     }
 
     StoryDialogueLine[] CurrentOpening =>
-        playingStory6 ? StoryNarrativeData3.Story6Opening : StoryNarrativeData3.Story5Opening;
+        StoryDialogueFitter.Fit(playingStory6 ? StoryNarrativeData3.Story6Opening : StoryNarrativeData3.Story5Opening, zuriText);
 
     StoryDialogueLine[] CurrentEnding =>
-        playingStory6 ? StoryNarrativeData3.Story6Ending : StoryNarrativeData3.Story5Ending;
+        StoryDialogueFitter.Fit(playingStory6 ? StoryNarrativeData3.Story6Ending : StoryNarrativeData3.Story5Ending, zuriText);
 
     void ShowUnavailableStoryMessage()
     {

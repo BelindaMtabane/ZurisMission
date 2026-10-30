@@ -72,6 +72,7 @@ public static class VillageFinishCourtyard
 
         if (SceneCatalog.IsLevel1(SceneCatalog.ActiveName))
         {
+            SpawnCenterPiece(root, CreatedProps.Well, "FinishVillageWell", new Vector3(pathCenter, groundY, finishZ + 6f), 4.6f);
             float tankZ = finishZ + 4.5f;
             float leftX = LevelLanes.X(0) - 4.8f;
             float rightX = LevelLanes.X(LevelLanes.Count - 1) + 4.8f;
@@ -91,12 +92,34 @@ public static class VillageFinishCourtyard
         }
         else
         {
-            SpawnCenterTank(root, new Vector3(pathCenter, groundY, finishZ + 4.5f), groundY);
+            Vector3 center = new Vector3(pathCenter, groundY, finishZ + 4.5f);
+            if (!SpawnCenterPiece(root, CreatedProps.Borehole, "FinishVillageBorehole", center, 4.2f))
+                SpawnCenterTank(root, center, groundY);
         }
+    }
+
+    static bool SpawnCenterPiece(Transform root, string prefabName, string objectName, Vector3 position, float height)
+    {
+        GameObject piece = CreatedProps.SpawnFitHeight(prefabName, root, Vector3.zero, height, 180f);
+        if (piece == null) return false;
+
+        piece.name = objectName;
+        piece.transform.position = position;
+        return true;
     }
 
     static void SpawnHouse(Transform root, string houseName, Vector3 position, float yaw, float groundY)
     {
+        GameObject desertHouse = CreatedProps.SpawnFitHeight(
+            CreatedProps.DesertHouse, root, Vector3.zero,
+            VillageSideHouses.DesertHouseHeight * HouseScale / 1.85f, yaw);
+        if (desertHouse != null)
+        {
+            desertHouse.name = $"FinishHouse_{CreatedProps.DesertHouse}_{root.childCount}";
+            desertHouse.transform.position = new Vector3(position.x, groundY, position.z);
+            return;
+        }
+
         GameObject prefab = LoadHouse(houseName);
         if (prefab == null) return;
 
@@ -112,6 +135,14 @@ public static class VillageFinishCourtyard
 
     static void SpawnCenterTank(Transform root, Vector3 position, float groundY)
     {
+        GameObject created = VillageSideHouses.PlaceCreatedTank(root, position.x, groundY, position.z, 2, 8f);
+        if (created != null)
+        {
+            created.name = "FinishVillageTank";
+            created.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+            return;
+        }
+
         GameObject prefab = LoadTankPrefab();
         if (prefab != null)
         {

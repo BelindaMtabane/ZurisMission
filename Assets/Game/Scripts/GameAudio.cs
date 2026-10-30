@@ -29,6 +29,10 @@ public class GameAudio : MonoBehaviour
     AudioClip springWater;
     AudioClip thunderstorm;
     AudioClip windLeaves;
+    AudioClip narrative1Music;
+    AudioClip narrative2Music;
+    AudioClip narrative3Music;
+    AudioClip narrative4Music;
 
     const float StormVolume = 0.8f;
     const float StormHoldSeconds = 4.5f;
@@ -112,6 +116,10 @@ public class GameAudio : MonoBehaviour
         springWater = LoadClip("spring water sound");
         thunderstorm = LoadClip("thunderstorm_pouring-rain");
         windLeaves = LoadClip("wind-through-the-leaves");
+        narrative1Music = LoadClip("Where_the_Water_Hides");
+        narrative2Music = LoadClip("Sprouts_in_the_Sun");
+        narrative3Music = LoadClip("Tracks_Along_The_Riverbed");
+        narrative4Music = LoadClip("Awakening_the_Glade");
 
         Volume = Mathf.Clamp01(PlayerPrefs.GetFloat(PrefVolume, 1f));
         Muted = PlayerPrefs.GetInt(PrefMuted, 0) == 1;
@@ -152,6 +160,10 @@ public class GameAudio : MonoBehaviour
             clip = gameMusic;
             volume = sceneName == SceneCatalog.StartScreen ? 0.32f : 0.42f;
         }
+        else if (sceneName == SceneCatalog.MiniNarrative1) { clip = narrative1Music; volume = 0.38f; }
+        else if (sceneName == SceneCatalog.MiniNarrative2) { clip = narrative2Music; volume = 0.38f; }
+        else if (sceneName == SceneCatalog.MiniNarrative3) { clip = narrative3Music; volume = 0.38f; }
+        else if (sceneName == SceneCatalog.MiniNarrative4) { clip = narrative4Music; volume = 0.38f; }
 
         if (clip == null)
         {

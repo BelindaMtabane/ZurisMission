@@ -212,10 +212,12 @@ public static class Level2Primitives
                 BuildPipe(root.transform);
                 break;
             case Level2MaterialKind.Nails:
-                BuildNails(root.transform);
+                if (CreatedProps.SpawnFitHeight(CreatedProps.Nails, root.transform, Vector3.zero, RunnerVisualScale.F(2.0f)) == null)
+                    BuildNails(root.transform);
                 break;
             default:
-                BuildHammer(root.transform);
+                if (CreatedProps.SpawnFitHeight(CreatedProps.Hammer, root.transform, Vector3.zero, RunnerVisualScale.F(2.5f)) == null)
+                    BuildHammer(root.transform);
                 break;
         }
 
@@ -400,9 +402,11 @@ public static class Level2Primitives
 
         GameObject visualRoot = new GameObject("Visual");
         visualRoot.transform.SetParent(root.transform, false);
-        GameObject monsterPrefab = Resources.Load<GameObject>("Monsters/SlimePBR");
+        bool createdMonster = CreatedProps.SpawnFitHeight(
+            CreatedProps.MudMonster, visualRoot.transform, Vector3.zero, RunnerVisualScale.F(3.4f), 180f) != null;
+        GameObject monsterPrefab = createdMonster ? null : Resources.Load<GameObject>("Monsters/SlimePBR");
 #if UNITY_EDITOR
-        if (monsterPrefab == null)
+        if (monsterPrefab == null && !createdMonster)
         {
             monsterPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(
                 "Assets/RPG Monster DUO PBR Polyart/Prefabs/PBRDefault/SlimePBR.prefab");
@@ -419,7 +423,7 @@ public static class Level2Primitives
             foreach (Collider collider in model.GetComponentsInChildren<Collider>(true))
                 collider.enabled = false;
         }
-        else
+        else if (!createdMonster)
         {
             Visual(PrimitiveType.Capsule, visualRoot.transform, new Vector3(0f, 1.35f, 0f), new Vector3(1.9f, 1.55f, 1.9f), MonsterBody, "Body");
             Visual(PrimitiveType.Sphere, visualRoot.transform, new Vector3(0f, 2.65f, 0.4f), new Vector3(1.35f, 1.35f, 1.35f), MonsterBody, "Head");
@@ -540,7 +544,8 @@ public static class Level2Primitives
         root.transform.SetParent(parent, false);
         root.transform.position = Level2Ground.LanePosition(lane, z);
 
-        AquisWaterVisuals.BuildLevel2PoolVisuals(root.transform, WaterPool, WaterPoolDeep);
+        if (CreatedProps.SpawnFitWidth(CreatedProps.WaterPool, root.transform, Vector3.zero, RunnerVisualScale.F(4.4f)) == null)
+            AquisWaterVisuals.BuildLevel2PoolVisuals(root.transform, WaterPool, WaterPoolDeep);
 
         TallTrigger(root, 4.8f, 4.2f, 3.8f, 1.2f);
         KinematicBody(root);
@@ -556,7 +561,9 @@ public static class Level2Primitives
 
         GameObject visual = new GameObject("Visual");
         visual.transform.SetParent(root.transform, false);
-        if (!AttachBrownPig(visual.transform))
+        bool createdPig = CreatedProps.SpawnFitHeight(
+            CreatedProps.Pig, visual.transform, new Vector3(0f, -CreatedProps.WarthogRideHeight, 0f), 2.4f, 90f) != null;
+        if (!createdPig && !AttachBrownPig(visual.transform))
         {
             Visual(PrimitiveType.Cube, visual.transform, new Vector3(0f, 0.65f, 0f), new Vector3(2.6f, 1.0f, 1.2f), Warthog, "Body");
             Visual(PrimitiveType.Cube, visual.transform, new Vector3(1.4f, 0.80f, 0f), new Vector3(0.85f, 0.65f, 0.9f), WarthogSnout, "Head");

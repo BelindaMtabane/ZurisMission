@@ -8,7 +8,9 @@ public static class VillageSideHouses
 {
     const string ResourcesFolder = "Village/";
     const float HouseScale = 1.85f;
+    public const float DesertHouseHeight = 7f;
     const float HouseFootprintRadius = 5.2f;
+    const float CreatedTankHeight = 6.4f;
 
     static readonly string[] HouseNames =
     {
@@ -70,18 +72,29 @@ public static class VillageSideHouses
                 if (!IsSpotFree(placed, x, z, HouseFootprintRadius)) continue;
                 if (RoadsideOverlapResolver.WouldHouseOverlapBoulders(x, z)) continue;
 
-                string houseName = HouseNames[(slot + attempt) % HouseNames.Length];
-                GameObject prefab = LoadHousePrefab(houseName);
-                if (prefab == null) break;
+                float yaw = left ? 90f : -90f;
+                GameObject desertHouse = CreatedProps.SpawnFitHeight(
+                    CreatedProps.DesertHouse, root, Vector3.zero, DesertHouseHeight, yaw);
+                if (desertHouse != null)
+                {
+                    desertHouse.name = $"VillageHouse_{CreatedProps.DesertHouse}_{spawned}";
+                    desertHouse.transform.position = new Vector3(x, groundY, z);
+                }
+                else
+                {
+                    string houseName = HouseNames[(slot + attempt) % HouseNames.Length];
+                    GameObject prefab = LoadHousePrefab(houseName);
+                    if (prefab == null) break;
 
-                GameObject instance = Object.Instantiate(prefab, root);
-                instance.name = $"VillageHouse_{houseName}_{spawned}";
-                instance.transform.position = new Vector3(x, groundY, z);
-                instance.transform.localScale = Vector3.one * HouseScale;
-                instance.transform.rotation = Quaternion.Euler(0f, left ? 90f : -90f, 0f);
-                GroundToSurface(instance.transform, groundY);
-                StripColliders(instance);
-                NaturePackVisuals.EnsureSceneObjectMaterials(instance);
+                    GameObject instance = Object.Instantiate(prefab, root);
+                    instance.name = $"VillageHouse_{houseName}_{spawned}";
+                    instance.transform.position = new Vector3(x, groundY, z);
+                    instance.transform.localScale = Vector3.one * HouseScale;
+                    instance.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+                    GroundToSurface(instance.transform, groundY);
+                    StripColliders(instance);
+                    NaturePackVisuals.EnsureSceneObjectMaterials(instance);
+                }
                 if (ShouldPlaceHouseTank(spawned))
                 {
                     // Place the tank on the road-facing side, beside the house so it is visible.
@@ -150,10 +163,24 @@ public static class VillageSideHouses
 
     public static GameObject PlaceWrappedTank(Transform parent, float x, float groundY, float z, int index, YoyoTankColor color)
     {
+        GameObject created = PlaceCreatedTank(parent, x, groundY, z, index);
+        if (created != null) return created;
+
         Color body;
         Color dark;
         BodyColors(color, out body, out dark);
         return BuildWaterTank(parent, x, groundY, z, index, body, dark, color);
+    }
+
+    public static GameObject PlaceCreatedTank(Transform parent, float x, float groundY, float z, int index, float height = CreatedTankHeight)
+    {
+        float towardRoad = x < LevelLanes.PathCenterX ? 1f : -1f;
+        GameObject tank = CreatedProps.SpawnFitHeight(CreatedProps.Tank(index), parent, Vector3.zero, height, 180f - 36.87f * towardRoad);
+        if (tank == null) return null;
+
+        tank.name = $"HouseWaterTank_{CreatedProps.Tank(index)}_{index}";
+        tank.transform.position = new Vector3(x, groundY, z);
+        return tank;
     }
 
     static void BodyColors(YoyoTankColor color, out Color body, out Color dark)
@@ -178,6 +205,8 @@ public static class VillageSideHouses
 
     static void PlaceHouseTank(Transform parent, float x, float groundY, float z, int index)
     {
+        if (PlaceCreatedTank(parent, x, groundY, z, index) != null) return;
+
         YoyoTankColor wrapColor = UseGreenHouseTanks ? YoyoTankColor.Green : YoyoTankColor.Blue;
         Color body;
         Color dark;

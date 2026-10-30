@@ -303,11 +303,11 @@ public sealed class NarrativeScene2Controller : MonoBehaviour
         RefreshStoryUi("Complete Story 3 perfectly to unlock Story 4");
     }
 
-    StoryDialogueLine[] CurrentOpening =>
-        playingStory4 ? StoryNarrativeData2.Story4Opening : StoryNarrativeData2.Story3Opening;
+    StoryDialogueLine[] CurrentOpening => StoryDialogueFitter.Fit(
+        playingStory4 ? StoryNarrativeData2.Story4Opening : StoryNarrativeData2.Story3Opening, zuriText);
 
-    StoryDialogueLine[] CurrentEnding =>
-        playingStory4 ? StoryNarrativeData2.Story4Ending : StoryNarrativeData2.Story3Ending;
+    StoryDialogueLine[] CurrentEnding => StoryDialogueFitter.Fit(
+        playingStory4 ? StoryNarrativeData2.Story4Ending : StoryNarrativeData2.Story3Ending, zuriText);
 
     void ShowUnavailableStoryMessage()
     {

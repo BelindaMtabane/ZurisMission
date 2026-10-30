@@ -792,13 +792,20 @@ public sealed class RunnerEnvironmentStreamer : MonoBehaviour
     }
 }
 
-/// <summary>Keeps roadside village characters standing on the streamed flat ground.</summary>
+/// <summary>Keeps roadside village characters standing on the streamed flat ground, busy with a work animation.</summary>
 public sealed class RoadsideNpcGrounding : MonoBehaviour
 {
+    const string WorkControllerResource = "Animations/VillagerWork";
+
+    static readonly string[] WorkStates =
+    {
+        "hammerUse", "drillUse", "handsawUse", "pipewrenchUse", "wrenchUse", "screwdriverUse"
+    };
+
+    static RuntimeAnimatorController workController;
+
     float targetGroundY;
     float groundedRootY;
-    float patrolCenterZ;
-    float patrolDirection;
     bool grounded;
 
     public void Setup(float groundY)
@@ -808,39 +815,32 @@ public sealed class RoadsideNpcGrounding : MonoBehaviour
 
     void Start()
     {
-        patrolCenterZ = transform.position.z;
-        patrolDirection = (GetInstanceID() & 1) == 0 ? 1f : -1f;
+        if (workController == null)
+            workController = Resources.Load<RuntimeAnimatorController>(WorkControllerResource);
+
+        int variant = Mathf.Abs(GetInstanceID());
+        float faceRoad = transform.position.x < LevelLanes.PathCenterX ? 90f : -90f;
+        transform.rotation = Quaternion.Euler(0f, faceRoad, 0f);
+
         Animator[] animators = GetComponentsInChildren<Animator>(true);
         for (int i = 0; i < animators.Length; i++)
         {
             if (animators[i] == null) continue;
             animators[i].applyRootMotion = false;
-            animators[i].speed = 0.9f;
-            string walkState = name.Contains("Female")
-                ? "locom_f_basicWalk_30f"
-                : "locom_m_basicWalk_30f";
-            animators[i].Play(walkState, 0, Mathf.Abs(GetInstanceID() % 100) / 100f);
+            animators[i].speed = 0.9f + (variant % 5) * 0.04f;
+            if (workController != null)
+            {
+                animators[i].runtimeAnimatorController = workController;
+                animators[i].Play(WorkStates[variant % WorkStates.Length], 0, (variant % 100) / 100f);
+            }
+            else
+            {
+                string idleState = name.Contains("Female") ? "idle_f_1_150f" : "idle_m_2_220f";
+                animators[i].Play(idleState, 0, (variant % 100) / 100f);
+            }
         }
 
         Invoke(nameof(GroundOnce), 0.08f);
-    }
-
-    void Update()
-    {
-        if (!grounded) return;
-
-        float nextZ = transform.position.z + patrolDirection * 0.85f * Time.deltaTime;
-        if (Mathf.Abs(nextZ - patrolCenterZ) > 7f)
-        {
-            patrolDirection *= -1f;
-            nextZ = Mathf.Clamp(nextZ, patrolCenterZ - 7f, patrolCenterZ + 7f);
-        }
-
-        Vector3 p = transform.position;
-        p.z = nextZ;
-        p.y = groundedRootY;
-        transform.position = p;
-        transform.rotation = Quaternion.Euler(0f, patrolDirection > 0f ? 0f : 180f, 0f);
     }
 
     void GroundOnce()

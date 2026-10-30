@@ -231,6 +231,7 @@ public static class RoadsideOverlapResolver
             for (int i = 0; i < wallRoot.transform.childCount; i++)
             {
                 Transform c = wallRoot.transform.GetChild(i);
+                if (c.name.Contains("MountainWall")) continue;
                 if (seen.Add(c.GetInstanceID())) result.Add(c);
             }
         }

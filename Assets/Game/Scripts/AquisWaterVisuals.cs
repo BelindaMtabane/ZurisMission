@@ -101,20 +101,9 @@ public static class AquisWaterVisuals
         AddWaterPlane(damRoot, "PoolSurface", new Vector3(0f, waterY, waterZ),
             basinW * 0.82f, basinD * 0.68f, shallow, false);
 
-        AttachSpringEffects(damRoot, sizeScale, basinW, basinD);
         AddGroundSpillPatches(damRoot, basinW, basinD, sizeScale);
         ScatterDamGrass(damRoot, basinW, basinD, sizeScale);
         ScatterDamFlowers(damRoot, basinW, basinD, sizeScale);
-    }
-
-    static void AttachSpringEffects(Transform damRoot, float sizeScale, float basinW, float basinD)
-    {
-        if (damRoot.GetComponentInChildren<SpringWaterDamFx>(true) != null) return;
-        GameObject fxHost = new GameObject("SpringWaterFx");
-        fxHost.transform.SetParent(damRoot, false);
-        fxHost.transform.localPosition = Vector3.zero;
-        SpringWaterDamFx fx = fxHost.AddComponent<SpringWaterDamFx>();
-        fx.Configure(sizeScale, basinW, basinD);
     }
 
     static void AddGroundSpillPatches(Transform damRoot, float basinW, float basinD, float sizeScale)
@@ -267,6 +256,8 @@ public static class AquisWaterVisuals
 
     static void EnsurePickupDam(Transform pickupRoot)
     {
+        if (pickupRoot.Find(CreatedProps.WaterPool) != null) return;
+
         Transform dam = pickupRoot.Find("GroundDam");
         if (dam != null && !DamFxIsCurrent(dam))
             Object.Destroy(dam.gameObject);
@@ -281,11 +272,7 @@ public static class AquisWaterVisuals
         if (dam == null) return false;
         if (dam.Find("DamGrass") == null || dam.Find("DamFlowers") == null || dam.Find("GroundSpill") == null)
             return false;
-        Transform fxHost = dam.Find("SpringWaterFx");
-        if (fxHost == null || fxHost.GetComponent<SpringWaterDamFx>() == null) return false;
-        if (NamuWaterFxLibrary.IsAvailable)
-            return fxHost.Find("ProximitySpringEffects/NamuFx") != null;
-        return true;
+        return dam.Find("SpringWaterFx") == null;
     }
 
     static void HideLegacyPoolChildren(Transform root)
