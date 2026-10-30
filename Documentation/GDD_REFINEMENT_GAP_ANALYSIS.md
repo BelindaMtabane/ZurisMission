@@ -791,3 +791,35 @@ These are **not** GDD features, but they affect every system above.
 - Do not implement the modifications listed above in this pass.
 
 **Stop.** Implementation waits for approval of this gap analysis.
+
+---
+
+## Status update — 30 October 2026
+
+The analysis above records the project as it stood on 16 August 2026. Since then, the following areas have been built out:
+
+| Area | Original verdict | Current state |
+|---|---|---|
+| Scene transitions | EXISTS BUT NEEDS REFINEMENT | Victory-gated flow: Start Screen → MiniNarrative1 → MainGame → MiniNarrative2 → Level2 → MiniNarrative3 → Level3 → MiniNarrative4 → Start Screen. A narrative chapter only opens after a level victory; losing restarts the level. Routing lives in `SceneCatalog.GetNextScene`. |
+| Saving | MISSING | `PlayerPrefs` stores level wins, story unlocks, read/completed stories, best quiz scores, the Water Detective Champion achievement and sound settings. A Start Screen **RESET** button clears story and level progress. |
+| Audio | MISSING | `GameAudio` plays per-scene music, ambience and sound effects. Each narrative scene has its own track (Narrative 1–4), created with Gemini. |
+| Enemies | PARTIALLY IMPLEMENTED | Wolves (`WolfAttackDirector`), charging warthogs, snakes and Level 2 mud monsters are active, built from project prefabs in `Assets/Game/Resources/Props`. |
+| Bosses | MISSING | Level 3 runs a closing boss wave (`Level3BossDirector`). |
+| UI | EXISTS BUT NEEDS REFINEMENT | Start Screen (New Game, Level 2, Level 3, Settings, Exit, Reset), pause menu, win/lose panels, level timers and mission HUDs. |
+
+### Narrative system
+
+- Four narrative scenes (`MiniNarrative1–4`), each with two stories: 1–2, 3–4, 5–6 and 7–8. Each story has a three-scene opening, a three-question quiz with first-attempt scoring and retry, and an ending.
+- 2/3 correct completes a story; 3/3 unlocks the chapter's bonus story. Story 8 completion records the Water Detective Champion achievement.
+- Story text lives in `StoryNarrativeData1–4.cs`; each scene is driven by `NarrativeScene1–4Controller.cs`, all reusing the Narrative Scene 1 UI layout.
+- `StoryDialogueFitter` splits long lines into extra Next-button pages so text stays inside the existing dialogue boxes.
+- A SKIP button appears for stories already read.
+- Narrative scene illustrations were created with Google Flow.
+
+### Environment props
+
+Village and level props are project prefabs in `Assets/Game/Resources/Props`: desert houses, water tanks, a well (Level 1 finish), a borehole (Level 2 finish), mountain walls (Levels 2–3), dead trees and rocks (Level 1 roadside), logs, cacti, thorn bushes, villagers, wolves, warthogs and mud monsters.
+
+### Still open from this analysis
+
+Mid-run respawn checkpoints, stamina, crafting, upgrades and skills have not been added. (`BushlandCheckpoint` in Level 1 only tops up water; it is not a respawn point.)
