@@ -9,6 +9,7 @@ public static class SceneCatalog
     public const string Tutorial = "Tutorial";
     public const string StartScreen = "StartScreen";
     public const string MiniNarrative1 = "MiniNarrative1";
+    public const string MiniNarrative2 = "MiniNarrative2";
     public const string MainGame = "MainGame";
     public const string Level2 = "Level2";
     public const string Level3 = "Level3";
